@@ -64,7 +64,11 @@
         "thread": "cpp",
         "cfenv": "cpp",
         "cinttypes": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "charconv": "cpp",
+        "list": "cpp",
+        "fstream": "cpp"
     },
-    "codeQL.githubDatabase.download": "never"
+    "codeQL.githubDatabase.download": "never",
+    "C_Cpp.errorSquiggles": "enabled"
 }

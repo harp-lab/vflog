@@ -8,6 +8,9 @@
 // #include <cuda_runtime.h>
 #include <iostream>
 
+// use librmm
+#include <rmm/mr/device/cuda_memory_resource.hpp>
+#include <rmm/mr/device/per_device_resource.hpp>
 #include <rmm/device_vector.hpp>
 #include <rmm/exec_policy.hpp>
 #include <thrust/execution_policy.h>
@@ -102,3 +105,13 @@ struct get_lower {
 };
 
 } // namespace hisa
+
+
+#include <rmm/mr/device/pool_memory_resource.hpp>
+
+inline void enable_rmm_allocator() {
+    rmm::mr::cuda_memory_resource cuda_mr{};
+    // rmm::mr::pool_memory_resource<rmm::mr::cuda_memory_resource> mr{
+    //     &cuda_mr, 4 * 256 * 1024};
+    // rmm::mr::set_current_device_resource(&mr);
+}

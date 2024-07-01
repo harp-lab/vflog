@@ -1,0 +1,32 @@
+
+.decl edge(x:number, y:number)
+.input edge(filename="data/data_7035.txt", delimiter="\t")
+.output edge
+.decl path(x:number, y:number)
+.decl path_debug1(x:number, y:number)
+.printsize path_debug1
+.output path_debug1
+.printsize path
+.output path
+
+.decl path_debug2(x:number, y:number)
+.printsize path_debug2
+.output path_debug2
+
+path(x, y) :- edge(x, y).
+path(x, z) :- path(x, y), edge(y, z).
+
+.decl node(x:number)
+.printsize node
+.output node
+node(x) :- edge(x, _).
+
+path_debug1(x, z) :- edge(x, z).
+path_debug1(x, z) :- edge(x, y), edge(y, z).
+path_debug2(x, z) :- path_debug1(x, z).
+path_debug2(x, z) :- path_debug1(x, y), edge(y, z).
+
+.decl path_delta2(x:number, y:number)
+.printsize path_delta2
+.output path_delta2
+path_delta2(x, y) :- path_debug2(x, y), !path_debug1(x, y).

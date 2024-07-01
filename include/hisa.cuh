@@ -15,6 +15,7 @@
 #include <thrust/device_ptr.h>
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
+#include <rmm/device_buffer.hpp>
 #include <vector>
 
 #define CREATE_V_MAP(uniq_size)                                                \
@@ -68,7 +69,8 @@ struct VerticalColumnGpu {
 
     device_data_t sorted_indices;
     // thrust::device_vector<internal_data_type> raw_data;
-    device_internal_data_ptr raw_data = nullptr;
+    // device_internal_data_ptr raw_data = nullptr;
+    size_t raw_offset = 0;
 
     VerticalColumnGpu() = default;
 
@@ -77,6 +79,8 @@ struct VerticalColumnGpu {
     bool indexed = false;
 
     size_t raw_size = 0;
+
+    size_t column_idx = 0;
 
     IndexStrategy index_strategy = IndexStrategy::EAGER;
 
@@ -110,7 +114,9 @@ struct multi_hisa {
     VersionedColumns delta_columns;
     VersionedColumns newt_columns;
 
-    offset_type total_tuples;
+    offset_type total_tuples = 0;
+
+    offset_type capacity = 0;
 
     multi_hisa(int arity);
 
@@ -132,6 +138,8 @@ struct multi_hisa {
     HOST_VECTOR<device_data_t> data;
     // lexical order of the data in the full
     // thrust::device_vector<uint32_t> full_lexical_order;
+
+    device_data_t data_buffer;
 
     // load data from CPU Memory to Full, this misa must be empty
     void
@@ -171,6 +179,8 @@ struct multi_hisa {
 
     void print_all(bool sorted = false);
 
+    void print_raw_data(RelationVersion version);
+
     void fit();
 
     void clear();
@@ -207,29 +217,56 @@ struct multi_hisa {
     // void deduplicate();
     uint32_t get_total_tuples() const { return total_tuples; }
 
-  private:
+    offset_type get_capacity() const { return capacity; }
+
+    /**
+     * @brief Build index for a specific column in the relation
+     */
     void build_index(VerticalColumnGpu &column, device_data_t &unique_offset,
                      device_data_t &unique_diff, bool sorted = false);
+
+    void set_index_startegy(int column_idx, RelationVersion version,
+                            IndexStrategy strategy) {
+        auto &column = get_versioned_columns(version)[column_idx];
+        column.index_strategy = strategy;
+    }
+
+    void set_default_index_column(int column_idx) {
+        default_index_column = column_idx;
+    }
+
+    void print_stats();
 };
 
 // filter the matched_pairs (id_1, id2) with respect to column2,
 // only keep the matched pair
-void column_match(VerticalColumnGpu &column1, VerticalColumnGpu &column2,
+void column_match(multi_hisa &h1, RelationVersion ver1, size_t column1_idx,
+                  multi_hisa &h2, RelationVersion ver2, size_t column2_idx,
                   device_pairs_t &matched_pair);
-void column_match(VerticalColumnGpu &column1, VerticalColumnGpu &column2,
+void column_match(multi_hisa &h1, RelationVersion ver1, size_t column1_idx,
+                  multi_hisa &h2, RelationVersion ver2, size_t column2_idx,
                   device_indices_t &column1_indices,
                   device_indices_t &column2_indices,
                   DEVICE_VECTOR<bool> &unmatched);
 
-void column_join(VerticalColumnGpu &inner_column,
-                 VerticalColumnGpu &outer_column,
+void column_join(multi_hisa &inner, RelationVersion inner_version,
+                 size_t inner_column_idx, multi_hisa &outer,
+                 RelationVersion outer_version, size_t outer_column_idx,
                  device_data_t &outer_tuple_indices,
                  device_pairs_t &matched_indices);
 
-void column_join(VerticalColumnGpu &inner_column,
-                 VerticalColumnGpu &outer_column,
+void column_join(multi_hisa &inner, RelationVersion inner_version,
+                 size_t inner_column_idx, multi_hisa &outer,
+                 RelationVersion outer_version, size_t outer_column_idx,
                  device_indices_t &outer_tuple_indices,
                  device_indices_t &matched_indices,
                  DEVICE_VECTOR<bool> &unmatched);
+
+void column_copy(multi_hisa &src, RelationVersion src_version, size_t src_idx,
+                 multi_hisa &dst, RelationVersion dst_version, size_t dst_idx,
+                 device_indices_t &indices);
+
+void read_kary_relation(const std::string &filename, hisa::multi_hisa &h,
+                        int k);
 
 } // namespace hisa

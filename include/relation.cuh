@@ -80,6 +80,9 @@ class relation {
             throw std::runtime_error("Unknown version");
         }
     }
+
+    size_t get_capacity() { return hisa_data->capacity; }
+    size_t get_total_tuples() { return hisa_data->total_tuples; }
 };
 
 using relational_ptr = std::shared_ptr<relation>;
