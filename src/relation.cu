@@ -25,7 +25,7 @@ void relation::load_data(const std::vector<std::vector<int>> &data,
 void relation::allocate_newt(size_t size) { hisa_data->allocate_newt(size); }
 
 device_data_ptr relation::get_newt_head(int i) {
-    return hisa_data->newt_columns[i].raw_data;
+    return hisa_data->data[i].data() + hisa_data->newt_columns[i].raw_offset;
 }
 
 } // namespace fvlog
