@@ -5,17 +5,18 @@
 
 #include <cuda/functional>
 
-#include "utils.cuh"
+#include "buffer.cuh"
+// #include "utils.cuh"
 #include <cstdint>
 #include <cuco/dynamic_map.cuh>
 #include <cuco/static_map.cuh>
 #include <cuda/std/chrono>
 #include <iostream>
 #include <memory>
+#include <rmm/device_buffer.hpp>
 #include <thrust/device_ptr.h>
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
-#include <rmm/device_buffer.hpp>
 #include <vector>
 
 #define CREATE_V_MAP(uniq_size)                                                \
@@ -118,13 +119,14 @@ struct multi_hisa {
 
     offset_type capacity = 0;
 
-    multi_hisa(int arity);
+    multi_hisa(int arity, d_buffer_ptr buf = nullptr);
 
     // HOST_VECTOR<int> indexed_columns;
     uint64_t hash_time = 0;
     uint64_t dedup_time = 0;
     uint64_t sort_time = 0;
     uint64_t load_time = 0;
+    uint64_t merge_time = 0;
 
     bool indexed = false;
 
@@ -139,6 +141,7 @@ struct multi_hisa {
     // lexical order of the data in the full
     // thrust::device_vector<uint32_t> full_lexical_order;
 
+    d_buffer_ptr buffer = nullptr;
     device_data_t data_buffer;
 
     // load data from CPU Memory to Full, this misa must be empty
@@ -223,7 +226,7 @@ struct multi_hisa {
      * @brief Build index for a specific column in the relation
      */
     void build_index(VerticalColumnGpu &column, device_data_t &unique_offset,
-                     device_data_t &unique_diff, bool sorted = false);
+                     bool sorted = false);
 
     void set_index_startegy(int column_idx, RelationVersion version,
                             IndexStrategy strategy) {
@@ -248,12 +251,6 @@ void column_match(multi_hisa &h1, RelationVersion ver1, size_t column1_idx,
                   device_indices_t &column1_indices,
                   device_indices_t &column2_indices,
                   DEVICE_VECTOR<bool> &unmatched);
-
-void column_join(multi_hisa &inner, RelationVersion inner_version,
-                 size_t inner_column_idx, multi_hisa &outer,
-                 RelationVersion outer_version, size_t outer_column_idx,
-                 device_data_t &outer_tuple_indices,
-                 device_pairs_t &matched_indices);
 
 void column_join(multi_hisa &inner, RelationVersion inner_version,
                  size_t inner_column_idx, multi_hisa &outer,

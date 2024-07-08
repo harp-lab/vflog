@@ -214,31 +214,6 @@ void test_join() {
         }
         std::cout << std::endl;
     }
-
-    // join h1 h2 on 1th column
-    hisa::device_data_t candidate_indices(3);
-    thrust::sequence(candidate_indices.begin(), candidate_indices.end());
-    hisa::device_pairs_t result_pair;
-    // hisa::column_join(h1.full_columns[0], h2.full_columns[0], candidate_indices,
-    //                   result_pair);
-    hisa::column_join(h1, FULL, 0, h2, FULL, 0, candidate_indices, result_pair);
-    thrust::host_vector<hisa::comp_pair_t> result_indices_host = result_pair;
-    std::cout << "result_indices: ";
-    for (int i = 0; i < result_indices_host.size(); i++) {
-        std::cout << "(" << (result_indices_host[i] >> 32) << ","
-                  << (result_indices_host[i] & 0xffffffff) << ") ";
-    }
-    std::cout << std::endl;
-    // hisa::column_match(h1.full_columns[1], h2.full_columns[1], result_pair);
-    hisa::column_match(h1, FULL, 1, h2, FULL, 1, result_pair);
-    // print result
-    result_indices_host = result_pair;
-    std::cout << "result_indices: ";
-    for (int i = 0; i < result_indices_host.size(); i++) {
-        std::cout << "(" << (result_indices_host[i] >> 32) << ","
-                  << (result_indices_host[i] & 0xffffffff) << ") ";
-    }
-    std::cout << std::endl;
 }
 
 int main() {

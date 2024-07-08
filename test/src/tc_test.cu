@@ -1,9 +1,10 @@
 
-#include "relation.cuh"
+#include "hisa.cuh"
 
 #include "tc_test.h"
 #include <iostream>
 #include <thrust/sequence.h>
+#include <rmm/mr/device/managed_memory_resource.hpp>
 
 void print_index_map(std::shared_ptr<hisa::GpuMap> &unique_v_map) {
     auto uniq_size = unique_v_map->size();
@@ -20,7 +21,8 @@ void print_index_map(std::shared_ptr<hisa::GpuMap> &unique_v_map) {
 }
 
 void tc_barebone(char *data_path) {
-    hisa::multi_hisa edge(2);
+    auto global_buffer = std::make_shared<hisa::d_buffer>(40960);
+    hisa::multi_hisa edge(2, global_buffer);
     edge.set_default_index_column(0);
     edge.set_index_startegy(0, FULL, hisa::IndexStrategy::EAGER);
     edge.set_index_startegy(1, FULL, hisa::IndexStrategy::LAZY);
@@ -30,7 +32,7 @@ void tc_barebone(char *data_path) {
     std::cout << "Edge full size: " << edge.get_versioned_size(FULL)
               << std::endl;
 
-    hisa::multi_hisa path(2);
+    hisa::multi_hisa path(2, global_buffer);
     path.set_default_index_column(1);
     path.set_index_startegy(0, FULL, hisa::IndexStrategy::LAZY);
     path.set_index_startegy(0, DELTA, hisa::IndexStrategy::LAZY);
@@ -127,14 +129,30 @@ void tc_barebone(char *data_path) {
 }
 
 int main(int argc, char **argv) {
+    if (argc != 3) {
+        std::cerr << "Usage: " << argv[0] << " <data_path> <memory_system_flag>"
+                  << std::endl;
+        return 1;
+    }
     // enable_rmm_allocator();
     rmm::mr::cuda_memory_resource cuda_mr{};
-    rmm::mr::pool_memory_resource<rmm::mr::cuda_memory_resource> mr{
-        &cuda_mr, 4 * 256 * 1024};
-    rmm::mr::set_current_device_resource(&mr);
-
+    // rmm::mr::set_current_device_resource(&cuda_mr);
     // first arg is data path
     char *data_path = argv[1];
+    int memory_system_flag = atoi(argv[2]);
+    if (memory_system_flag == 0) {
+        rmm::mr::set_current_device_resource(&cuda_mr);
+    } else if (memory_system_flag == 1) {
+        rmm::mr::pool_memory_resource<rmm::mr::cuda_memory_resource> mr{
+        &cuda_mr, 4 * 256 * 1024};
+        rmm::mr::set_current_device_resource(&mr);
+    } else if (memory_system_flag == 2) {
+        rmm::mr::managed_memory_resource mr{};
+        rmm::mr::set_current_device_resource(&mr);
+    } else {
+        rmm::mr::set_current_device_resource(&cuda_mr);
+    }
+
     tc_barebone(data_path);
     return 0;
 }

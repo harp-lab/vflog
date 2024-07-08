@@ -9,11 +9,12 @@
 #include <iostream>
 
 // use librmm
-#include <rmm/mr/device/cuda_memory_resource.hpp>
-#include <rmm/mr/device/per_device_resource.hpp>
 #include <rmm/device_vector.hpp>
 #include <rmm/exec_policy.hpp>
+#include <rmm/mr/device/cuda_memory_resource.hpp>
+#include <rmm/mr/device/per_device_resource.hpp>
 #include <thrust/execution_policy.h>
+#include <thrust/memory.h>
 
 #define checkCuda(ans)                                                         \
     { gpuAssert((ans), __FILE__, __LINE__); }
@@ -86,6 +87,11 @@ using device_internal_data_ptr = thrust::device_ptr<internal_data_type>;
 using device_ranges_t = DEVICE_VECTOR<comp_range_t>;
 using device_pairs_t = DEVICE_VECTOR<comp_pair_t>;
 
+using ptr_and_size_t =
+    thrust::pair<thrust::pointer<internal_data_type, thrust::device_system_tag>,
+                 std::ptrdiff_t>;
+using thrust_buffer_ptr_t = thrust::pointer<internal_data_type, thrust::device_system_tag>;
+
 inline uint64_t __device__ __host__ compress_u32(uint32_t &a, uint32_t &b) {
     return ((uint64_t)a << 32) | b;
 }
@@ -105,7 +111,6 @@ struct get_lower {
 };
 
 } // namespace hisa
-
 
 #include <rmm/mr/device/pool_memory_resource.hpp>
 

@@ -59,7 +59,7 @@ void VerticalColumnGpu::clear_unique_v() {
 
 VerticalColumnGpu::~VerticalColumnGpu() { clear_unique_v(); }
 
-multi_hisa::multi_hisa(int arity) {
+multi_hisa::multi_hisa(int arity, d_buffer_ptr buffer) {
     this->arity = arity;
     newt_size = 0;
     full_size = 0;
@@ -68,6 +68,11 @@ multi_hisa::multi_hisa(int arity) {
     delta_columns.resize(arity);
     newt_columns.resize(arity);
     data.resize(arity);
+    if (buffer) {
+        this->buffer = buffer;
+    } else {
+        this->buffer = std::make_shared<d_buffer>(40960);
+    }
 
     for (int i = 0; i < arity; i++) {
         full_columns[i].column_idx = i;
@@ -239,13 +244,15 @@ void multi_hisa::print_raw_data(RelationVersion ver) {
 }
 
 void multi_hisa::build_index(VerticalColumnGpu &column,
-                             device_data_t &unique_offset,
-                             device_data_t &unique_diff, bool sorted) {
-    device_data_t column_data(column.raw_size);
+                             device_data_t &unique_offset, bool sorted) {
     auto sorte_start = std::chrono::high_resolution_clock::now();
     auto &raw_data = data[column.column_idx];
     auto raw_ver_head = raw_data.begin() + column.raw_offset;
+    size_t uniq_size = 0;
     if (!sorted) {
+        // std::cout << ">>>>>> sort column while build index " <<
+        // column.column_idx << std::endl;
+        device_data_t column_data(column.raw_size);
         column.sorted_indices.resize(column.raw_size);
         thrust::sequence(DEFAULT_DEVICE_POLICY, column.sorted_indices.begin(),
                          column.sorted_indices.end());
@@ -257,49 +264,40 @@ void multi_hisa::build_index(VerticalColumnGpu &column,
                                    column_data.end(),
                                    column.sorted_indices.begin());
         // }
+        // count unique
+        uniq_size = thrust::unique_count(
+            DEFAULT_DEVICE_POLICY, column_data.begin(), column_data.end());
+        // buffer_ptr_and_size =
+        // thrust::get_temporary_buffer<internal_data_type>(
+        //     device_sys, uniq_size);
+        // offset_buffer_ptr = buffer_ptr_and_size.first;
+        buffer->reserve(uniq_size);
+        auto uniq_end = thrust::unique_by_key_copy(
+            DEFAULT_DEVICE_POLICY, column_data.begin(), column_data.end(),
+            thrust::make_counting_iterator<uint32_t>(0),
+            thrust::make_discard_iterator(), buffer->data());
+        // uniq_size = uniq_end.second - unique_offset.begin();
     } else {
-        thrust::gather(DEFAULT_DEVICE_POLICY, column.sorted_indices.begin(),
-                       column.sorted_indices.end(), raw_ver_head,
-                       column_data.begin());
+        uniq_size = thrust::unique_count(
+            DEFAULT_DEVICE_POLICY,
+            thrust::make_permutation_iterator(raw_ver_head,
+                                              column.sorted_indices.begin()),
+            thrust::make_permutation_iterator(raw_ver_head,
+                                              column.sorted_indices.end()));
+        buffer->reserve(uniq_size);
+        auto uniq_end = thrust::unique_by_key_copy(
+            DEFAULT_DEVICE_POLICY,
+            thrust::make_permutation_iterator(raw_ver_head,
+                                              column.sorted_indices.begin()),
+            thrust::make_permutation_iterator(raw_ver_head,
+                                              column.sorted_indices.end()),
+            thrust::make_counting_iterator<uint32_t>(0),
+            thrust::make_discard_iterator(), buffer->data());
     }
     auto sort_end = std::chrono::high_resolution_clock::now();
     this->sort_time += std::chrono::duration_cast<std::chrono::microseconds>(
                            sort_end - sorte_start)
                            .count();
-    // compress the column, save unique values and their counts
-    thrust::sequence(DEFAULT_DEVICE_POLICY, unique_offset.begin(),
-                     unique_offset.end());
-    // using thrust parallel algorithm to compress the column
-    // mark non-unique values as 0
-    // print column_data
-    // std::cout << ">>>>>> raw size: " << column.sorted_indices.size() <<
-    // std::endl;
-    // // print column.sorted_indices
-    // HOST_VECTOR<internal_data_type> h_column_data = column.sorted_indices;
-    // for (int i = 0; i < h_column_data.size(); i++) {
-    //     std::cout << h_column_data[i] << " ";
-    // }
-    // std::cout << std::endl;
-    auto uniq_end =
-        thrust::unique_by_key(DEFAULT_DEVICE_POLICY, column_data.begin(),
-                              column_data.end(), unique_offset.begin());
-    auto uniq_size = uniq_end.first - column_data.begin();
-    auto &uniq_val = column_data;
-    uniq_val.resize(uniq_size);
-
-    unique_offset.resize(uniq_size);
-    // device_data_t unique_diff = unique_offset;
-    unique_diff.resize(uniq_size + 1);
-    thrust::copy(DEFAULT_DEVICE_POLICY, unique_offset.begin(),
-                 unique_offset.end(), unique_diff.begin());
-    unique_diff[uniq_size] = column.raw_size;
-    // calculate offset by minus the previous value
-    thrust::adjacent_difference(DEFAULT_DEVICE_POLICY, unique_diff.begin(),
-                                unique_diff.end(), unique_diff.begin());
-    // the first value is always 0, in following code, we will use the
-    // 1th as the start index
-    unique_diff.erase(unique_diff.begin());
-    unique_diff.resize(uniq_size);
 
     // update map
     auto start = std::chrono::high_resolution_clock::now();
@@ -316,28 +314,40 @@ void multi_hisa::build_index(VerticalColumnGpu &column,
             column.unique_v_map = CREATE_V_MAP(uniq_size);
         }
         auto insertpair_begin = thrust::make_transform_iterator(
-            thrust::make_zip_iterator(thrust::make_tuple(
-                uniq_val.begin(), unique_offset.begin(), unique_diff.begin())),
-            cuda::proclaim_return_type<GpuMapPair>([] __device__(auto &t) {
-                return HASH_NAMESPACE::make_pair(
-                    thrust::get<0>(t),
-                    (static_cast<uint64_t>(thrust::get<1>(t)) << 32) +
-                        (static_cast<uint64_t>(thrust::get<2>(t))));
-            }));
+            thrust::make_counting_iterator<uint32_t>(0),
+            cuda::proclaim_return_type<GpuMapPair>(
+                [uniq_offset_raw = buffer->data(), uniq_size,
+                 sorted_idx = column.sorted_indices.data().get(),
+                 raw_head = raw_data.data().get() + column.raw_offset,
+                 column_size = column.raw_size] __device__(auto &idx) {
+                    // compute the offset by idx+1 - idx, if idx is the last
+                    // one, then the offset is the size of the column - idx
+                    auto val = raw_head[sorted_idx[uniq_offset_raw[idx]]];
+                    auto range_size =
+                        idx == uniq_size - 1
+                            ? column_size - uniq_offset_raw[idx]
+                            : uniq_offset_raw[idx + 1] - uniq_offset_raw[idx];
+                    return HASH_NAMESPACE::make_pair(
+                        val,
+                        (static_cast<uint64_t>(uniq_offset_raw[idx]) << 32) +
+                            (static_cast<uint64_t>(range_size)));
+                }));
         column.unique_v_map->insert(insertpair_begin,
                                     insertpair_begin + uniq_size);
     } else {
-        device_ranges_t ranges(uniq_size);
-        // compress offset and diff to u64 ranges
-        thrust::transform(DEFAULT_DEVICE_POLICY, unique_offset.begin(),
-                          unique_offset.end(), unique_diff.begin(),
-                          ranges.begin(),
-                          [] __device__(auto &offset, auto &diff) -> uint64_t {
-                              return (static_cast<uint64_t>(offset) << 32) +
-                                     (static_cast<uint64_t>(diff));
-                          });
-        column.unique_v_map_simp.insert(uniq_val, ranges);
-        // std::cout << "ranges size: " << ranges.size() << std::endl;
+        throw std::runtime_error("not implemented");
+        // device_ranges_t ranges(uniq_size);
+        // // compress offset and diff to u64 ranges
+        // thrust::transform(DEFAULT_DEVICE_POLICY, unique_offset.begin(),
+        //                   unique_offset.end(), unique_diff.begin(),
+        //                   ranges.begin(),
+        //                   [] __device__(auto &offset, auto &diff) -> uint64_t
+        //                   {
+        //                       return (static_cast<uint64_t>(offset) << 32) +
+        //                              (static_cast<uint64_t>(diff));
+        //                   });
+        // column.unique_v_map_simp.insert(uniq_val, ranges);
+        // // std::cout << "ranges size: " << ranges.size() << std::endl;
     }
     auto end = std::chrono::high_resolution_clock::now();
     this->hash_time +=
@@ -352,24 +362,22 @@ void multi_hisa::force_column_index(RelationVersion version, int i,
     if (columns[i].indexed && !rebuild) {
         return;
     }
-    device_data_t unique_offset(total_tuples);
-    device_data_t unique_diff(total_tuples);
-    build_index(columns[i], unique_offset, unique_diff, sorted);
+    device_data_t unique_offset;
+    build_index(columns[i], unique_offset, sorted);
 }
 
 void multi_hisa::build_index_all(RelationVersion version, bool sorted) {
     auto &columns = get_versioned_columns(version);
     auto version_size = get_versioned_size(version);
 
-    device_data_t unique_offset(version_size);
-    device_data_t unique_diff(version_size);
+    device_data_t unique_offset;
     for (size_t i = 0; i < arity; i++) {
         if (columns[i].index_strategy == IndexStrategy::EAGER) {
             std::cout << "build index " << i << std::endl;
             if (i != default_index_column) {
-                build_index(columns[i], unique_offset, unique_diff, sorted);
+                build_index(columns[i], unique_offset, sorted);
             } else {
-                build_index(columns[i], unique_offset, unique_diff, true);
+                build_index(columns[i], unique_offset, true);
             }
             // std::cout << "indexed map size : " <<
             // columns[i].unique_v_map->size() << std::endl;
@@ -388,7 +396,9 @@ void multi_hisa::deduplicate() {
     std::cout << "deduplicate newt size: " << version_size << std::endl;
     thrust::sequence(DEFAULT_DEVICE_POLICY, sorted_indices.begin(),
                      sorted_indices.end());
-    device_data_t tmp_raw(version_size);
+    // device_data_t tmp_raw(version_size);
+    buffer->reserve(version_size);
+    auto tmp_raw_ptr = buffer->data();
     for (int i = arity - 1; i >= 0; i--) {
         if (i == default_index_column) {
             continue;
@@ -397,18 +407,21 @@ void multi_hisa::deduplicate() {
         auto column_data = data[i].begin() + column.raw_offset;
         // gather the column data
         thrust::gather(DEFAULT_DEVICE_POLICY, sorted_indices.begin(),
-                       sorted_indices.end(), column_data, tmp_raw.begin());
-        thrust::stable_sort_by_key(DEFAULT_DEVICE_POLICY, tmp_raw.begin(),
-                                   tmp_raw.end(), sorted_indices.begin());
+                       sorted_indices.end(), column_data, tmp_raw_ptr);
+        thrust::stable_sort_by_key(DEFAULT_DEVICE_POLICY, tmp_raw_ptr,
+                                   tmp_raw_ptr + version_size,
+                                   sorted_indices.begin());
     }
 
     // sort the default index column
     auto &column = columns[default_index_column];
     auto column_data = data[default_index_column].begin() + column.raw_offset;
     thrust::gather(DEFAULT_DEVICE_POLICY, sorted_indices.begin(),
-                   sorted_indices.end(), column_data, tmp_raw.begin());
-    thrust::stable_sort_by_key(DEFAULT_DEVICE_POLICY, tmp_raw.begin(),
-                               tmp_raw.end(), sorted_indices.begin());
+                   sorted_indices.end(), column_data,
+                   tmp_raw_ptr); // gather the column data
+    thrust::stable_sort_by_key(DEFAULT_DEVICE_POLICY, tmp_raw_ptr,
+                               tmp_raw_ptr + version_size,
+                               sorted_indices.begin());
 
     device_bitmap_t dup_flags(version_size, false);
     // check duplicates tuple
@@ -442,14 +455,15 @@ void multi_hisa::deduplicate() {
     auto new_sorted_indices_size =
         new_sorted_indices_end - sorted_indices.begin();
     sorted_indices.resize(new_sorted_indices_size);
-    tmp_raw.resize(new_sorted_indices_size);
+    sorted_indices.shrink_to_fit();
+    // tmp_raw.resize(new_sorted_indices_size);
     // gather the newt data
     for (int i = 0; i < arity; i++) {
         auto column_data = data[i].begin() + columns[i].raw_offset;
         thrust::gather(DEFAULT_DEVICE_POLICY, sorted_indices.begin(),
-                       sorted_indices.end(), column_data, tmp_raw.begin());
-        thrust::copy(DEFAULT_DEVICE_POLICY, tmp_raw.begin(), tmp_raw.end(),
-                     column_data);
+                       sorted_indices.end(), column_data, tmp_raw_ptr);
+        thrust::copy(DEFAULT_DEVICE_POLICY, tmp_raw_ptr,
+                     tmp_raw_ptr + new_sorted_indices_size, column_data);
         columns[i].raw_size = new_sorted_indices_size;
     }
     // set the 0-th column's sorted indices
@@ -501,9 +515,9 @@ void column_match(multi_hisa &inner, RelationVersion inner_ver,
             return raw_outer[t >> 32] != raw_inner[t & 0xFFFFFFFF];
         });
     // filter
-    auto new_matched_pair_end =
-        thrust::remove_if(matched_pair.begin(), matched_pair.end(),
-                          unmatched_flags.begin(), thrust::identity<bool>());
+    auto new_matched_pair_end = thrust::remove_if(
+        DEFAULT_DEVICE_POLICY, matched_pair.begin(), matched_pair.end(),
+        unmatched_flags.begin(), thrust::identity<bool>());
     auto new_matched_pair_size = new_matched_pair_end - matched_pair.begin();
     matched_pair.resize(new_matched_pair_size);
 }
@@ -711,8 +725,8 @@ void multi_hisa::persist_newt() {
                     return true;
                 }
                 if (tuple_compare(all_col_fulls_ptrs, full_index,
-                                   all_col_news_ptrs, newt_index, arity,
-                                   default_index_column)) {
+                                  all_col_news_ptrs, newt_index, arity,
+                                  default_index_column)) {
                     left = mid + 1;
                 } else {
                     right = mid - 1;
@@ -786,8 +800,10 @@ void multi_hisa::persist_newt() {
 
         // merge
         // device_data_t merged_column(full_size + newt_size);
-        auto &merged_column = data_buffer;
+        // buffer->reserve(full_size + newt_size);
         data_buffer.resize(full_size + newt_size);
+        // auto merged_column = buffer->data();
+        auto &merged_column = data_buffer;
         // std::cout << "data size: " << data[i].size() << std::endl;
 
         thrust::merge_by_key(
@@ -804,6 +820,7 @@ void multi_hisa::persist_newt() {
             full_column.sorted_indices.begin(), thrust::make_discard_iterator(),
             merged_column.begin());
         full_column.sorted_indices.swap(merged_column);
+        // buffer->swap(full_column.sorted_indices);
         // minus size of full on all newt indices
         thrust::transform(DEFAULT_DEVICE_POLICY,
                           newt_column.sorted_indices.begin(),
@@ -817,9 +834,9 @@ void multi_hisa::persist_newt() {
     tmp_newt_v.resize(0);
     tmp_newt_v.shrink_to_fit();
     auto merge_end = std::chrono::high_resolution_clock::now();
-    sort_time += std::chrono::duration_cast<std::chrono::microseconds>(
-                     merge_end - merge_start)
-                     .count();
+    merge_time += std::chrono::duration_cast<std::chrono::microseconds>(
+                      merge_end - merge_start)
+                      .count();
 
     // swap newt and delta
     delta_size = newt_size;
@@ -845,6 +862,7 @@ void multi_hisa::print_stats() {
     std::cout << "sort time: " << sort_time << std::endl;
     std::cout << "hash time: " << hash_time << std::endl;
     std::cout << "dedup time: " << dedup_time << std::endl;
+    std::cout << "merge time: " << merge_time << std::endl;
 }
 
 void multi_hisa::clear() {
@@ -868,117 +886,6 @@ void multi_hisa::clear() {
         data[i].shrink_to_fit();
     }
     total_tuples = 0;
-}
-
-void column_join(multi_hisa &inner, RelationVersion inner_ver, size_t inner_idx,
-                 multi_hisa &outer, RelationVersion outer_ver, size_t outer_idx,
-                 device_data_t &outer_tuple_indices,
-                 device_pairs_t &matched_indices) {
-    auto &inner_column = inner.get_versioned_columns(inner_ver)[inner_idx];
-    auto &outer_column = outer.get_versioned_columns(outer_ver)[outer_idx];
-    auto outer_size = outer_tuple_indices.size();
-
-    device_ranges_t range_result(outer_tuple_indices.size());
-
-    auto outer_raw_begin =
-        outer.data[outer_column.column_idx].begin() + outer_column.raw_offset;
-    inner_column.unique_v_map->find(
-        thrust::make_permutation_iterator(outer_raw_begin,
-                                          outer_tuple_indices.begin()),
-        thrust::make_permutation_iterator(outer_raw_begin,
-                                          outer_tuple_indices.end()),
-        range_result.begin());
-
-    // mark the outer_tuple_indices as UINT32_MAX if corresponding range result
-    // is UINT32_MAX
-    thrust::transform(
-        DEFAULT_DEVICE_POLICY, range_result.begin(), range_result.end(),
-        outer_tuple_indices.begin(), outer_tuple_indices.begin(),
-        [] __device__(auto &range, auto &outer_tuple_index) {
-            return range == UINT32_MAX ? UINT32_MAX : outer_tuple_index;
-        });
-    // remove unmatched U32_MAX
-    auto new_outer_tuple_end =
-        thrust::remove(DEFAULT_DEVICE_POLICY, outer_tuple_indices.begin(),
-                       outer_tuple_indices.end(), UINT32_MAX);
-    outer_tuple_indices.resize(new_outer_tuple_end -
-                               outer_tuple_indices.begin());
-    // remove unmatched range result
-    auto new_range_end =
-        thrust::remove(DEFAULT_DEVICE_POLICY, range_result.begin(),
-                       range_result.end(), UINT32_MAX);
-    range_result.resize(new_range_end - range_result.begin());
-
-    // print range_result
-    // std::cout << "range_result:\n";
-    // HOST_VECTOR<uint64_t> h_range_result = range_result;
-    // for (int i = 0; i < h_range_result.size(); i++) {
-    //     std::cout << "(" << (h_range_result[i] >> 32) << " "
-    //               << (h_range_result[i] & 0xffffffff) << ") ";
-    // }
-    // std::cout << std::endl;
-
-    // materialize the comp_ranges
-
-    // fecth all range size
-    device_data_t size_vec(range_result.size());
-    thrust::transform(
-        DEFAULT_DEVICE_POLICY, range_result.begin(), range_result.end(),
-        size_vec.begin(),
-        [] __device__(auto &t) { return static_cast<uint32_t>(t); });
-
-    device_ranges_t offset_vec;
-    offset_vec.swap(range_result);
-    thrust::transform(
-        DEFAULT_DEVICE_POLICY, offset_vec.begin(), offset_vec.end(),
-        offset_vec.begin(),
-        [] __device__(auto &t) { return static_cast<uint64_t>(t >> 32); });
-
-    uint32_t total_matched_size =
-        thrust::reduce(DEFAULT_DEVICE_POLICY, size_vec.begin(), size_vec.end());
-    device_data_t size_offset_tmp(outer_size);
-    thrust::exclusive_scan(DEFAULT_DEVICE_POLICY, size_vec.begin(),
-                           size_vec.end(), size_offset_tmp.begin());
-    // std::cout << "total_matched_size: " << total_matched_size << std::endl;
-    // // print size_vec
-    // std::cout << "size_offset_tmp:\n";
-    // HOST_VECTOR<uint32_t> h_size_vec = offset_vec;
-    // for (int i = 0; i < h_size_vec.size(); i++) {
-    //     std::cout << h_size_vec[i] << " ";
-    // }
-    // std::cout << std::endl;
-
-    // pirnt outer tuple indices
-    // std::cout << "outer_tuple_indices:\n";
-    // HOST_VECTOR<uint32_t> h_outer_tuple_indices =
-    // outer_tuple_indices; for (int i = 0; i < h_outer_tuple_indices.size();
-    // i++) {
-    //     std::cout << h_outer_tuple_indices[i] << " ";
-    // }
-    // std::cout << std::endl;
-
-    // materialize the matched_indices
-    matched_indices.resize(total_matched_size);
-    thrust::for_each(
-        DEFAULT_DEVICE_POLICY,
-        thrust::make_zip_iterator(
-            thrust::make_tuple(outer_tuple_indices.begin(), offset_vec.begin(),
-                               size_vec.begin(), size_offset_tmp.begin())),
-        thrust::make_zip_iterator(
-            thrust::make_tuple(outer_tuple_indices.end(), offset_vec.end(),
-                               size_vec.end(), size_offset_tmp.end())),
-        [res = matched_indices.data().get(),
-         inner_sorted_idx =
-             inner_column.sorted_indices.data().get()] __device__(auto &t) {
-            auto outer_pos = thrust::get<0>(t);
-            auto &inner_pos = thrust::get<1>(t);
-            auto &size = thrust::get<2>(t);
-            auto &start = thrust::get<3>(t);
-            for (int i = 0; i < size; i++) {
-                res[start + i] =
-                    compress_u32(outer_pos, inner_sorted_idx[inner_pos + i]);
-            }
-        });
 }
 
 void column_join(multi_hisa &inner, RelationVersion inner_ver, size_t inner_idx,
