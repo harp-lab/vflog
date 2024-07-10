@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
-project(fvlog LANGUAGES CXX CUDA)
+project(vflog LANGUAGES CXX CUDA)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE CACHE INTERNAL "")
 
@@ -152,6 +152,7 @@ set(gpu_ra_include "${PROJECT_SOURCE_DIR}/include")
 
 file(GLOB source_file_gpu_ra
     "${gpu_ra_src}/*.cu"
+    "${gpu_ra_src}/ra/*.cu"
     "${gpu_ra_src}/*.cpp"
     "${gpu_ra_include}/*.h"
     "${gpu_ra_include}/*.cuh"

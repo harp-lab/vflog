@@ -1,11 +1,11 @@
 
-#include "relation.cuh"
 
+#include "hisa.cuh"
+#include <algorithm>
 #include <iostream>
 #include <vector>
-#include <algorithm>
 
-namespace fvlog {
+namespace vflog {
 
 enum class RAOperatorType {
     JOIN,
@@ -23,13 +23,7 @@ struct RelationalAlgebraOperator {
     RAOperatorType type;
     bool debug_flag = false;
 
-    virtual void execute(RelationalEnvironment &env) = 0;
-};
-
-struct ColumnRAInfo {
-    relational_ptr relation;
-    RelationVersion version;
-    size_t column_idx;
+    virtual void execute() = 0;
 };
 
 /**
@@ -38,99 +32,28 @@ struct ColumnRAInfo {
  * It will be applied to the re_slices
  * After execution, the result will be updated in the rel_slices
  */
-struct RelationalJoin : public RelationalAlgebraOperator {
-    using ID_t = uint32_t;
+struct JoinOperator : public RelationalAlgebraOperator {
 
-    HOST_VECTOR<ColumnRAInfo> input_columns;
-    relational_ptr output_relation;
-    HOST_VECTOR<ColumnRAInfo> output_columns;
-
-    RelationalJoin(ID_t id, HOST_VECTOR<ColumnRAInfo> ins, relational_ptr out,
-                   HOST_VECTOR<ColumnRAInfo> column) {
-        this->id = id;
-        this->type = RAOperatorType::JOIN;
-        this->input_columns = ins;
-        this->output_relation = out;
-        this->output_columns = column;
-    }
-
-    void execute(RelationalEnvironment &env) override;
-
-    /**
-     * @brief Get all join input relation names
-     */
-    HOST_VECTOR<std::string> get_input_relation_names() const {
-        HOST_VECTOR<std::string> names;
-        for (auto &col : input_columns) {
-            names.push_back(col.relation->get_name());
-        }
-        return names;
-    }
-
-    /**
-     * @brief Get all input relation name need in out
-     */
-    HOST_VECTOR<std::string> get_output_relation_names() const {
-        HOST_VECTOR<std::string> names;
-        for (auto &col : output_columns) {
-            names.push_back(col.relation->get_name());
-        }
-        // remove duplicate
-        std::sort(names.begin(), names.end());
-        names.erase(std::unique(names.begin(), names.end()), names.end());
-        return names;
-    }
-
-    /**
-     * @brief check if a relation name is used in output
-     */
-    bool is_used_in_out(const std::string &name) const {
-        for (auto &col : output_columns) {
-            if (col.relation->get_name() == name) {
-                return true;
-            }
-        }
-        return false;
-    }
+    void execute() override {}
 };
 
-/**
- * @brief Relational index operator
- * Index operator takes a relation, a version and a column index as input
- * Force rebuild the index for the column
- */
-struct RelationalIndex : public RelationalAlgebraOperator {
-    using ID_t = uint32_t;
+void column_join(multi_hisa &inner, RelationVersion inner_version,
+                 size_t inner_column_idx, multi_hisa &outer,
+                 RelationVersion outer_version, size_t outer_column_idx,
+                 device_indices_t &outer_tuple_indices,
+                 device_indices_t &matched_indices,
+                 DEVICE_VECTOR<bool> &unmatched);
+void column_join(multi_hisa &inner, RelationVersion inner_ver, size_t inner_idx,
+                 multi_hisa &outer, RelationVersion outer_ver, size_t outer_idx,
+                 host_buf_ref_t &cached_indices, std::string meta_var,
+                 std::shared_ptr<device_indices_t> matched_indices,
+                 bool pop_outer = false);
 
-    ColumnRAInfo column;
+void column_copy(multi_hisa &src, RelationVersion src_version, size_t src_idx,
+                 multi_hisa &dst, RelationVersion dst_version, size_t dst_idx,
+                 device_indices_t &indices);
+void column_copy(multi_hisa &src, RelationVersion src_ver, size_t src_idx,
+                 multi_hisa &dst, RelationVersion dst_ver, size_t dst_idx,
+                 std::shared_ptr<device_indices_t> &indices);
 
-    RelationalIndex(ID_t id, ColumnRAInfo column) : column(column) {
-        this->id = id;
-        this->type = RAOperatorType::INDEX;
-    }
-
-    void execute(RelationalEnvironment &env) override;
-};
-
-/**
- * @brief Relational project operator
- * Project operator takes a relation, a version and a column index as input
- * Project the column to the result slice
- */
-struct RelationalProject : public RelationalAlgebraOperator {
-    using ID_t = uint32_t;
-
-    ColumnRAInfo input_column;
-    ColumnRAInfo output_column;
-
-    RelationalProject(ID_t id, ColumnRAInfo in, ColumnRAInfo out) {
-        this->id = id;
-        this->type = RAOperatorType::PROJECT;
-        this->input_column = in;
-        this->output_column = out;
-    }
-
-    void execute(RelationalEnvironment &env) override;
-};
-
-} // namespace fvlog
+} // namespace vflog

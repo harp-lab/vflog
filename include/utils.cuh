@@ -2,6 +2,9 @@
 #pragma once
 
 #include <cstdint>
+#include <map>
+#include <memory>
+#include <string>
 #include <thrust/host_vector.h>
 
 #include <assert.h>
@@ -68,14 +71,12 @@ enum RelationVersion { DELTA, FULL, NEWT };
 #define DEFAULT_SET_HASH_MAP true
 #define DEFAULT_LOAD_FACTOR 0.9
 
-namespace hisa {
+namespace vflog {
 using internal_data_type = uint32_t;
 
 using offset_type = uint64_t;
 using comp_range_t = uint64_t;
 using comp_pair_t = uint64_t;
-
-using tuple_type = thrust::host_vector<internal_data_type>;
 
 using device_data_t = DEVICE_VECTOR<internal_data_type>;
 using device_indices_t = DEVICE_VECTOR<internal_data_type>;
@@ -87,10 +88,13 @@ using device_internal_data_ptr = thrust::device_ptr<internal_data_type>;
 using device_ranges_t = DEVICE_VECTOR<comp_range_t>;
 using device_pairs_t = DEVICE_VECTOR<comp_pair_t>;
 
+using host_buf_ref_t = std::map<std::string, std::shared_ptr<device_indices_t>>;
+
 using ptr_and_size_t =
     thrust::pair<thrust::pointer<internal_data_type, thrust::device_system_tag>,
                  std::ptrdiff_t>;
-using thrust_buffer_ptr_t = thrust::pointer<internal_data_type, thrust::device_system_tag>;
+using thrust_buffer_ptr_t =
+    thrust::pointer<internal_data_type, thrust::device_system_tag>;
 
 inline uint64_t __device__ __host__ compress_u32(uint32_t &a, uint32_t &b) {
     return ((uint64_t)a << 32) | b;
@@ -110,7 +114,9 @@ struct get_lower {
     }
 };
 
-} // namespace hisa
+enum IndexStrategy { EAGER, LAZY };
+
+} // namespace vflog
 
 #include <rmm/mr/device/pool_memory_resource.hpp>
 

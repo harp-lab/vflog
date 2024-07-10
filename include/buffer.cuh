@@ -4,13 +4,13 @@
 #include "../include/utils.cuh"
 #include <memory>
 
-namespace hisa {
+namespace vflog {
 
 // a Managed buffer used during
 // 1. merge
 // 2. compute index
 // managed by thrust temporary buffer
-// now its just a wrapper of rmm device vector, we need figure out a better version
+// now its just a wrapper of rmm device vector, we need figure out a better version 
 struct d_buffer {
 
     ptr_and_size_t ptr_and_size;

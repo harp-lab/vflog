@@ -1,0 +1,24 @@
+.decl edge(x:number, y:number)
+.input edge(filename="data/data_7035.txt", delimiter="\t")
+.output edge
+
+
+.decl sg(x:number, y:number)
+.printsize sg
+.output sg
+
+.decl filtered_edge(x:number, y:number)
+.printsize filtered_edge
+.output filtered_edge
+
+filtered_edge(x, y), sg_debug(x, y) :- edge(a, x), edge(a, y), x != y.
+
+.decl sg_debug(x:number, y:number)
+.printsize sg_debug
+.output sg_debug
+
+sg_debug(x, y) :- filtered_edge(a, b), edge(a, x), edge(b, y).
+
+sg(x, y) :- edge(a, x), edge(a, y), x != y.
+sg(x, y) :- edge(a, x), sg(a, b), edge(b, y).
+

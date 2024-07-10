@@ -1,10 +1,6 @@
 
 #include "hisa.cuh"
-
-#include <fstream>
 #include <iostream>
-#include <sstream>
-#include <string>
 
 #include <thrust/adjacent_difference.h>
 #include <thrust/binary_search.h>
@@ -24,40 +20,14 @@
 #include <thrust/transform.h>
 #include <thrust/unique.h>
 
-namespace hisa {
+#define CREATE_V_MAP(uniq_size)                                                \
+    std::make_unique<vflog::GpuMap>(                                           \
+        uniq_size, DEFAULT_LOAD_FACTOR,                                        \
+        cuco::empty_key<vflog::internal_data_type>{UINT32_MAX},                \
+        cuco::empty_value<vflog::offset_type>{UINT32_MAX})
+#define HASH_NAMESPACE cuco
 
-// simple map
-void GpuSimplMap::insert(device_data_t &keys, device_ranges_t &values) {
-    // swap in
-    this->keys.swap(keys);
-    this->values.swap(values);
-}
-
-void GpuSimplMap::find(device_data_t &keys, device_ranges_t &result) {
-    // keys is the input, values is the output
-    result.resize(keys.size());
-    // device_data_t found_keys(keys.size());
-
-    thrust::transform(
-        keys.begin(), keys.end(), result.begin(),
-        [map_keys = this->keys.data().get(), map_vs = this->values.data().get(),
-         ksize = this->keys.size()] __device__(internal_data_type key)
-            -> comp_range_t {
-            auto it = thrust::lower_bound(thrust::seq, map_keys,
-                                          map_keys + ksize, key);
-            return map_vs[it - map_keys];
-        });
-}
-
-// multi_hisa
-void VerticalColumnGpu::clear_unique_v() {
-    if (!unique_v_map) {
-        // delete unique_v_map;
-        unique_v_map = nullptr;
-    }
-}
-
-VerticalColumnGpu::~VerticalColumnGpu() { clear_unique_v(); }
+namespace vflog {
 
 multi_hisa::multi_hisa(int arity, d_buffer_ptr buffer) {
     this->arity = arity;
@@ -278,13 +248,17 @@ void multi_hisa::build_index(VerticalColumnGpu &column,
             thrust::make_discard_iterator(), buffer->data());
         // uniq_size = uniq_end.second - unique_offset.begin();
     } else {
-        uniq_size = thrust::unique_count(
-            DEFAULT_DEVICE_POLICY,
-            thrust::make_permutation_iterator(raw_ver_head,
-                                              column.sorted_indices.begin()),
-            thrust::make_permutation_iterator(raw_ver_head,
-                                              column.sorted_indices.end()));
-        buffer->reserve(uniq_size);
+        if (unique_gather_flag) {
+            uniq_size = thrust::unique_count(
+                DEFAULT_DEVICE_POLICY,
+                thrust::make_permutation_iterator(raw_ver_head,
+                                                column.sorted_indices.begin()),
+                thrust::make_permutation_iterator(raw_ver_head,
+                                                column.sorted_indices.end()));
+            buffer->reserve(uniq_size);
+        } else {
+            buffer->reserve(column.raw_size);
+        }
         auto uniq_end = thrust::unique_by_key_copy(
             DEFAULT_DEVICE_POLICY,
             thrust::make_permutation_iterator(raw_ver_head,
@@ -293,6 +267,9 @@ void multi_hisa::build_index(VerticalColumnGpu &column,
                                               column.sorted_indices.end()),
             thrust::make_counting_iterator<uint32_t>(0),
             thrust::make_discard_iterator(), buffer->data());
+        if (!unique_gather_flag) {
+            uniq_size = uniq_end.second - buffer->data();
+        }
     }
     auto sort_end = std::chrono::high_resolution_clock::now();
     this->sort_time += std::chrono::duration_cast<std::chrono::microseconds>(
@@ -304,7 +281,7 @@ void multi_hisa::build_index(VerticalColumnGpu &column,
     if (column.use_real_map) {
         if (column.unique_v_map) {
             // columns[i].unique_v_map->reserve(uniq_size);
-            if (column.unique_v_map->size() <= uniq_size + 1) {
+            if (column.unique_v_map->size() > uniq_size + 1) {
                 column.unique_v_map->clear();
             } else {
                 column.unique_v_map = nullptr;
@@ -373,7 +350,7 @@ void multi_hisa::build_index_all(RelationVersion version, bool sorted) {
     device_data_t unique_offset;
     for (size_t i = 0; i < arity; i++) {
         if (columns[i].index_strategy == IndexStrategy::EAGER) {
-            std::cout << "build index " << i << std::endl;
+            // std::cout << "build index " << i << std::endl;
             if (i != default_index_column) {
                 build_index(columns[i], unique_offset, sorted);
             } else {
@@ -480,85 +457,6 @@ void multi_hisa::fit() {
         data[i].resize(total_tuples);
         data[i].shrink_to_fit();
     }
-}
-
-void column_match(multi_hisa &inner, RelationVersion inner_ver,
-                  size_t inner_column_idx, multi_hisa &outer,
-                  RelationVersion outer_ver, size_t outer_column_idx,
-                  device_pairs_t &matched_pair) {
-    auto &column_inner =
-        inner.get_versioned_columns(inner_ver)[inner_column_idx];
-    auto &column_outer =
-        outer.get_versioned_columns(outer_ver)[outer_column_idx];
-    auto matched_size = matched_pair.size();
-    // check if they agree on the value
-    thrust::device_vector<bool> unmatched_flags(matched_size, true);
-    device_data_t tmp_inner(matched_size);
-    auto raw_inner = inner.data[column_inner.column_idx].data().get() +
-                     column_inner.raw_offset;
-    thrust::transform(
-        DEFAULT_DEVICE_POLICY, matched_pair.begin(), matched_pair.end(),
-        tmp_inner.begin(),
-        [raw_inner] __device__(auto &t) { return raw_inner[t & 0xFFFFFFFF]; });
-    // print tmp_inner
-    // HOST_VECTOR<internal_data_type> h_tmp_inner = tmp_inner;
-    // for (int i = 0; i < h_tmp_inner.size(); i++) {
-    //     std::cout << h_tmp_inner[i] << " ";
-    // }
-    // std::cout << std::endl;
-
-    auto raw_outer = outer.data[column_outer.column_idx].data().get() +
-                     column_outer.raw_offset;
-    thrust::transform(
-        matched_pair.begin(), matched_pair.end(), unmatched_flags.begin(),
-        [raw_outer, raw_inner] __device__(auto &t) {
-            return raw_outer[t >> 32] != raw_inner[t & 0xFFFFFFFF];
-        });
-    // filter
-    auto new_matched_pair_end = thrust::remove_if(
-        DEFAULT_DEVICE_POLICY, matched_pair.begin(), matched_pair.end(),
-        unmatched_flags.begin(), thrust::identity<bool>());
-    auto new_matched_pair_size = new_matched_pair_end - matched_pair.begin();
-    matched_pair.resize(new_matched_pair_size);
-}
-
-void column_match(multi_hisa &h1, RelationVersion ver1, size_t column1_idx,
-                  multi_hisa &h2, RelationVersion ver2, size_t column2_idx,
-                  device_indices_t &column1_indices,
-                  device_indices_t &column2_indices,
-                  DEVICE_VECTOR<bool> &unmatched) {
-    auto &column1 = h1.get_versioned_columns(ver1)[column1_idx];
-    auto &column2 = h2.get_versioned_columns(ver2)[column2_idx];
-    auto matched_size = column1_indices.size();
-    // check if they agree on the value
-    unmatched.resize(matched_size);
-
-    auto column1_raw_begin =
-        h1.data[column1.column_idx].begin() + column1.raw_offset;
-    auto column2_raw_begin =
-        h2.data[column2.column_idx].begin() + column2.raw_offset;
-    thrust::transform(
-        DEFAULT_DEVICE_POLICY,
-        thrust::make_permutation_iterator(column1_raw_begin,
-                                          column1_indices.begin()),
-        thrust::make_permutation_iterator(column1_raw_begin,
-                                          column1_indices.end()),
-        thrust::make_permutation_iterator(column2_raw_begin,
-                                          column2_indices.begin()),
-        unmatched.begin(), thrust::not_equal_to<internal_data_type>());
-    // filter
-    auto new_column1_indices_end = thrust::remove_if(
-        DEFAULT_DEVICE_POLICY, column1_indices.begin(), column1_indices.end(),
-        unmatched.begin(), thrust::identity<bool>());
-    auto new_column1_indices_size =
-        new_column1_indices_end - column1_indices.begin();
-    column1_indices.resize(new_column1_indices_size);
-    auto new_column2_indices_end = thrust::remove_if(
-        DEFAULT_DEVICE_POLICY, column2_indices.begin(), column2_indices.end(),
-        unmatched.begin(), thrust::identity<bool>());
-    auto new_column2_indices_size =
-        new_column2_indices_end - column2_indices.begin();
-    column2_indices.resize(new_column2_indices_size);
 }
 
 void merge_column0_index(multi_hisa &h) {
@@ -700,19 +598,6 @@ void multi_hisa::persist_newt() {
             uint32_t full_pos_start = static_cast<uint32_t>(range >> 32);
             uint32_t full_pos_offset =
                 static_cast<uint32_t>(range & 0xFFFFFFFF);
-
-            // // I know full is sorted by lexical order, so I can do a binary
-            // // search
-            // for (int i = 0; i < full_pos_offset; i++) {
-            //     auto full_index = all_col_full_idx_ptrs[full_pos_start + i];
-            //     bool is_duplicated = tuple_eq(all_col_fulls_ptrs, full_index,
-            //                                   all_col_news_ptrs, newt_index,
-            //                                   arity, default_index_column);
-            //     if (is_duplicated) {
-            //         printf("duplicated >>>>>>> %d\n", i);
-            //         return true;
-            //     }
-            // }
             // binary search
             int left = 0;
             int right = full_pos_offset - 1;
@@ -852,6 +737,7 @@ void multi_hisa::persist_newt() {
         newt_columns[i].raw_size = 0;
     }
     // std::cout << ">>>>>>>>>>" << std::endl;
+
     // build indices on full
     build_index_all(RelationVersion::FULL);
 
@@ -859,10 +745,10 @@ void multi_hisa::persist_newt() {
 }
 
 void multi_hisa::print_stats() {
-    std::cout << "sort time: " << sort_time << std::endl;
-    std::cout << "hash time: " << hash_time << std::endl;
-    std::cout << "dedup time: " << dedup_time << std::endl;
-    std::cout << "merge time: " << merge_time << std::endl;
+    std::cout << "sort time: " << sort_time / 1000000.0 << std::endl;
+    std::cout << "hash time: " << hash_time / 1000000.0 << std::endl;
+    std::cout << "dedup time: " << dedup_time / 1000000.0 << std::endl;
+    std::cout << "merge time: " << merge_time / 1000000.0 << std::endl;
 }
 
 void multi_hisa::clear() {
@@ -888,164 +774,4 @@ void multi_hisa::clear() {
     total_tuples = 0;
 }
 
-void column_join(multi_hisa &inner, RelationVersion inner_ver, size_t inner_idx,
-                 multi_hisa &outer, RelationVersion outer_ver, size_t outer_idx,
-                 device_indices_t &outer_tuple_indices,
-                 device_indices_t &matched_indices,
-                 DEVICE_VECTOR<bool> &unmatched) {
-    auto &inner_column = inner.get_versioned_columns(inner_ver)[inner_idx];
-    auto &outer_column = outer.get_versioned_columns(outer_ver)[outer_idx];
-    auto outer_size = outer_tuple_indices.size();
-    unmatched.resize(outer_size);
-    thrust::fill(DEFAULT_DEVICE_POLICY, unmatched.begin(), unmatched.end(),
-                 false);
-
-    device_ranges_t range_result(outer_tuple_indices.size());
-
-    auto outer_raw_begin =
-        outer.data[outer_column.column_idx].begin() + outer_column.raw_offset;
-    inner_column.unique_v_map->find(
-        thrust::make_permutation_iterator(outer_raw_begin,
-                                          outer_tuple_indices.begin()),
-        thrust::make_permutation_iterator(outer_raw_begin,
-                                          outer_tuple_indices.end()),
-        range_result.begin());
-
-    // mark the outer_tuple_indices as UINT32_MAX if corresponding range result
-    // is UINT32_MAX
-    thrust::transform(
-        DEFAULT_DEVICE_POLICY, range_result.begin(), range_result.end(),
-        outer_tuple_indices.begin(), outer_tuple_indices.begin(),
-        [] __device__(auto &range, auto &outer_tuple_index) {
-            return range == UINT32_MAX ? UINT32_MAX : outer_tuple_index;
-        });
-    // mark the unmatched as true
-    thrust::transform(DEFAULT_DEVICE_POLICY, range_result.begin(),
-                      range_result.end(), unmatched.begin(),
-                      [] __device__(auto &t) { return t == UINT32_MAX; });
-    // remove unmatched U32_MAX
-    auto new_outer_tuple_end =
-        thrust::remove(DEFAULT_DEVICE_POLICY, outer_tuple_indices.begin(),
-                       outer_tuple_indices.end(), UINT32_MAX);
-    outer_tuple_indices.resize(new_outer_tuple_end -
-                               outer_tuple_indices.begin());
-    // remove unmatched range result
-    auto new_range_end =
-        thrust::remove(DEFAULT_DEVICE_POLICY, range_result.begin(),
-                       range_result.end(), UINT32_MAX);
-    range_result.resize(new_range_end - range_result.begin());
-
-    // materialize the comp_ranges
-
-    // fecth all range size
-    device_data_t size_vec(range_result.size());
-    thrust::transform(
-        DEFAULT_DEVICE_POLICY, range_result.begin(), range_result.end(),
-        size_vec.begin(),
-        [] __device__(auto &t) { return static_cast<uint32_t>(t); });
-
-    device_ranges_t offset_vec;
-    offset_vec.swap(range_result);
-    thrust::transform(
-        DEFAULT_DEVICE_POLICY, offset_vec.begin(), offset_vec.end(),
-        offset_vec.begin(),
-        [] __device__(auto &t) { return static_cast<uint64_t>(t >> 32); });
-
-    uint32_t total_matched_size =
-        thrust::reduce(DEFAULT_DEVICE_POLICY, size_vec.begin(), size_vec.end());
-    device_data_t size_offset_tmp(outer_size);
-    thrust::exclusive_scan(DEFAULT_DEVICE_POLICY, size_vec.begin(),
-                           size_vec.end(), size_offset_tmp.begin());
-
-    // materialize the matched_indices
-    device_data_t materialized_outer(total_matched_size);
-    matched_indices.resize(total_matched_size);
-    thrust::for_each(
-        DEFAULT_DEVICE_POLICY,
-        thrust::make_zip_iterator(
-            thrust::make_tuple(outer_tuple_indices.begin(), offset_vec.begin(),
-                               size_vec.begin(), size_offset_tmp.begin())),
-        thrust::make_zip_iterator(
-            thrust::make_tuple(outer_tuple_indices.end(), offset_vec.end(),
-                               size_vec.end(), size_offset_tmp.end())),
-        [res_inner = matched_indices.data().get(),
-         res_outer = materialized_outer.data().get(),
-         inner_sorted_idx =
-             inner_column.sorted_indices.data().get()] __device__(auto &t) {
-            auto outer_pos = thrust::get<0>(t);
-            auto &inner_pos = thrust::get<1>(t);
-            auto &size = thrust::get<2>(t);
-            auto &start = thrust::get<3>(t);
-            for (int i = 0; i < size; i++) {
-                // res[start + i] =
-                //     compress_u32(outer_pos, inner_sorted_idx[inner_pos + i]);
-                res_inner[start + i] = inner_sorted_idx[inner_pos + i];
-                res_outer[start + i] = outer_pos;
-            }
-        });
-    outer_tuple_indices.swap(materialized_outer);
-}
-
-void column_copy(multi_hisa &src, RelationVersion src_ver, size_t src_idx,
-                 multi_hisa &dst, RelationVersion dst_ver, size_t dst_idx,
-                 device_indices_t &indices) {
-    // print indices
-    // gather
-    auto src_raw_begin = src.data[src_idx].begin() +
-                         src.get_versioned_columns(src_ver)[src_idx].raw_offset;
-    auto dst_raw_begin = dst.data[dst_idx].begin() +
-                         dst.get_versioned_columns(dst_ver)[dst_idx].raw_offset;
-    thrust::gather(DEFAULT_DEVICE_POLICY, indices.begin(), indices.end(),
-                   src_raw_begin, dst_raw_begin);
-    // TODO: check this
-    dst.get_versioned_columns(dst_ver)[dst_idx].raw_size = indices.size();
-}
-
-std::string trim(const std::string &str) {
-    size_t first = str.find_first_not_of(" \t\n\v\f\r");
-    if (std::string::npos == first) {
-        return str;
-    }
-    size_t last = str.find_last_not_of(" \t\n\v\f\r");
-    return str.substr(first, (last - first + 1));
-}
-
-// function read in a k-arity relation file, load into a hisa
-void read_kary_relation(const std::string &filename, hisa::multi_hisa &h,
-                        int k) {
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-        std::cerr << "Error: file not found" << std::endl;
-        return;
-    }
-
-    HOST_VECTOR<HOST_VECTOR<hisa::internal_data_type>> tuples_vertical(k);
-
-    std::string line;
-    uint32_t line_count = 0;
-    while (std::getline(file, line)) {
-        std::istringstream iss(line);
-        HOST_VECTOR<hisa::internal_data_type> tokens;
-        std::string token;
-        while (std::getline(iss, token, '\t')) {
-            // trim whitespace on the token and convert into a uint32_t
-            auto trimmed = trim(token);
-            tokens.push_back(std::stoi(trimmed));
-        }
-
-        if (tokens.size() != k) {
-            std::cerr << "Error: invalid arity" << std::endl;
-            return;
-        }
-
-        for (size_t i = 0; i < k; i++) {
-            tuples_vertical[i].push_back(tokens[i]);
-        }
-        line_count++;
-    }
-
-    h.init_load_vectical(tuples_vertical, line_count);
-    // h.deduplicate();
-}
-
-} // namespace hisa
+} // namespace vflog

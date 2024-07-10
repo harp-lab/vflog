@@ -6,10 +6,11 @@
 #include <cuda/functional>
 
 #include "buffer.cuh"
+#include "column.cuh"
 // #include "utils.cuh"
 #include <cstdint>
-#include <cuco/dynamic_map.cuh>
-#include <cuco/static_map.cuh>
+// #include <functional>
+
 #include <cuda/std/chrono>
 #include <iostream>
 #include <memory>
@@ -19,93 +20,7 @@
 #include <thrust/host_vector.h>
 #include <vector>
 
-#define CREATE_V_MAP(uniq_size)                                                \
-    std::make_unique<hisa::GpuMap>(                                            \
-        uniq_size, DEFAULT_LOAD_FACTOR,                                        \
-        cuco::empty_key<hisa::internal_data_type>{UINT32_MAX},                 \
-        cuco::empty_value<hisa::offset_type>{UINT32_MAX})
-#define HASH_NAMESPACE cuco
-
-namespace hisa {
-
-// a simple Device Map, its a wrapper of the device_vector
-struct GpuSimplMap {
-    device_data_t keys;
-    device_ranges_t values;
-
-    GpuSimplMap() = default;
-
-    // bulk insert
-    void insert(device_data_t &keys, device_ranges_t &values);
-
-    // bulk find
-    void find(device_data_t &keys, device_ranges_t &result);
-};
-
-// higher 32 bit is the value, lower is offset in data
-// using index_value = uint64_t;
-// using Map = std::unordered_map<internal_data_type, offset_type>;
-using GpuMap = cuco::static_map<internal_data_type, comp_range_t>;
-// using GpuMap = cuco::dynamic_map<internal_data_type, comp_range_t>;
-using GpuMapPair = cuco::pair<internal_data_type, comp_range_t>;
-
-// using GpuMap = bght::bcht<internal_data_type, comp_range_t>;
-// using GpuMapPair = bght::pair<internal_data_type, comp_range_t>;
-
-enum IndexStrategy { EAGER, LAZY };
-
-// CSR stype column entryunique values aray in the column, sharing the same
-// prefix
-struct VerticalColumnGpu {
-
-    // FIXME: remove this, this is redundant
-    // all unique values in the column, sharing the same prefix
-    device_data_t unique_v;
-    // a mapping from the unique value to the range of tuple share the same
-    // value in the next column
-    std::shared_ptr<GpuMap> unique_v_map = nullptr;
-    // std::unique_ptr<GpuMap> unique_v_map = nullptr;
-
-    GpuSimplMap unique_v_map_simp;
-
-    device_data_t sorted_indices;
-    // thrust::device_vector<internal_data_type> raw_data;
-    // device_internal_data_ptr raw_data = nullptr;
-    size_t raw_offset = 0;
-
-    VerticalColumnGpu() = default;
-
-    size_t size() const { return raw_size; }
-
-    bool indexed = false;
-
-    size_t raw_size = 0;
-
-    size_t column_idx = 0;
-
-    IndexStrategy index_strategy = IndexStrategy::EAGER;
-
-    bool use_real_map = DEFAULT_SET_HASH_MAP;
-
-    void clear_unique_v();
-
-    ~VerticalColumnGpu();
-};
-
-// a vertical column in CPU memory
-struct VetricalColumnCpu {
-    HOST_VECTOR<internal_data_type> full_sorted_indices;
-    HOST_VECTOR<internal_data_type> delta_sorted_indices;
-    HOST_VECTOR<internal_data_type> newt_sorted_indices;
-    uint32_t full_size = 0;
-    uint32_t delta_size = 0;
-    uint32_t newt_size = 0;
-    HOST_VECTOR<internal_data_type> raw_data;
-
-    size_t full_head_offset = 0;
-    size_t delta_head_offset = 0;
-    size_t newt_head_offset = 0;
-};
+namespace vflog {
 
 struct multi_hisa {
     int arity;
@@ -129,6 +44,7 @@ struct multi_hisa {
     uint64_t merge_time = 0;
 
     bool indexed = false;
+    bool unique_gather_flag = false;
 
     uint32_t full_size = 0;
     uint32_t delta_size = 0;
@@ -190,6 +106,12 @@ struct multi_hisa {
 
     void allocate_newt(size_t size);
 
+    internal_data_type *get_raw_data_ptrs(RelationVersion version,
+                                          int column_idx) {
+        return data[version].data().get() +
+               get_versioned_columns(version)[column_idx].raw_offset;
+    }
+
     // get reference to the different version of columns
     VersionedColumns &get_versioned_columns(RelationVersion version) {
         switch (version) {
@@ -236,34 +158,23 @@ struct multi_hisa {
 
     void set_default_index_column(int column_idx) {
         default_index_column = column_idx;
+        // set FULL of default index column to EAGER
+        set_index_startegy(column_idx, FULL, EAGER);
     }
 
     void print_stats();
 };
 
-// filter the matched_pairs (id_1, id2) with respect to column2,
-// only keep the matched pair
-void column_match(multi_hisa &h1, RelationVersion ver1, size_t column1_idx,
-                  multi_hisa &h2, RelationVersion ver2, size_t column2_idx,
-                  device_pairs_t &matched_pair);
-void column_match(multi_hisa &h1, RelationVersion ver1, size_t column1_idx,
-                  multi_hisa &h2, RelationVersion ver2, size_t column2_idx,
-                  device_indices_t &column1_indices,
-                  device_indices_t &column2_indices,
-                  DEVICE_VECTOR<bool> &unmatched);
+struct column_ref {
+    std::reference_wrapper<multi_hisa> relation;
+    RelationVersion version;
+    size_t index;
 
-void column_join(multi_hisa &inner, RelationVersion inner_version,
-                 size_t inner_column_idx, multi_hisa &outer,
-                 RelationVersion outer_version, size_t outer_column_idx,
-                 device_indices_t &outer_tuple_indices,
-                 device_indices_t &matched_indices,
-                 DEVICE_VECTOR<bool> &unmatched);
+    // std::reference_wrapper<device_bitmap_t> selected;
 
-void column_copy(multi_hisa &src, RelationVersion src_version, size_t src_idx,
-                 multi_hisa &dst, RelationVersion dst_version, size_t dst_idx,
-                 device_indices_t &indices);
+    column_ref(multi_hisa &rel, RelationVersion ver, size_t idx)
+        : relation(rel), version(ver), index(idx){
+    }
+};
 
-void read_kary_relation(const std::string &filename, hisa::multi_hisa &h,
-                        int k);
-
-} // namespace hisa
+} // namespace vflog

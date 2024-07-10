@@ -1,4 +1,4 @@
-# fvlog
+# vflog
 vertical + gpu + free join + datalog
 
 # Dependency
