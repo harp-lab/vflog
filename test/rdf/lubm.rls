@@ -1,0 +1,135 @@
+%%% Imports
+
+@import src_advisor :- csv { resource = "data/01k/src_advisor.csv.gz" } .
+@import src_AssistantProfessor :- csv { resource = "data/01k/src_AssistantProfessor.csv.gz" } .
+@import src_AssociateProfessor :- csv { resource = "data/01k/src_AssociateProfessor.csv.gz" } .
+@import src_Course :- csv { resource = "data/01k/src_Course.csv.gz" } .
+@import src_Department :- csv { resource = "data/01k/src_Department.csv.gz" } .
+@import src_doctoralDegreeFrom :- csv { resource = "data/01k/src_doctoralDegreeFrom.csv.gz" } .
+@import src_emailAddress :- csv { resource = "data/01k/src_emailAddress.csv.gz" } .
+@import src_FullProfessor :- csv { resource = "data/01k/src_FullProfessor.csv.gz" } .
+@import src_GraduateCourse :- csv { resource = "data/01k/src_GraduateCourse.csv.gz" } .
+@import src_GraduateStudent :- csv { resource = "data/01k/src_GraduateStudent.csv.gz" } .
+@import src_headOf :- csv { resource = "data/01k/src_headOf.csv.gz" } .
+@import src_Lecturer :- csv { resource = "data/01k/src_Lecturer.csv.gz" } .
+@import src_mastersDegreeFrom :- csv { resource = "data/01k/src_mastersDegreeFrom.csv.gz" } .
+@import src_memberOf :- csv { resource = "data/01k/src_memberOf.csv.gz" } .
+@import src_name :- csv { resource = "data/01k/src_name.csv.gz" } .
+@import src_Publication :- csv { resource = "data/01k/src_Publication.csv.gz" } .
+@import src_publicationAuthor :- csv { resource = "data/01k/src_publicationAuthor.csv.gz" } .
+@import src_ResearchAssistant :- csv { resource = "data/01k/src_ResearchAssistant.csv.gz" } .
+@import src_ResearchGroup :- csv { resource = "data/01k/src_ResearchGroup.csv.gz" } .
+@import src_researchInterest :- csv { resource = "data/01k/src_researchInterest.csv.gz" } .
+@import src_subOrganizationOf :- csv { resource = "data/01k/src_subOrganizationOf.csv.gz" } .
+@import src_takesCourse :- csv { resource = "data/01k/src_takesCourse.csv.gz" } .
+@import src_teacherOf :- csv { resource = "data/01k/src_teacherOf.csv.gz" } .
+@import src_TeachingAssistant :- csv { resource = "data/01k/src_TeachingAssistant.csv.gz" } .
+@import src_teachingAssistantOf :- csv { resource = "data/01k/src_teachingAssistantOf.csv.gz" } .
+@import src_telephone :- csv { resource = "data/01k/src_telephone.csv.gz" } .
+@import src_undergraduateDegreeFrom :- csv { resource = "data/01k/src_undergraduateDegreeFrom.csv.gz" } .
+@import src_UndergraduateStudent :- csv { resource = "data/01k/src_UndergraduateStudent.csv.gz" } .
+@import src_University :- csv { resource = "data/01k/src_University.csv.gz" } .
+@import src_worksFor :- csv { resource = "data/01k/src_worksFor.csv.gz" } .
+
+%%% st-tgds
+
+advisor(?X, ?Y) :- src_advisor(?X, ?Y) .
+AssistantProfessor(?X) :- src_AssistantProfessor(?X) .
+AssociateProfessor(?X) :- src_AssociateProfessor(?X) .
+Course(?X) :- src_Course(?X) .
+Department(?X) :- src_Department(?X) .
+doctoralDegreeFrom(?X, ?Y) :- src_doctoralDegreeFrom(?X, ?Y) .
+emailAddress(?X, ?Y) :- src_emailAddress(?X, ?Y) .
+FullProfessor(?X) :- src_FullProfessor(?X) .
+GraduateCourse(?X) :- src_GraduateCourse(?X) .
+GraduateStudent(?X) :- src_GraduateStudent(?X) .
+headOf(?X, ?Y) :- src_headOf(?X, ?Y) .
+Lecturer(?X) :- src_Lecturer(?X) .
+mastersDegreeFrom(?X, ?Y) :- src_mastersDegreeFrom(?X, ?Y) .
+memberOf(?X, ?Y) :- src_memberOf(?X, ?Y) .
+name(?X, ?Y) :- src_name(?X, ?Y) .
+Publication(?X) :- src_Publication(?X) .
+publicationAuthor(?X, ?Y) :- src_publicationAuthor(?X, ?Y) .
+ResearchAssistant(?X) :- src_ResearchAssistant(?X) .
+ResearchGroup(?X) :- src_ResearchGroup(?X) .
+researchInterest(?X, ?Y) :- src_researchInterest(?X, ?Y) .
+subOrganizationOf(?X, ?Y) :- src_subOrganizationOf(?X, ?Y) .
+takesCourse(?X, ?Y) :- src_takesCourse(?X, ?Y) .
+teacherOf(?X, ?Y) :- src_teacherOf(?X, ?Y) .
+TeachingAssistant(?X) :- src_TeachingAssistant(?X) .
+teachingAssistantOf(?X, ?Y) :- src_teachingAssistantOf(?X, ?Y) .
+telephone(?X, ?Y) :- src_telephone(?X, ?Y) .
+undergraduateDegreeFrom(?X, ?Y) :- src_undergraduateDegreeFrom(?X, ?Y) .
+UndergraduateStudent(?X) :- src_UndergraduateStudent(?X) .
+University(?X) :- src_University(?X) .
+worksFor(?X, ?Y) :- src_worksFor(?X, ?Y) .
+
+%%% t-tgds
+
+Person(?X) :- advisor(?X, ?X1) .
+Professor(?X1) :- advisor(?X, ?X1) .
+Professor(?X) :- AssistantProfessor(?X) .
+Professor(?X) :- AssociateProfessor(?X) .
+headOf(?X, !Y), Department(!Y) :- Chair(?X) .
+Person(?X) :- Chair(?X) .
+Professor(?X) :- Chair(?X) .
+Work(?X) :- Course(?X) .
+Person(?X) :- degreeFrom(?X, ?X1) .
+University(?X1) :- degreeFrom(?X, ?X1) .
+hasAlumnus(?X, ?Y) :- degreeFrom(?Y, ?X) .
+Organization(?X) :- Department(?X) .
+headOf(?X, !Y), Program(!Y) :- Director(?X) .
+Person(?X) :- Director(?X) .
+Person(?X) :- doctoralDegreeFrom(?X, ?X1) .
+University(?X1) :- doctoralDegreeFrom(?X, ?X1) .
+degreeFrom(?X, ?Y) :- doctoralDegreeFrom(?X, ?Y) .
+Person(?X) :- emailAddress(?X, ?X1) .
+Person(?X) :- Employee(?X) .
+worksFor(?X, !Y), Organization(!Y) :- Employee(?X) .
+Employee(?X) :- Faculty(?X) .
+Professor(?X) :- FullProfessor(?X) .
+Course(?X) :- GraduateCourse(?X) .
+Person(?X) :- GraduateStudent(?X) .
+takesCourse(?X, !Y), GraduateCourse(!Y) :- GraduateStudent(?X) .
+Person(?X1) :- hasAlumnus(?X, ?X1) .
+University(?X) :- hasAlumnus(?X, ?X1) .
+degreeFrom(?X, ?Y) :- hasAlumnus(?Y, ?X) .
+worksFor(?X, ?Y) :- headOf(?X, ?Y) .
+Faculty(?X) :- Lecturer(?X) .
+Person(?X) :- mastersDegreeFrom(?X, ?X1) .
+University(?X1) :- mastersDegreeFrom(?X, ?X1) .
+degreeFrom(?X, ?Y) :- mastersDegreeFrom(?X, ?Y) .
+Organization(?X) :- member(?X, ?X1) .
+Person(?X1) :- member(?X, ?X1) .
+memberOf(?X, ?Y) :- member(?Y, ?X) .
+member(?X, ?Y) :- memberOf(?Y, ?X) .
+Chair(?X) :- Person(?X), headOf(?X, ?X1), Department(?X1) .
+Director(?X) :- Person(?X), headOf(?X, ?X1), Program(?X1) .
+Student(?X) :- Person(?X), takesCourse(?X, ?X1), Course(?X1) .
+TeachingAssistant(?X) :- Person(?X), teachingAssistantOf(?X, ?X1), Course(?X1) .
+Employee(?X) :- Person(?X), worksFor(?X, ?X1), Organization(?X1) .
+Faculty(?X) :- Professor(?X) .
+Organization(?X) :- Program(?X) .
+Person(?X1) :- publicationAuthor(?X, ?X1) .
+Publication(?X) :- publicationAuthor(?X, ?X1) .
+Person(?X) :- ResearchAssistant(?X) .
+worksFor(?X, !Y), ResearchGroup(!Y) :- ResearchAssistant(?X) .
+Organization(?X) :- ResearchGroup(?X) .
+Person(?X) :- Student(?X) .
+takesCourse(?X, !Y), Course(!Y) :- Student(?X) .
+Organization(?X) :- subOrganizationOf(?X, ?X1) .
+Organization(?X1) :- subOrganizationOf(?X, ?X1) .
+subOrganizationOf(?X, ?Z) :- subOrganizationOf(?X, ?Y), subOrganizationOf(?Y, ?Z) .
+Course(?X1) :- teacherOf(?X, ?X1) .
+Faculty(?X) :- teacherOf(?X, ?X1) .
+Person(?X) :- TeachingAssistant(?X) .
+teachingAssistantOf(?X, !Y), Course(!Y) :- TeachingAssistant(?X) .
+Course(?X1) :- teachingAssistantOf(?X, ?X1) .
+TeachingAssistant(?X) :- teachingAssistantOf(?X, ?X1) .
+Person(?X) :- telephone(?X, ?X1) .
+Person(?X) :- undergraduateDegreeFrom(?X, ?X1) .
+University(?X1) :- undergraduateDegreeFrom(?X, ?X1) .
+degreeFrom(?X, ?Y) :- undergraduateDegreeFrom(?X, ?Y) .
+Student(?X) :- UndergraduateStudent(?X) .
+Organization(?X) :- University(?X) .
+memberOf(?X, ?Y) :- worksFor(?X, ?Y) .

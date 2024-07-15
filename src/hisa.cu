@@ -29,7 +29,7 @@
 
 namespace vflog {
 
-multi_hisa::multi_hisa(int arity, d_buffer_ptr buffer) {
+multi_hisa::multi_hisa(int arity, d_buffer_ptr buffer, size_t default_idx) {
     this->arity = arity;
     newt_size = 0;
     full_size = 0;
@@ -49,6 +49,7 @@ multi_hisa::multi_hisa(int arity, d_buffer_ptr buffer) {
         delta_columns[i].column_idx = i;
         newt_columns[i].column_idx = i;
     }
+    set_default_index_column(default_idx);
 }
 
 void multi_hisa::init_load_vectical(
@@ -80,7 +81,7 @@ void multi_hisa::allocate_newt(size_t size) {
     auto old_size = capacity;
     if (total_tuples + size < capacity) {
         // std::cout << "no need to allocate newt" << std::endl;
-        // return;
+        // return;  
         size = 0;
     }
     // compute offset of each version
@@ -251,10 +252,10 @@ void multi_hisa::build_index(VerticalColumnGpu &column,
         if (unique_gather_flag) {
             uniq_size = thrust::unique_count(
                 DEFAULT_DEVICE_POLICY,
+                thrust::make_permutation_iterator(
+                    raw_ver_head, column.sorted_indices.begin()),
                 thrust::make_permutation_iterator(raw_ver_head,
-                                                column.sorted_indices.begin()),
-                thrust::make_permutation_iterator(raw_ver_head,
-                                                column.sorted_indices.end()));
+                                                  column.sorted_indices.end()));
             buffer->reserve(uniq_size);
         } else {
             buffer->reserve(column.raw_size);
@@ -346,6 +347,9 @@ void multi_hisa::force_column_index(RelationVersion version, int i,
 void multi_hisa::build_index_all(RelationVersion version, bool sorted) {
     auto &columns = get_versioned_columns(version);
     auto version_size = get_versioned_size(version);
+    if (version_size == 0) {
+        return;
+    }
 
     device_data_t unique_offset;
     for (size_t i = 0; i < arity; i++) {
@@ -370,7 +374,7 @@ void multi_hisa::deduplicate() {
     auto version_size = newt_size;
     // radix sort the raw data of each column
     device_data_t sorted_indices(version_size);
-    std::cout << "deduplicate newt size: " << version_size << std::endl;
+    // std::cout << "deduplicate newt size: " << version_size << std::endl;
     thrust::sequence(DEFAULT_DEVICE_POLICY, sorted_indices.begin(),
                      sorted_indices.end());
     // device_data_t tmp_raw(version_size);
@@ -467,8 +471,13 @@ void merge_column0_index(multi_hisa &h) {
     for (int i = 0; i < h.arity; i++) {
         all_col_ptrs[i] = h.data[i].data().get();
     }
-
     device_indices_t merged_idx(h.full_size + h.newt_size);
+    // std::cout << "merge column0 index " << merged_idx.size() << " "
+    //           << h.full_size << " "
+    //           << full_column0.sorted_indices.size() << " "
+    //           << h.newt_size << " "
+    //           << h.data[0].size() << " "
+    //           << h.data[1].size() << std::endl;
     thrust::merge(
         DEFAULT_DEVICE_POLICY, full_column0.sorted_indices.begin(),
         full_column0.sorted_indices.end(),
@@ -542,22 +551,33 @@ void multi_hisa::persist_newt() {
         delta_columns[i].unique_v.resize(0);
         delta_columns[i].unique_v.shrink_to_fit();
         delta_columns[i].clear_unique_v();
-        delta_columns[i].unique_v_map = nullptr;
+        if (delta_columns[i].unique_v_map) {
+            delta_columns[i].unique_v_map->clear();
+        }
         delta_columns[i].raw_offset = full_size;
         delta_columns[i].raw_size = 0;
+    }
+    delta_size = 0;
+
+    if (newt_size == 0) {
+        return;
     }
     // merge newt to full
     if (full_size == 0) {
         full_size = newt_size;
+        delta_size = newt_size;
         // thrust::swap(newt_columns, full_columns);
         for (int i = 0; i < arity; i++) {
             full_columns[i].raw_size = newt_columns[i].raw_size;
             full_columns[i].sorted_indices.swap(newt_columns[i].sorted_indices);
+            delta_columns[i].raw_size = newt_columns[i].raw_size;
+            delta_columns[i].raw_offset = 0;
             newt_columns[i].raw_size = 0;
             newt_columns[i].raw_offset = full_size;
         }
         build_index_all(RelationVersion::FULL);
-        // TODO: need some way to also set the delta index
+        build_index_all(RelationVersion::DELTA);
+        newt_size = 0;
         return;
     }
 
@@ -621,7 +641,7 @@ void multi_hisa::persist_newt() {
         });
     auto dup_size = thrust::count(DEFAULT_DEVICE_POLICY, dup_newt_flags.begin(),
                                   dup_newt_flags.end(), true);
-    std::cout << "dup size: " << dup_size << std::endl;
+    // std::cout << "dup size: " << dup_size << std::endl;
     auto after_dedup = std::chrono::high_resolution_clock::now();
     dedup_time += std::chrono::duration_cast<std::chrono::microseconds>(
                       after_dedup - before_dedup)
@@ -658,6 +678,7 @@ void multi_hisa::persist_newt() {
     // device_data_t tmp_full_v(full_size+newt_size);
     // merge column 0, this is different then the other columns
     merge_column0_index(*this);
+    // std::cout << "merge column 0 done" << std::endl;
     for (size_t i = 0; i < arity; i++) {
         if (i == default_index_column) {
             continue;
@@ -771,6 +792,9 @@ void multi_hisa::clear() {
         data[i].resize(0);
         data[i].shrink_to_fit();
     }
+    newt_size = 0;
+    full_size = 0;
+    delta_size = 0;
     total_tuples = 0;
 }
 

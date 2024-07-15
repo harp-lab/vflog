@@ -14,6 +14,10 @@ void column_join(multi_hisa &inner, RelationVersion inner_ver, size_t inner_idx,
                  device_indices_t &outer_tuple_indices,
                  device_indices_t &matched_indices,
                  DEVICE_VECTOR<bool> &unmatched_outer) {
+    if (outer_tuple_indices.size() == 0) {
+        return;
+    }
+
     auto &inner_column = inner.get_versioned_columns(inner_ver)[inner_idx];
     auto &outer_column = outer.get_versioned_columns(outer_ver)[outer_idx];
     auto outer_size = outer_tuple_indices.size();
@@ -187,10 +191,21 @@ void column_join(multi_hisa &inner, RelationVersion inner_ver, size_t inner_idx,
                  std::shared_ptr<device_indices_t> matched_indices,
                  bool pop_outer) {
     auto &outer_tuple_indices = cached_indices[meta_var];
+    if (outer_tuple_indices->size() == 0) {
+        // clear all other in cache
+        for (auto &meta : cached_indices) {
+            meta.second->resize(0);
+        }
+        matched_indices->resize(0);
+        return;
+    }
     device_ranges_t matched_ranges(outer_tuple_indices->size());
     // gather the outer values
     auto &outer_column = outer.get_versioned_columns(outer_ver)[outer_idx];
     auto &inner_column = inner.get_versioned_columns(inner_ver)[inner_idx];
+    if (inner.get_versioned_size(inner_ver) == 0) {
+        return;
+    }
     auto outer_raw_begin =
         outer.data[outer_idx].begin() + outer_column.raw_offset;
     inner_column.unique_v_map->find(
@@ -203,7 +218,6 @@ void column_join(multi_hisa &inner, RelationVersion inner_ver, size_t inner_idx,
     //     outer_tuple_indices->clear();
     //     outer_tuple_indices->shrink_to_fit();
     // }
-
     // clear the unmatched tuples
     for (auto &meta : cached_indices) {
         auto &outer_ts = meta.second;
@@ -324,36 +338,6 @@ void column_join(multi_hisa &inner, RelationVersion inner_ver, size_t inner_idx,
     if (pop_outer) {
         cached_indices.erase(meta_var);
     }
-}
-
-void column_copy(multi_hisa &src, RelationVersion src_ver, size_t src_idx,
-                 multi_hisa &dst, RelationVersion dst_ver, size_t dst_idx,
-                 device_indices_t &indices) {
-    // print indices
-    // gather
-    auto src_raw_begin = src.data[src_idx].begin() +
-                         src.get_versioned_columns(src_ver)[src_idx].raw_offset;
-    auto dst_raw_begin = dst.data[dst_idx].begin() +
-                         dst.get_versioned_columns(dst_ver)[dst_idx].raw_offset;
-    thrust::gather(DEFAULT_DEVICE_POLICY, indices.begin(), indices.end(),
-                   src_raw_begin, dst_raw_begin);
-    // TODO: check this
-    dst.get_versioned_columns(dst_ver)[dst_idx].raw_size = indices.size();
-}
-
-void column_copy(multi_hisa &src, RelationVersion src_ver, size_t src_idx,
-                 multi_hisa &dst, RelationVersion dst_ver, size_t dst_idx,
-                 std::shared_ptr<device_indices_t> &indices) {
-    // print indices
-    // gather
-    auto src_raw_begin = src.data[src_idx].begin() +
-                         src.get_versioned_columns(src_ver)[src_idx].raw_offset;
-    auto dst_raw_begin = dst.data[dst_idx].begin() +
-                         dst.get_versioned_columns(dst_ver)[dst_idx].raw_offset;
-    thrust::gather(DEFAULT_DEVICE_POLICY, indices->begin(), indices->end(),
-                   src_raw_begin, dst_raw_begin);
-    // TODO: check this
-    dst.get_versioned_columns(dst_ver)[dst_idx].raw_size = indices->size();
 }
 
 } // namespace vflog

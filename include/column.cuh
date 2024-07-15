@@ -61,7 +61,7 @@ struct VerticalColumnGpu {
 
     size_t column_idx = 0;
 
-    IndexStrategy index_strategy = IndexStrategy::EAGER;
+    IndexStrategy index_strategy = IndexStrategy::LAZY;
 
     bool use_real_map = DEFAULT_SET_HASH_MAP;
 

@@ -27,6 +27,8 @@ void tc_barebone(char *data_path) {
     edge.set_index_startegy(1, FULL, vflog::IndexStrategy::LAZY);
     vflog::read_kary_relation(data_path, edge, 2);
     edge.deduplicate();
+    std::cout << "Edge newt size: " << edge.get_versioned_size(NEWT)
+              << std::endl;
     edge.persist_newt();
     std::cout << "Edge full size: " << edge.get_versioned_size(FULL)
               << std::endl;
@@ -69,10 +71,10 @@ void tc_barebone(char *data_path) {
     while (true) {
         std::cout << "Iteration " << iteration << std::endl;
         RelationVersion path_version = DELTA;
-        if (iteration == 0) {
-            // in first iter, use full as delta
-            path_version = FULL;
-        }
+        // if (iteration == 0) {
+        //     // in first iter, use full as delta
+        //     path_version = FULL;
+        // }
 
         // join edge's delta with path's full
         // path(a, c) :- path(a, b), edge(b, c).

@@ -23,6 +23,8 @@
 namespace vflog {
 
 struct multi_hisa {
+    size_t uid = 0;
+
     int arity;
 
     using VersionedColumns = HOST_VECTOR<VerticalColumnGpu>;
@@ -34,7 +36,7 @@ struct multi_hisa {
 
     offset_type capacity = 0;
 
-    multi_hisa(int arity, d_buffer_ptr buf = nullptr);
+    multi_hisa(int arity, d_buffer_ptr buf = nullptr, size_t default_idx = 0);
 
     // HOST_VECTOR<int> indexed_columns;
     uint64_t hash_time = 0;
@@ -173,8 +175,7 @@ struct column_ref {
     // std::reference_wrapper<device_bitmap_t> selected;
 
     column_ref(multi_hisa &rel, RelationVersion ver, size_t idx)
-        : relation(rel), version(ver), index(idx){
-    }
+        : relation(rel), version(ver), index(idx) {}
 };
 
 } // namespace vflog

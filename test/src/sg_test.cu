@@ -94,10 +94,6 @@ void sg_barebone(char *data_path) {
     while (true) {
         std::cout << "Iteration " << iteration << std::endl;
         RelationVersion sg_version = DELTA;
-        if (iteration == 0) {
-            // in first iter, use full as delta
-            sg_version = FULL;
-        }
 
         // sg(x, y) :-  sg(a, b), edge(a, x), edge(b, y).
         timer2.start_timer();

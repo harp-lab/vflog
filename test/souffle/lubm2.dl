@@ -1,0 +1,223 @@
+
+.decl src_advisor(x: symbol, y: symbol)
+.input src_advisor(filename="src_advisor.csv", delimiter=",")
+.decl src_AssistantProfessor(x: symbol)
+.input src_AssistantProfessor(filename="src_AssistantProfessor.csv", delimiter=",")
+.decl src_AssociateProfessor(x: symbol)
+.input src_AssociateProfessor(filename="src_AssociateProfessor.csv", delimiter=",")
+.decl src_Course(x: symbol)
+.input src_Course(filename="src_Course.csv", delimiter=",")
+.decl src_Department(x: symbol)
+.input src_Department(filename="src_Department.csv", delimiter=",")
+.decl src_doctoralDegreeFrom(x: symbol, y: symbol)
+.input src_doctoralDegreeFrom(filename="src_doctoralDegreeFrom.csv", delimiter=",")
+.decl src_emailAddress(x: symbol, y: symbol)
+.input src_emailAddress(filename="src_emailAddress.csv", delimiter=",")
+.decl src_FullProfessor(x: symbol)
+.input src_FullProfessor(filename="src_FullProfessor.csv", delimiter=",")
+.decl src_GraduateCourse(x: symbol)
+.input src_GraduateCourse(filename="src_GraduateCourse.csv", delimiter=",")
+.decl src_GraduateStudent(x: symbol)
+.input src_GraduateStudent(filename="src_GraduateStudent.csv", delimiter=",")
+.decl src_headOf(x: symbol, y: symbol)
+.input src_headOf(filename="src_headOf.csv", delimiter=",")
+.decl src_Lecturer(x: symbol)
+.input src_Lecturer(filename="src_Lecturer.csv", delimiter=",")
+.decl src_mastersDegreeFrom(x: symbol, y: symbol)
+.input src_mastersDegreeFrom(filename="src_mastersDegreeFrom.csv", delimiter=",")
+.decl src_memberOf(x: symbol, y: symbol)
+.input src_memberOf(filename="src_memberOf.csv", delimiter=",")
+.decl src_name(x: symbol, y: symbol)
+.input src_name(filename="src_name.csv", delimiter=",")
+.decl src_Publication(x: symbol)
+.input src_Publication(filename="src_Publication.csv", delimiter=",")
+.decl src_publicationAuthor(x: symbol, y: symbol)
+.input src_publicationAuthor(filename="src_publicationAuthor.csv", delimiter=",")
+.decl src_ResearchAssistant(x: symbol)
+.input src_ResearchAssistant(filename="src_ResearchAssistant.csv", delimiter=",")
+.decl src_ResearchGroup(x: symbol)
+.input src_ResearchGroup(filename="src_ResearchGroup.csv", delimiter=",")
+.decl src_researchInterest(x: symbol, y: symbol)
+.input src_researchInterest(filename="src_researchInterest.csv", delimiter=",")
+.decl src_subOrganizationOf(x: symbol, y: symbol)
+.input src_subOrganizationOf(filename="src_subOrganizationOf.csv", delimiter=",")
+.decl src_takesCourse(x: symbol, y: symbol)
+.input src_takesCourse(filename="src_takesCourse.csv", delimiter=",")
+.decl src_teacherOf(x: symbol, y: symbol)
+.input src_teacherOf(filename="src_teacherOf.csv", delimiter=",")
+.decl src_TeachingAssistant(x: symbol)
+.input src_TeachingAssistant(filename="src_TeachingAssistant.csv", delimiter=",")
+.decl src_teachingAssistantOf(x: symbol, y: symbol)
+.input src_teachingAssistantOf(filename="src_teachingAssistantOf.csv", delimiter=",")
+.decl src_telephone(x: symbol, y: symbol)
+.input src_telephone(filename="src_telephone.csv", delimiter=",")
+.decl src_undergraduateDegreeFrom(x: symbol, y: symbol)
+.input src_undergraduateDegreeFrom(filename="src_undergraduateDegreeFrom.csv", delimiter=",")
+.decl src_UndergraduateStudent(x: symbol)
+.input src_UndergraduateStudent(filename="src_UndergraduateStudent.csv", delimiter=",")
+.decl src_University(x: symbol)
+.input src_University(filename="src_University.csv", delimiter=",")
+.decl src_worksFor(x: symbol, y: symbol)
+.input src_worksFor(filename="src_worksFor.csv", delimiter=",")
+
+
+.decl advisor(x: symbol, y: symbol)
+.decl AssistantProfessor(x: symbol)
+.decl AssociateProfessor(x: symbol)
+.decl Course(x: symbol)
+.decl Department(x: symbol)
+.decl doctoralDegreeFrom(x: symbol, y: symbol)
+.decl emailAddress(x: symbol, y: symbol)
+.decl FullProfessor(x: symbol)
+.decl GraduateCourse(x: symbol)
+.decl GraduateStudent(x: symbol)
+.decl headOf(x: symbol, y: symbol)
+.decl Lecturer(x: symbol)
+.decl mastersDegreeFrom(x: symbol, y: symbol)
+.decl memberOf(x: symbol, y: symbol)
+.decl name(x: symbol, y: symbol)
+.decl Publication(x: symbol)
+.decl publicationAuthor(x: symbol, y: symbol)
+.decl ResearchAssistant(x: symbol)
+.decl ResearchGroup(x: symbol)
+.decl researchInterest(x: symbol, y: symbol)
+.decl subOrganizationOf(x: symbol, y: symbol)
+.decl takesCourse(x: symbol, y: symbol)
+.decl teacherOf(x: symbol, y: symbol)
+.decl TeachingAssistant(x: symbol)
+.decl teachingAssistantOf(x: symbol, y: symbol)
+.decl telephone(x: symbol, y: symbol)
+.decl undergraduateDegreeFrom(x: symbol, y: symbol)
+.decl UndergraduateStudent(x: symbol)
+.decl University(x: symbol)
+.decl worksFor(x: symbol, y: symbol)
+
+
+advisor(?X, ?Y) :- src_advisor(?X, ?Y) .
+AssistantProfessor(?X) :- src_AssistantProfessor(?X) .
+AssociateProfessor(?X) :- src_AssociateProfessor(?X) .
+Course(?X) :- src_Course(?X) .
+Department(?X) :- src_Department(?X) .
+doctoralDegreeFrom(?X, ?Y) :- src_doctoralDegreeFrom(?X, ?Y) .
+emailAddress(?X, ?Y) :- src_emailAddress(?X, ?Y) .
+FullProfessor(?X) :- src_FullProfessor(?X) .
+GraduateCourse(?X) :- src_GraduateCourse(?X) .
+GraduateStudent(?X) :- src_GraduateStudent(?X) .
+headOf(?X, ?Y) :- src_headOf(?X, ?Y) .
+Lecturer(?X) :- src_Lecturer(?X) .
+mastersDegreeFrom(?X, ?Y) :- src_mastersDegreeFrom(?X, ?Y) .
+memberOf(?X, ?Y) :- src_memberOf(?X, ?Y) .
+name(?X, ?Y) :- src_name(?X, ?Y) .
+Publication(?X) :- src_Publication(?X) .
+publicationAuthor(?X, ?Y) :- src_publicationAuthor(?X, ?Y) .
+ResearchAssistant(?X) :- src_ResearchAssistant(?X) .
+ResearchGroup(?X) :- src_ResearchGroup(?X) .
+researchInterest(?X, ?Y) :- src_researchInterest(?X, ?Y) .
+subOrganizationOf(?X, ?Y) :- src_subOrganizationOf(?X, ?Y) .
+takesCourse(?X, ?Y) :- src_takesCourse(?X, ?Y) .
+teacherOf(?X, ?Y) :- src_teacherOf(?X, ?Y) .
+TeachingAssistant(?X) :- src_TeachingAssistant(?X) .
+teachingAssistantOf(?X, ?Y) :- src_teachingAssistantOf(?X, ?Y) .
+telephone(?X, ?Y) :- src_telephone(?X, ?Y) .
+undergraduateDegreeFrom(?X, ?Y) :- src_undergraduateDegreeFrom(?X, ?Y) .
+UndergraduateStudent(?X) :- src_UndergraduateStudent(?X) .
+University(?X) :- src_University(?X) .
+worksFor(?X, ?Y) :- src_worksFor(?X, ?Y) .
+
+.decl Person(x: symbol)
+.decl Professor(x: symbol)
+.decl Work(x: symbol)
+.decl Organization(x: symbol)
+.decl degreeFrom(x: symbol, y: symbol)
+.decl hasAlumnus(x: symbol, y: symbol)
+.decl member(x: symbol, y: symbol)
+.decl Faculty(x: symbol)
+.decl Student(x: symbol)
+.decl Director(x: symbol)
+.decl Chair(x: symbol)
+.decl Program(x: symbol)
+.decl Employee(x: symbol)
+
+.printsize Person
+.printsize Professor
+.printsize Work
+.printsize Organization
+.printsize degreeFrom
+.printsize hasAlumnus
+.printsize member
+.printsize Faculty
+.printsize Student
+.printsize Director
+.printsize Chair
+.printsize Program
+.printsize Employee
+.printsize subOrganizationOf
+
+
+Person(?X) :- advisor(?X, ?X1) .
+Professor(?X1) :- advisor(?X, ?X1) .
+Professor(?X) :- AssistantProfessor(?X) .
+Professor(?X) :- AssociateProfessor(?X) .
+// headOf(?X, !Y), Department(!Y) :- Chair(?X) .
+Person(?X) :- Chair(?X) .
+Professor(?X) :- Chair(?X) .
+Work(?X) :- Course(?X) .
+Person(?X) :- degreeFrom(?X, ?X1) .
+University(?X1) :- degreeFrom(?X, ?X1) .
+hasAlumnus(?X, ?Y) :- degreeFrom(?Y, ?X) .
+Organization(?X) :- Department(?X) .
+// headOf(?X, !Y), Program(!Y) :- Director(?X) .
+Person(?X) :- Director(?X) .
+Person(?X) :- doctoralDegreeFrom(?X, ?X1) .
+University(?X1) :- doctoralDegreeFrom(?X, ?X1) .
+degreeFrom(?X, ?Y) :- doctoralDegreeFrom(?X, ?Y) .
+Person(?X) :- emailAddress(?X, ?X1) .
+Person(?X) :- Employee(?X) .
+// worksFor(?X, !Y), Organization(!Y) :- Employee(?X) .
+Employee(?X) :- Faculty(?X) .
+Professor(?X) :- FullProfessor(?X) .
+Course(?X) :- GraduateCourse(?X) .
+Person(?X) :- GraduateStudent(?X) .
+// takesCourse(?X, !Y), GraduateCourse(!Y) :- GraduateStudent(?X) .
+Person(?X1) :- hasAlumnus(?X, ?X1) .
+University(?X) :- hasAlumnus(?X, ?X1) .
+degreeFrom(?X, ?Y) :- hasAlumnus(?Y, ?X) .
+worksFor(?X, ?Y) :- headOf(?X, ?Y) .
+Faculty(?X) :- Lecturer(?X) .
+Person(?X) :- mastersDegreeFrom(?X, ?X1) .
+University(?X1) :- mastersDegreeFrom(?X, ?X1) .
+degreeFrom(?X, ?Y) :- mastersDegreeFrom(?X, ?Y) .
+Organization(?X) :- member(?X, ?X1) .
+Person(?X1) :- member(?X, ?X1) .
+memberOf(?X, ?Y) :- member(?Y, ?X) .
+member(?X, ?Y) :- memberOf(?Y, ?X) .
+Chair(?X) :- Person(?X), headOf(?X, ?X1), Department(?X1) .
+Director(?X) :- Person(?X), headOf(?X, ?X1), Program(?X1) .
+Student(?X) :- Person(?X), takesCourse(?X, ?X1), Course(?X1) .
+TeachingAssistant(?X) :- Person(?X), teachingAssistantOf(?X, ?X1), Course(?X1) .
+Employee(?X) :- Person(?X), worksFor(?X, ?X1), Organization(?X1) .
+Faculty(?X) :- Professor(?X) .
+Organization(?X) :- Program(?X) .
+Person(?X1) :- publicationAuthor(?X, ?X1) .
+Publication(?X) :- publicationAuthor(?X, ?X1) .
+Person(?X) :- ResearchAssistant(?X) .
+// worksFor(?X, !Y), ResearchGroup(!Y) :- ResearchAssistant(?X) .
+Organization(?X) :- ResearchGroup(?X) .
+Person(?X) :- Student(?X) .
+// takesCourse(?X, !Y), Course(!Y) :- Student(?X) .
+Organization(?X) :- subOrganizationOf(?X, ?X1) .
+Organization(?X1) :- subOrganizationOf(?X, ?X1) .
+subOrganizationOf(?X, ?Z) :- subOrganizationOf(?X, ?Y), subOrganizationOf(?Y, ?Z) .
+Course(?X1) :- teacherOf(?X, ?X1) .
+Faculty(?X) :- teacherOf(?X, ?X1) .
+Person(?X) :- TeachingAssistant(?X) .
+// teachingAssistantOf(?X, !Y), Course(!Y) :- TeachingAssistant(?X) .
+Course(?X1) :- teachingAssistantOf(?X, ?X1) .
+TeachingAssistant(?X) :- teachingAssistantOf(?X, ?X1) .
+Person(?X) :- telephone(?X, ?X1) .
+Person(?X) :- undergraduateDegreeFrom(?X, ?X1) .
+University(?X1) :- undergraduateDegreeFrom(?X, ?X1) .
+degreeFrom(?X, ?Y) :- undergraduateDegreeFrom(?X, ?Y) .
+Student(?X) :- UndergraduateStudent(?X) .
+Organization(?X) :- University(?X) .
+memberOf(?X, ?Y) :- worksFor(?X, ?Y) .
