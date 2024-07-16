@@ -26,7 +26,7 @@ void tc_barebone(char *data_path) {
     edge.set_index_startegy(0, FULL, vflog::IndexStrategy::EAGER);
     edge.set_index_startegy(1, FULL, vflog::IndexStrategy::LAZY);
     vflog::read_kary_relation(data_path, edge, 2);
-    edge.deduplicate();
+    edge.newt_self_deduplicate();
     std::cout << "Edge newt size: " << edge.get_versioned_size(NEWT)
               << std::endl;
     edge.persist_newt();
@@ -45,62 +45,49 @@ void tc_barebone(char *data_path) {
     // copy edge FULL to path's newt
     auto &edge_full = edge.get_versioned_columns(FULL);
     auto &path_newt = path.get_versioned_columns(NEWT);
-    vflog::device_indices_t input_indices(init_size);
-    thrust::sequence(input_indices.begin(), input_indices.end());
+    auto input_indices_ptr = std::make_shared<vflog::device_indices_t>();
+    thrust::sequence(input_indices_ptr->begin(), input_indices_ptr->end());
     for (size_t i = 0; i < edge.arity; i++) {
         std::cout << "edge full size " << edge_full[i].size() << std::endl;
-        vflog::column_copy(edge, FULL, i, path, NEWT, i, input_indices);
+        vflog::column_copy(edge, FULL, i, path, NEWT, i, input_indices_ptr);
         path.newt_size = edge_full[i].size();
-        path.total_tuples += input_indices.size();
+        path.total_tuples += input_indices_ptr->size();
         path_newt[i].raw_size = path.newt_size;
     }
     std::cout << "Copied edge to path" << std::endl;
-    path.deduplicate();
+    path.newt_self_deduplicate();
     path.persist_newt();
     std::cout << "Path full size: " << path.get_versioned_size(FULL)
               << std::endl;
 
     // evaluate loop
     size_t iteration = 0;
-    vflog::device_indices_t matched_edges;
-    vflog::device_bitmap_t matched_bitmap(init_size, false);
-    vflog::device_indices_t matched_paths;
-    matched_paths.swap(input_indices);
+    auto matched_path_ptr = std::make_shared<vflog::device_indices_t>();
+    auto matched_edge_ptr = std::make_shared<vflog::device_indices_t>();
     KernelTimer timer;
     timer.start_timer();
     while (true) {
         std::cout << "Iteration " << iteration << std::endl;
         RelationVersion path_version = DELTA;
-        // if (iteration == 0) {
-        //     // in first iter, use full as delta
-        //     path_version = FULL;
-        // }
+        vflog::host_buf_ref_t cached;
 
         // join edge's delta with path's full
         // path(a, c) :- path(a, b), edge(b, c).
-        matched_paths.resize(path.get_versioned_size(path_version));
-        thrust::sequence(matched_paths.begin(), matched_paths.end());
-
-        vflog::column_join(edge, FULL, 0, path, path_version, 1, matched_paths,
-                          matched_edges, matched_bitmap);
-        size_t raw_newt_size = matched_paths.size();
-
-        // std::cout << "Matched edges: " << matched_edges.size() << std::endl;
+        cached["path"] = matched_path_ptr;
+        cached["path"]->resize(path.get_versioned_size(path_version));
+        thrust::sequence(cached["path"]->begin(), cached["path"]->end());
+        vflog::column_join(edge, FULL, 0, path, path_version, 1, cached, "path", matched_edge_ptr);
+        cached["edge"] = matched_edge_ptr;
+        size_t raw_newt_size = cached["path"]->size();
         // materialize
         path.allocate_newt(raw_newt_size);
-
-        vflog::column_copy(path, path_version, 0, path, NEWT, 0, matched_paths);
-        vflog::column_copy(edge, FULL, 1, path, NEWT, 1, matched_edges);
+        vflog::column_copy(path, path_version, 0, path, NEWT, 0, cached["path"]);
+        vflog::column_copy(edge, FULL, 1, path, NEWT, 1, cached["edge"]);
         path.newt_size = raw_newt_size;
         path.total_tuples += raw_newt_size;
-        // std::cout << "Newt size before dedup: " << path.newt_size << std::endl;
-        // deduplicate NEWT itself
-
-        path.deduplicate();
-        // path.print_raw_data(NEWT);
-
+        path.newt_self_deduplicate();
         path.persist_newt();
-        // path.print_raw_data(DELTA);
+        cached.clear();
 
         auto delta_size = path.get_versioned_size(DELTA);
         std::cout << "Full size: " << path.get_versioned_size(FULL)

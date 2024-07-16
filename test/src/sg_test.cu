@@ -15,7 +15,7 @@ void sg_barebone(char *data_path) {
     edge.set_index_startegy(0, FULL, vflog::IndexStrategy::EAGER);
     edge.set_index_startegy(1, FULL, vflog::IndexStrategy::LAZY);
     vflog::read_kary_relation(data_path, edge, 2);
-    edge.deduplicate();
+    edge.newt_self_deduplicate();
     edge.persist_newt();
     std::cout << "Edge full size: " << edge.get_versioned_size(FULL)
               << std::endl;
@@ -23,24 +23,28 @@ void sg_barebone(char *data_path) {
     // .decl path(a: int, b: int)
     vflog::multi_hisa sg(2, global_buffer);
     sg.set_default_index_column(0);
-    sg.set_index_startegy(0, FULL, vflog::IndexStrategy::EAGER);
-    sg.set_index_startegy(1, FULL, vflog::IndexStrategy::LAZY);
-    sg.set_index_startegy(0, DELTA, vflog::IndexStrategy::LAZY);
-    sg.set_index_startegy(1, DELTA, vflog::IndexStrategy::LAZY);
+
+    // use ptr for buffer, because we want share buffer between different
+    // RA operations
+    auto matched_a_ptr = std::make_shared<vflog::device_indices_t>();
+    auto matched_b_ptr = std::make_shared<vflog::device_indices_t>();
+    auto matched_x_ptr = std::make_shared<vflog::device_indices_t>();
+    auto matched_y_ptr = std::make_shared<vflog::device_indices_t>();
 
     // non recursive part
+    vflog::host_buf_ref_t cached;
     // sg(x, y) :- edge(a, x), edge(a, y), x != y.
-    vflog::device_indices_t matched_x;
-    vflog::device_bitmap_t matched_bitmap;
-    vflog::device_indices_t matched_y;
-    matched_x.resize(edge.get_versioned_size(FULL));
-    thrust::sequence(DEFAULT_DEVICE_POLICY, matched_x.begin(), matched_x.end());
-    vflog::column_join(edge, FULL, 0, edge, FULL, 0, matched_x, matched_y,
-                       matched_bitmap);
+    matched_x_ptr->resize(edge.get_versioned_size(FULL));
+    cached["edge1"] = matched_x_ptr;
+    thrust::sequence(DEFAULT_DEVICE_POLICY, cached["edge1"]->begin(),
+                     cached["edge1"]->end());
+    vflog::column_join(edge, FULL, 0, edge, FULL, 0, cached, "edge1",
+                       matched_y_ptr);
+    cached["edge2"] = matched_y_ptr;
     // filter match x y
-    vflog::device_bitmap_t filter_bitmap(matched_x.size(), false);
-    thrust::transform(DEFAULT_DEVICE_POLICY, matched_x.begin(), matched_x.end(),
-                      matched_y.begin(), filter_bitmap.begin(),
+    vflog::device_bitmap_t filter_bitmap(matched_x_ptr->size(), false);
+    thrust::transform(DEFAULT_DEVICE_POLICY, matched_x_ptr->begin(), matched_x_ptr->end(),
+                      matched_y_ptr->begin(), filter_bitmap.begin(),
                       [x_ptrs = edge.get_raw_data_ptrs(FULL, 1),
                        y_ptrs = edge.get_raw_data_ptrs(
                            FULL, 1)] __device__(auto &x, auto &y) {
@@ -48,26 +52,26 @@ void sg_barebone(char *data_path) {
                       });
     // filter x y
     auto matched_x_end = thrust::remove_if(
-        DEFAULT_DEVICE_POLICY, matched_x.begin(), matched_x.end(),
+        DEFAULT_DEVICE_POLICY, matched_x_ptr->begin(), matched_x_ptr->end(),
         filter_bitmap.begin(), thrust::logical_not<bool>());
-    matched_x.resize(matched_x_end - matched_x.begin());
+    matched_x_ptr->resize(matched_x_end - matched_x_ptr->begin());
     auto matched_y_end = thrust::remove_if(
-        DEFAULT_DEVICE_POLICY, matched_y.begin(), matched_y.end(),
+        DEFAULT_DEVICE_POLICY, matched_y_ptr->begin(), matched_y_ptr->end(),
         filter_bitmap.begin(), thrust::logical_not<bool>());
-    matched_y.resize(matched_y_end - matched_y.begin());
+    matched_y_ptr->resize(matched_y_end - matched_y_ptr->begin());
 
     // materialize sg
-    sg.allocate_newt(matched_x.size());
-    vflog::column_copy(edge, FULL, 1, sg, NEWT, 0, matched_x);
-    vflog::column_copy(edge, FULL, 1, sg, NEWT, 1, matched_y);
-    sg.newt_size = matched_x.size();
-    sg.total_tuples += matched_x.size();
-    sg.deduplicate();
+    sg.allocate_newt(matched_x_ptr->size());
+    vflog::column_copy(edge, FULL, 1, sg, NEWT, 0, matched_x_ptr);
+    vflog::column_copy(edge, FULL, 1, sg, NEWT, 1, matched_y_ptr);
+    sg.newt_size = matched_x_ptr->size();
+    sg.total_tuples += matched_x_ptr->size();
+    sg.newt_self_deduplicate();
     sg.persist_newt();
-    matched_x.clear();
-    matched_x.shrink_to_fit();
-    matched_y.clear();
-    matched_y.shrink_to_fit();
+    matched_x_ptr->clear();
+    matched_x_ptr->shrink_to_fit();
+    matched_y_ptr->clear();
+    matched_y_ptr->shrink_to_fit();
     std::cout << "SG full size before : " << sg.get_versioned_size(FULL)
               << std::endl;
     // print delta size
@@ -85,12 +89,6 @@ void sg_barebone(char *data_path) {
     float join_time = 0;
     timer.start_timer();
 
-    // use ptr for buffer, because we want share buffer between different
-    // RA operations
-    auto matched_a_ptr = std::make_shared<vflog::device_indices_t>();
-    auto matched_b_ptr = std::make_shared<vflog::device_indices_t>();
-    auto matched_x_ptr = std::make_shared<vflog::device_indices_t>();
-    auto matched_y_ptr = std::make_shared<vflog::device_indices_t>();
     while (true) {
         std::cout << "Iteration " << iteration << std::endl;
         RelationVersion sg_version = DELTA;
@@ -124,7 +122,7 @@ void sg_barebone(char *data_path) {
         sg.total_tuples += raw_newt_size;
 
         timer2.start_timer();
-        sg.deduplicate();
+        sg.newt_self_deduplicate();
         timer2.stop_timer();
         dedup_time += timer2.get_spent_time();
         // sg.print_raw_data(NEWT);

@@ -85,11 +85,10 @@ struct multi_hisa {
                             bool rebuild = true, bool sorted = false);
 
     // deduplicate the data in the newt
-    void deduplicate();
+    void newt_self_deduplicate();
 
-    // load newt to delta, this will clear the newt, the delta must be empty
-    // before this operation
-    void new_to_delta();
+    // deduplicate the newt data in the full
+    void newt_full_deduplicate();
 
     // this will
     // 1. clear the index of delta
@@ -141,7 +140,7 @@ struct multi_hisa {
         }
     }
 
-    // void deduplicate();
+    // void newt_self_deduplicate();
     uint32_t get_total_tuples() const { return total_tuples; }
 
     offset_type get_capacity() const { return capacity; }

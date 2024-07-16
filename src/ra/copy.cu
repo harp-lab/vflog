@@ -12,25 +12,6 @@ namespace vflog {
 
 void column_copy(multi_hisa &src, RelationVersion src_ver, size_t src_idx,
                  multi_hisa &dst, RelationVersion dst_ver, size_t dst_idx,
-                 device_indices_t &indices) {
-    if (indices.size() == 0) {
-        return;
-    }
-    // gather
-    auto src_raw_begin = src.data[src_idx].begin() +
-                         src.get_versioned_columns(src_ver)[src_idx].raw_offset;
-    auto dst_raw_begin =
-        dst.data[dst_idx].begin() +
-        dst.get_versioned_columns(dst_ver)[dst_idx].raw_offset +
-        dst.get_versioned_columns(dst_ver)[dst_idx].raw_size;
-    thrust::gather(DEFAULT_DEVICE_POLICY, indices.begin(), indices.end(),
-                   src_raw_begin, dst_raw_begin);
-    // TODO: check this
-    dst.get_versioned_columns(dst_ver)[dst_idx].raw_size += indices.size();
-}
-
-void column_copy(multi_hisa &src, RelationVersion src_ver, size_t src_idx,
-                 multi_hisa &dst, RelationVersion dst_ver, size_t dst_idx,
                  std::shared_ptr<device_indices_t> &indices) {
     if (indices->size() == 0) {
         return;

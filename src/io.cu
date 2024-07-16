@@ -50,7 +50,7 @@ void read_kary_relation(const std::string &filename, vflog::multi_hisa &h,
     }
 
     h.init_load_vectical(tuples_vertical, line_count);
-    // h.deduplicate();
+    // h.newt_self_deduplicate();
 }
 
 // function check if a string is a number
