@@ -48,6 +48,7 @@ void column_copy_all(multi_hisa &src, RelationVersion src_version,
 void column_copy_indices(multi_hisa &src, RelationVersion src_version,
                          size_t src_idx, multi_hisa &dst,
                          RelationVersion dst_version, size_t dst_idx,
+                         std::shared_ptr<device_indices_t> &indices,
                          bool append) {
     if (src.get_versioned_columns(src_version)[src_idx].raw_size == 0) {
         return;
@@ -58,13 +59,13 @@ void column_copy_indices(multi_hisa &src, RelationVersion src_version,
     auto dst_raw_begin =
         dst.data[dst_idx].begin() + dst_column.raw_offset + dst_column.raw_size;
 
-    auto id_begin = thrust::make_counting_iterator(src_column.raw_offset);
+    auto id_begin = indices->begin();
     // add the uid to the top 4 bit of the sequenced value
     thrust::transform(
-        DEFAULT_DEVICE_POLICY, id_begin, id_begin + src_column.raw_size,
+        DEFAULT_DEVICE_POLICY, id_begin, id_begin + indices->size(),
         dst_raw_begin,
         [uid = src.uid] __device__(auto &x) { return x | (uid << 28); });
-    dst_column.raw_size += src_column.raw_size;
+    dst_column.raw_size += indices->size();
 }
 
 } // namespace vflog

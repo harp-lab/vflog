@@ -14,7 +14,6 @@
 #include <cuda/std/chrono>
 #include <iostream>
 #include <memory>
-#include <rmm/device_buffer.hpp>
 #include <thrust/device_ptr.h>
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>

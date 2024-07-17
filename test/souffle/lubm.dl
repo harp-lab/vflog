@@ -153,6 +153,7 @@ worksFor(?X, ?Y) :- src_worksFor(?X, ?Y) .
 .printsize Program
 .printsize Employee
 .printsize subOrganizationOf
+.printsize worksFor
 
 
 Person(?X) :- advisor(?X, ?X1) .
@@ -203,6 +204,9 @@ Person(?X1) :- publicationAuthor(?X, ?X1) .
 Publication(?X) :- publicationAuthor(?X, ?X1) .
 Person(?X) :- ResearchAssistant(?X) .
 // worksFor(?X, !Y), ResearchGroup(!Y) :- ResearchAssistant(?X) .
+.decl NW_ResearchAssistant(x: number)
+.printsize NW_ResearchAssistant
+NW_ResearchAssistant(?X) :- ResearchAssistant(?X), !worksFor(?X, _).
 Organization(?X) :- ResearchGroup(?X) .
 Person(?X) :- Student(?X) .
 // takesCourse(?X, !Y), Course(!Y) :- Student(?X) .

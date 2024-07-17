@@ -481,100 +481,6 @@ void lubm(char *data_path) {
     worksFor.persist_newt();
     timer.stop_timer();
 
-    // print the FULL size of each relation after copying
-    std::cout << "advisor full size: " << advisor.get_versioned_size(FULL)
-              << std::endl;
-    std::cout << "AssistantProfessor full size: "
-              << AssistantProfessor.get_versioned_size(FULL) << std::endl;
-    std::cout << "AssociateProfessor full size: "
-              << AssociateProfessor.get_versioned_size(FULL) << std::endl;
-    std::cout << "Course full size: " << Course.get_versioned_size(FULL)
-              << std::endl;
-    std::cout << "Department full size: " << Department.get_versioned_size(FULL)
-              << std::endl;
-    std::cout << "doctoralDegreeFrom full size: "
-              << doctoralDegreeFrom.get_versioned_size(FULL) << std::endl;
-    std::cout << "emailAddress full size: "
-              << emailAddress.get_versioned_size(FULL) << std::endl;
-    std::cout << "FullProfessor full size: "
-              << FullProfessor.get_versioned_size(FULL) << std::endl;
-    std::cout << "GraduateCourse full size: "
-              << GraduateCourse.get_versioned_size(FULL) << std::endl;
-    std::cout << "GraduateStudent full size: "
-              << GraduateStudent.get_versioned_size(FULL) << std::endl;
-    std::cout << "headOf full size: " << headOf.get_versioned_size(FULL)
-              << std::endl;
-    std::cout << "Lecturer full size: " << Lecturer.get_versioned_size(FULL)
-              << std::endl;
-    std::cout << "mastersDegreeFrom full size: "
-              << mastersDegreeFrom.get_versioned_size(FULL) << std::endl;
-    std::cout << "memberOf full size: " << memberOf.get_versioned_size(FULL)
-              << std::endl;
-    std::cout << "name full size: " << name.get_versioned_size(FULL)
-              << std::endl;
-    std::cout << "Publication full size: "
-              << Publication.get_versioned_size(FULL) << std::endl;
-    std::cout << "publicationAuthor full size: "
-              << publicationAuthor.get_versioned_size(FULL) << std::endl;
-    std::cout << "ResearchAssistant full size: "
-              << ResearchAssistant.get_versioned_size(FULL) << std::endl;
-    std::cout << "ResearchGroup full size: "
-              << ResearchGroup.get_versioned_size(FULL) << std::endl;
-    std::cout << "researchInterest full size: "
-              << researchInterest.get_versioned_size(FULL) << std::endl;
-    std::cout << "subOrganizationOf full size: "
-              << subOrganizationOf.get_versioned_size(FULL) << std::endl;
-    std::cout << "takesCourse full size: "
-              << takesCourse.get_versioned_size(FULL) << std::endl;
-    std::cout << "teacherOf full size: " << teacherOf.get_versioned_size(FULL)
-              << std::endl;
-    std::cout << "TeachingAssistant full size: "
-              << TeachingAssistant.get_versioned_size(FULL) << std::endl;
-    std::cout << "teachingAssistantOf full size: "
-              << teachingAssistantOf.get_versioned_size(FULL) << std::endl;
-    std::cout << "telephone full size: " << telephone.get_versioned_size(FULL)
-              << std::endl;
-    std::cout << "undergraduateDegreeFrom full size: "
-              << undergraduateDegreeFrom.get_versioned_size(FULL) << std::endl;
-    std::cout << "UndergraduateStudent full size: "
-              << UndergraduateStudent.get_versioned_size(FULL) << std::endl;
-    std::cout << "University full size: " << University.get_versioned_size(FULL)
-              << std::endl;
-    std::cout << "worksFor full size: " << worksFor.get_versioned_size(FULL)
-              << std::endl;
-
-    // drop all src
-    src_advisor.clear();
-    src_AssistantProfessor.clear();
-    src_AssociateProfessor.clear();
-    src_Course.clear();
-    src_Department.clear();
-    src_doctoralDegreeFrom.clear();
-    src_emailAddress.clear();
-    src_FullProfessor.clear();
-    src_GraduateCourse.clear();
-    src_GraduateStudent.clear();
-    src_headOf.clear();
-    src_Lecturer.clear();
-    src_mastersDegreeFrom.clear();
-    src_memberOf.clear();
-    src_name.clear();
-    src_Publication.clear();
-    src_publicationAuthor.clear();
-    src_ResearchAssistant.clear();
-    src_ResearchGroup.clear();
-    src_researchInterest.clear();
-    // src_subOrganizationOf.clear();
-    src_takesCourse.clear();
-    src_teacherOf.clear();
-    src_TeachingAssistant.clear();
-    src_teachingAssistantOf.clear();
-    src_telephone.clear();
-    src_undergraduateDegreeFrom.clear();
-    src_UndergraduateStudent.clear();
-    src_University.clear();
-    src_worksFor.clear();
-
     // copy time
     std::cout << "Copy time: " << timer.get_spent_time() << std::endl;
 
@@ -605,12 +511,6 @@ void lubm(char *data_path) {
     Person.newt_size += AssociateProfessor.get_versioned_size(FULL);
     Person.total_tuples += AssociateProfessor.get_versioned_size(FULL);
     Person.newt_self_deduplicate();
-    // Work(?X) :- Course(?X) .
-    vflog::multi_hisa Work(1, global_buffer);
-    Work.allocate_newt(Course.get_versioned_size(FULL));
-    vflog::column_copy_all(Course, FULL, 0, Work, NEWT, 0);
-    Work.newt_size += Course.get_versioned_size(FULL);
-    Work.total_tuples += Course.get_versioned_size(FULL);
     // Organization(?X) :- Department(?X) .
     vflog::multi_hisa Organization(1, global_buffer);
     Organization.allocate_newt(Department.get_versioned_size(FULL));
@@ -759,7 +659,6 @@ void lubm(char *data_path) {
     // deduplicate all non-recurisve relations
     Person.newt_self_deduplicate();
     Professor.newt_self_deduplicate();
-    Work.newt_self_deduplicate();
     Organization.newt_self_deduplicate();
     University.newt_self_deduplicate();
     degreeFrom.newt_self_deduplicate();
@@ -770,7 +669,6 @@ void lubm(char *data_path) {
 
     Person.persist_newt();
     Professor.persist_newt();
-    Work.persist_newt();
     Organization.persist_newt();
     University.persist_newt();
     degreeFrom.persist_newt();
@@ -792,10 +690,10 @@ void lubm(char *data_path) {
     auto matched_x_ptr = std::make_shared<vflog::device_indices_t>();
     auto matched_x1_ptr = std::make_shared<vflog::device_indices_t>();
     auto matched_y_ptr = std::make_shared<vflog::device_indices_t>();
-
+    vflog::host_buf_ref_t cached;
     size_t iteration = 0;
     while (true) {
-        vflog::host_buf_ref_t cached;
+        cached.clear();
         std::cout << "Iteration " << iteration << std::endl;
 
         // headOf(?X, !Y), Department(!Y) :- Chair(?X) .
@@ -821,16 +719,13 @@ void lubm(char *data_path) {
         std::cout << "Person(?X) :- degreeFrom(?X, ?X1) ." << std::endl;
         // University(?X1) :- degreeFrom(?X, ?X1) .
         University.allocate_newt(degreeFrom.get_versioned_size(DELTA));
-        vflog::column_copy_all(degreeFrom, DELTA, 1, University, NEWT, 0,
-                               true);
+        vflog::column_copy_all(degreeFrom, DELTA, 1, University, NEWT, 0, true);
         University.newt_size += degreeFrom.get_versioned_size(DELTA);
         University.total_tuples += degreeFrom.get_versioned_size(DELTA);
         // hasAlumnus(?X, ?Y) :- degreeFrom(?Y, ?X) .
         hasAlumnus.allocate_newt(degreeFrom.get_versioned_size(DELTA));
-        vflog::column_copy_all(degreeFrom, DELTA, 0, hasAlumnus, NEWT, 1,
-                               true);
-        vflog::column_copy_all(degreeFrom, DELTA, 1, hasAlumnus, NEWT, 0,
-                               true);
+        vflog::column_copy_all(degreeFrom, DELTA, 0, hasAlumnus, NEWT, 1, true);
+        vflog::column_copy_all(degreeFrom, DELTA, 1, hasAlumnus, NEWT, 0, true);
         hasAlumnus.newt_size += degreeFrom.get_versioned_size(DELTA);
         hasAlumnus.total_tuples += degreeFrom.get_versioned_size(DELTA);
 
@@ -841,20 +736,6 @@ void lubm(char *data_path) {
         Person.total_tuples += Employee.get_versioned_size(DELTA);
 
         // worksFor(?X, !Y), Organization(!Y) :- Employee(?X) .
-        // copy the delta id of employee to Organization
-        // Organization.allocate_newt(Employee.get_versioned_size(DELTA));
-        // vflog::column_copy_indices(Employee, DELTA, 0, Organization, NEWT,
-        // 0,
-        //                            true);
-        // Organization.newt_size += Employee.get_versioned_size(DELTA);
-        // Organization.total_tuples += Employee.get_versioned_size(DELTA);
-        // worksFor.allocate_newt(Employee.get_versioned_size(DELTA));
-        // vflog::column_copy_all(Employee, DELTA, 0, worksFor, NEWT, 0,
-        // true); vflog::column_copy_indices(Employee, DELTA, 0, worksFor,
-        // NEWT, 1,
-        //                            true);
-        // worksFor.newt_size += Employee.get_versioned_size(DELTA);
-        // worksFor.total_tuples += Employee.get_versioned_size(DELTA);
 
         // Employee(?X) :- Faculty(?X) .
         Employee.allocate_newt(Faculty.get_versioned_size(DELTA));
@@ -870,29 +751,25 @@ void lubm(char *data_path) {
         Person.newt_self_deduplicate();
         // University(?X) :- hasAlumnus(?X, ?X1) .
         University.allocate_newt(hasAlumnus.get_versioned_size(DELTA));
-        vflog::column_copy_all(hasAlumnus, DELTA, 0, University, NEWT, 0,
-                               true);
+        vflog::column_copy_all(hasAlumnus, DELTA, 0, University, NEWT, 0, true);
         University.newt_size += hasAlumnus.get_versioned_size(DELTA);
         University.total_tuples += hasAlumnus.get_versioned_size(DELTA);
         // degreeFrom(?X, ?Y) :- hasAlumnus(?Y, ?X) .
         degreeFrom.allocate_newt(hasAlumnus.get_versioned_size(DELTA));
-        vflog::column_copy_all(hasAlumnus, DELTA, 1, degreeFrom, NEWT, 0,
-                               true);
-        vflog::column_copy_all(hasAlumnus, DELTA, 0, degreeFrom, NEWT, 1,
-                               true);
+        vflog::column_copy_all(hasAlumnus, DELTA, 1, degreeFrom, NEWT, 0, true);
+        vflog::column_copy_all(hasAlumnus, DELTA, 0, degreeFrom, NEWT, 1, true);
         degreeFrom.newt_size += hasAlumnus.get_versioned_size(DELTA);
         degreeFrom.total_tuples += hasAlumnus.get_versioned_size(DELTA);
 
         // worksFor(?X, ?Y) :- headOf(?X, ?Y) .
-        worksFor.allocate_newt(Chair.get_versioned_size(DELTA));
-        vflog::column_copy_all(Chair, DELTA, 0, worksFor, NEWT, 0, true);
-        vflog::column_copy_all(Chair, DELTA, 1, worksFor, NEWT, 1, true);
-        worksFor.newt_size += Chair.get_versioned_size(DELTA);
-        worksFor.total_tuples += Chair.get_versioned_size(DELTA);
+        worksFor.allocate_newt(headOf.get_versioned_size(DELTA));
+        vflog::column_copy_all(headOf, DELTA, 0, worksFor, NEWT, 0, true);
+        vflog::column_copy_all(headOf, DELTA, 1, worksFor, NEWT, 1, true);
+        worksFor.newt_size += headOf.get_versioned_size(DELTA);
+        worksFor.total_tuples += headOf.get_versioned_size(DELTA);
         // Organization(?X) :- member(?X, ?X1) .
         Organization.allocate_newt(member.get_versioned_size(DELTA));
-        vflog::column_copy_all(member, DELTA, 1, Organization, NEWT, 0,
-                               true);
+        vflog::column_copy_all(member, DELTA, 1, Organization, NEWT, 0, true);
         Organization.newt_size += member.get_versioned_size(DELTA);
         Organization.total_tuples += member.get_versioned_size(DELTA);
         // Person(?X1) :- member(?X, ?X1) .
@@ -913,14 +790,13 @@ void lubm(char *data_path) {
         cached["Person"] = matched_x_ptr;
         cached["Person"]->resize(Person.get_versioned_size(DELTA));
         thrust::sequence(cached["Person"]->begin(), cached["Person"]->end());
-        vflog::column_join(headOf, FULL, 0, Person, DELTA, 0, cached,
-                           "Person", matched_x1_ptr);
+        vflog::column_join(headOf, FULL, 0, Person, DELTA, 0, cached, "Person",
+                           matched_x1_ptr);
         cached["headOf"] = matched_x1_ptr;
         vflog::column_join(Department, FULL, 0, headOf, FULL, 1, cached,
                            "headOf", matched_y_ptr, true);
         Chair.allocate_newt(cached["Person"]->size());
-        vflog::column_copy(Person, DELTA, 0, Chair, NEWT, 0,
-                           cached["Person"]);
+        vflog::column_copy(Person, DELTA, 0, Chair, NEWT, 0, cached["Person"]);
         Chair.newt_size += cached["Person"]->size();
         Chair.total_tuples += cached["Person"]->size();
         cached.clear();
@@ -1015,13 +891,6 @@ void lubm(char *data_path) {
         Faculty.total_tuples += Professor.get_versioned_size(DELTA);
         std::cout << "Faculty(?X) :- Professor(?X) ." << std::endl;
 
-        // Organization(?X) :- ResearchGroup(?X) .
-        Organization.allocate_newt(ResearchGroup.get_versioned_size(DELTA));
-        vflog::column_copy_all(ResearchGroup, DELTA, 0, Organization, NEWT,
-                               0, true);
-        Organization.newt_size += ResearchGroup.get_versioned_size(DELTA);
-        Organization.total_tuples += ResearchGroup.get_versioned_size(DELTA);
-        std::cout << "Organization(?X) :- ResearchGroup(?X) ." << std::endl;
         // Person(?X) :- Student(?X) .
         Person.allocate_newt(Student.get_versioned_size(DELTA));
         vflog::column_copy_all(Student, DELTA, 0, Person, NEWT, 0, true);
@@ -1029,56 +898,20 @@ void lubm(char *data_path) {
         Person.total_tuples += Student.get_versioned_size(DELTA);
         Person.newt_self_deduplicate();
         std::cout << "Person(?X) :- Student(?X) ." << std::endl;
-        // takesCourse(?X, !Y), Course(!Y) :- Student(?X) .
-        // Course.allocate_newt(Student.get_versioned_size(DELTA));
-        // vflog::column_copy_indices(Student, DELTA, 0, Course, NEWT, 0,
-        // true); Course.newt_size += Student.get_versioned_size(DELTA);
-        // Course.total_tuples += Student.get_versioned_size(DELTA);
-        // takesCourse.allocate_newt(Student.get_versioned_size(DELTA));
-        // vflog::column_copy_all(Student, DELTA, 0, takesCourse, NEWT, 0,
-        //                        true);
-        // vflog::column_copy_indices(Student, DELTA, 0, takesCourse, NEWT,
-        // 1,
-        //                            true);
-        // takesCourse.newt_size += Student.get_versioned_size(DELTA);
-        // takesCourse.total_tuples += Student.get_versioned_size(DELTA);
 
-        // worksFor(?X, !Y), ResearchGroup(!Y) :- ResearchAssistant(?X) .
-        // ResearchGroup.allocate_newt(
-        //     ResearchAssistant.get_versioned_size(DELTA));
-        // vflog::column_copy_all(ResearchAssistant, DELTA, 1, ResearchGroup,
-        //                        NEWT, 0, true);
-        // ResearchGroup.newt_size +=
-        //     ResearchAssistant.get_versioned_size(DELTA);
-        // ResearchGroup.total_tuples +=
-        //     ResearchAssistant.get_versioned_size(DELTA);
-        // worksFor.allocate_newt(ResearchAssistant.get_versioned_size(DELTA));
-        // vflog::column_copy_all(ResearchAssistant, DELTA, 0, worksFor,
-        // NEWT,
-        //                        0, true);
-        // vflog::column_copy_indices(ResearchAssistant, DELTA, 0, worksFor,
-        //                            NEWT, 1, true);
-        // worksFor.newt_size += ResearchAssistant.get_versioned_size(DELTA);
-        // worksFor.total_tuples +=
-        // ResearchAssistant.get_versioned_size(DELTA); Organization(?X) :-
-        // subOrganizationOf(?X, ?X1) .
-        Organization.allocate_newt(
-            subOrganizationOf.get_versioned_size(DELTA));
-        vflog::column_copy_all(subOrganizationOf, DELTA, 0, Organization,
-                               NEWT, 0, true);
-        Organization.newt_size +=
-            subOrganizationOf.get_versioned_size(DELTA);
+        Organization.allocate_newt(subOrganizationOf.get_versioned_size(DELTA));
+        vflog::column_copy_all(subOrganizationOf, DELTA, 0, Organization, NEWT,
+                               0, true);
+        Organization.newt_size += subOrganizationOf.get_versioned_size(DELTA);
         Organization.total_tuples +=
             subOrganizationOf.get_versioned_size(DELTA);
         std::cout << "Organization(?X) :- subOrganizationOf(?X, ?X1) ."
                   << std::endl;
         // Organization(?X1) :- subOrganizationOf(?X, ?X1) .
-        Organization.allocate_newt(
-            subOrganizationOf.get_versioned_size(DELTA));
-        vflog::column_copy_all(subOrganizationOf, DELTA, 1, Organization,
-                               NEWT, 0, true);
-        Organization.newt_size +=
-            subOrganizationOf.get_versioned_size(DELTA);
+        Organization.allocate_newt(subOrganizationOf.get_versioned_size(DELTA));
+        vflog::column_copy_all(subOrganizationOf, DELTA, 1, Organization, NEWT,
+                               0, true);
+        Organization.newt_size += subOrganizationOf.get_versioned_size(DELTA);
         Organization.total_tuples +=
             subOrganizationOf.get_versioned_size(DELTA);
         std::cout << "Organization(?X1) :- subOrganizationOf(?X, ?X1) ."
@@ -1099,8 +932,8 @@ void lubm(char *data_path) {
             cached["src_subOrganizationOf"]->size());
         vflog::column_copy(src_subOrganizationOf, FULL, 0, subOrganizationOf,
                            NEWT, 0, cached["src_subOrganizationOf"]);
-        vflog::column_copy(subOrganizationOf, DELTA, 1, subOrganizationOf,
-                           NEWT, 1, cached["subOrganizationOf"]);
+        vflog::column_copy(subOrganizationOf, DELTA, 1, subOrganizationOf, NEWT,
+                           1, cached["subOrganizationOf"]);
         subOrganizationOf.newt_size += cached["subOrganizationOf"]->size();
         subOrganizationOf.total_tuples += cached["subOrganizationOf"]->size();
         cached.clear();
@@ -1108,29 +941,10 @@ void lubm(char *data_path) {
                      "?Y), subOrganizationOf(?Y, ?Z) ."
                   << std::endl;
 
-        // teachingAssistantOf(?X, !Y), Course(!Y) :- TeachingAssistant(?X) .
-        // Course.allocate_newt(TeachingAssistant.get_versioned_size(DELTA));
-        // vflog::column_copy_indices(TeachingAssistant, DELTA, 0, Course,
-        // NEWT,
-        //                            0, true);
-        // Course.newt_size += TeachingAssistant.get_versioned_size(DELTA);
-        // Course.total_tuples +=
-        // TeachingAssistant.get_versioned_size(DELTA);
-        // teachingAssistantOf.allocate_newt(
-        //     TeachingAssistant.get_versioned_size(DELTA));
-        // vflog::column_copy_all(TeachingAssistant, DELTA, 0,
-        //                        teachingAssistantOf, NEWT, 0, true);
-        // vflog::column_copy_indices(TeachingAssistant, DELTA, 0,
-        //                            teachingAssistantOf, NEWT, 1, true);
-        // teachingAssistantOf.newt_size +=
-        //     TeachingAssistant.get_versioned_size(DELTA);
-        // teachingAssistantOf.total_tuples +=
-        //     TeachingAssistant.get_versioned_size(DELTA);
-
         // Course(?X1) :- teachingAssistantOf(?X, ?X1) .
         Course.allocate_newt(teachingAssistantOf.get_versioned_size(DELTA));
-        vflog::column_copy_all(teachingAssistantOf, DELTA, 1, Course, NEWT,
-                               0, true);
+        vflog::column_copy_all(teachingAssistantOf, DELTA, 1, Course, NEWT, 0,
+                               true);
         Course.newt_size += teachingAssistantOf.get_versioned_size(DELTA);
         Course.total_tuples += teachingAssistantOf.get_versioned_size(DELTA);
 
@@ -1140,12 +954,6 @@ void lubm(char *data_path) {
                                true);
         Organization.newt_size += University.get_versioned_size(DELTA);
         Organization.total_tuples += University.get_versioned_size(DELTA);
-        // memberOf(?X, ?Y) :- worksFor(?X, ?Y) .
-        memberOf.allocate_newt(worksFor.get_versioned_size(DELTA));
-        vflog::column_copy_all(worksFor, DELTA, 0, memberOf, NEWT, 0, true);
-        vflog::column_copy_all(worksFor, DELTA, 1, memberOf, NEWT, 1, true);
-        memberOf.newt_size += worksFor.get_versioned_size(DELTA);
-        memberOf.total_tuples += worksFor.get_versioned_size(DELTA);
 
         // deduplicate all recurisve relations and persist
         Chair.newt_self_deduplicate();
@@ -1178,39 +986,6 @@ void lubm(char *data_path) {
         University.persist_newt();
         degreeFrom.persist_newt();
         Faculty.persist_newt();
-        // std::cout << "Chair size: " << Chair.get_versioned_size(DELTA)
-        //           << std::endl;
-        // std::cout << "hasAlumnus size: " <<
-        // hasAlumnus.get_versioned_size(DELTA)
-        //           << std::endl;
-        // std::cout << "Employee size: " << Employee.get_versioned_size(DELTA)
-        //           << std::endl;
-        // std::cout << "worksFor size: " << worksFor.get_versioned_size(DELTA)
-        //           << std::endl;
-        // std::cout << "subOrganizationOf size: "
-        //           << subOrganizationOf.get_versioned_size(DELTA) <<
-        //           std::endl;
-        // std::cout << "teachingAssistantOf size: "
-        //           << teachingAssistantOf.get_versioned_size(DELTA) <<
-        //           std::endl;
-        // std::cout << "Organization size: " <<
-        // Organization.get_versioned_size(DELTA)
-        //           << std::endl;
-        // std::cout << "memberOf size: " << memberOf.get_versioned_size(DELTA)
-        //           << std::endl;
-        // std::cout << "Person size: " << Person.get_versioned_size(DELTA)
-        //           << std::endl;
-        // std::cout << "Professor size: " <<
-        // Professor.get_versioned_size(DELTA)
-        //           << std::endl;
-        // std::cout << "University size: " <<
-        // University.get_versioned_size(DELTA)
-        //           << std::endl;
-        // std::cout << "degreeFrom size: " <<
-        // degreeFrom.get_versioned_size(DELTA)
-        //           << std::endl;
-        // std::cout << "Faculty size: " << Faculty.get_versioned_size(DELTA)
-        //           << std::endl;
 
         size_t total_delta_size =
             Chair.get_versioned_size(DELTA) +
@@ -1233,6 +1008,123 @@ void lubm(char *data_path) {
 
         iteration++;
     }
+    cached.clear();
+
+    // worksFor(?X, !Y), ResearchGroup(!Y) :- ResearchAssistant(?X) .
+    // This is same as
+    //  ResearchGroup(@autoince), WorksFor(?X, @autoince) :-
+    //     !WorksFor(?X, _),  ResearchAssistant(?X) .
+    cached["ResearchAssistant"] = matched_x_ptr;
+    cached["ResearchAssistant"]->resize(
+        ResearchAssistant.get_versioned_size(FULL));
+    thrust::sequence(cached["ResearchAssistant"]->begin(),
+                     cached["ResearchAssistant"]->end());
+    vflog::column_negate(worksFor, FULL, 0, ResearchAssistant, FULL, 0, cached,
+                         "ResearchAssistant");
+    ResearchGroup.allocate_newt(cached["ResearchAssistant"]->size());
+    vflog::column_copy_indices(ResearchAssistant, FULL, 0, ResearchGroup, NEWT,
+                               0, cached["ResearchAssistant"]);
+    ResearchGroup.newt_size += cached["ResearchAssistant"]->size();
+    ResearchGroup.total_tuples += cached["ResearchAssistant"]->size();
+    worksFor.allocate_newt(cached["ResearchAssistant"]->size());
+    vflog::column_copy(ResearchAssistant, FULL, 0, worksFor, NEWT, 0,
+                       cached["ResearchAssistant"]);
+    vflog::column_copy_indices(ResearchAssistant, FULL, 0, worksFor, NEWT, 1,
+                               cached["ResearchAssistant"]);
+    worksFor.newt_size += cached["ResearchAssistant"]->size();
+    worksFor.total_tuples += cached["ResearchAssistant"]->size();
+    cached.clear();
+    ResearchGroup.newt_self_deduplicate();
+    worksFor.newt_self_deduplicate();
+    ResearchGroup.persist_newt();
+    worksFor.persist_newt();
+    std::cout
+        << "worksFor(?X, !Y), ResearchGroup(!Y) :- ResearchAssistant(?X) ."
+        << std::endl;
+
+    // memberOf(?X, ?Y) :- worksFor(?X, ?Y) .
+    memberOf.allocate_newt(worksFor.get_versioned_size(FULL));
+    vflog::column_copy_all(worksFor, FULL, 0, memberOf, NEWT, 0, true);
+    vflog::column_copy_all(worksFor, FULL, 1, memberOf, NEWT, 1, true);
+    memberOf.newt_size += worksFor.get_versioned_size(FULL);
+    memberOf.total_tuples += worksFor.get_versioned_size(FULL);
+    memberOf.newt_self_deduplicate();
+    memberOf.persist_newt();
+    std::cout << "memberOf(?X, ?Y) :- worksFor(?X, ?Y) ." << std::endl;
+
+    // Organization(?X) :- ResearchGroup(?X) .
+    Organization.allocate_newt(ResearchGroup.get_versioned_size(FULL));
+    vflog::column_copy_all(ResearchGroup, FULL, 0, Organization, NEWT, 0, true);
+    Organization.newt_size += ResearchGroup.get_versioned_size(FULL);
+    Organization.total_tuples += ResearchGroup.get_versioned_size(FULL);
+    Organization.newt_self_deduplicate();
+    Organization.persist_newt();
+    std::cout << "Organization(?X) :- ResearchGroup(?X) ." << std::endl;
+
+    // teachingAssistantOf(?X, !Y), Course(!Y) :- TeachingAssistant(?X) .
+    cached["TeachingAssistant"] = matched_x_ptr;
+    cached["TeachingAssistant"]->resize(
+        TeachingAssistant.get_versioned_size(FULL));
+    thrust::sequence(cached["TeachingAssistant"]->begin(),
+                     cached["TeachingAssistant"]->end());
+    vflog::column_negate(teachingAssistantOf, FULL, 0, TeachingAssistant, FULL,
+                         0, cached, "TeachingAssistant");
+    Course.allocate_newt(cached["TeachingAssistant"]->size());
+    vflog::column_copy_indices(TeachingAssistant, FULL, 0, Course, NEWT, 1,
+                               cached["TeachingAssistant"]);
+    Course.newt_size += cached["TeachingAssistant"]->size();
+    Course.total_tuples += cached["TeachingAssistant"]->size();
+    teachingAssistantOf.allocate_newt(cached["TeachingAssistant"]->size());
+    vflog::column_copy(TeachingAssistant, FULL, 0, teachingAssistantOf, NEWT, 0,
+                       cached["TeachingAssistant"]);
+    vflog::column_copy_indices(TeachingAssistant, FULL, 0, teachingAssistantOf,
+                               NEWT, 1, cached["TeachingAssistant"]);
+    teachingAssistantOf.newt_size += cached["TeachingAssistant"]->size();
+    teachingAssistantOf.total_tuples += cached["TeachingAssistant"]->size();
+    cached.clear();
+    Course.newt_self_deduplicate();
+    teachingAssistantOf.newt_self_deduplicate();
+    Course.persist_newt();
+    teachingAssistantOf.persist_newt();
+    std::cout << "teachingAssistantOf(?X, !Y), Course(!Y) :- "
+                 "TeachingAssistant(?X) ."
+              << std::endl;
+
+    // takesCourse(?X, !Y), Course(!Y) :- Student(?X) .
+    cached["Student"] = matched_x_ptr;
+    cached["Student"]->resize(Student.get_versioned_size(FULL));
+    thrust::sequence(cached["Student"]->begin(), cached["Student"]->end());
+    vflog::column_negate(takesCourse, FULL, 0, Student, FULL, 0, cached,
+                         "Student");
+    Course.allocate_newt(cached["Student"]->size());
+    vflog::column_copy_indices(Student, FULL, 0, Course, NEWT, 1,
+                               cached["Student"]);
+    Course.newt_size += cached["Student"]->size();
+    Course.total_tuples += cached["Student"]->size();
+    takesCourse.allocate_newt(cached["Student"]->size());
+    vflog::column_copy(Student, FULL, 0, takesCourse, NEWT, 0,
+                       cached["Student"]);
+    vflog::column_copy_indices(Student, FULL, 0, takesCourse, NEWT, 1,
+                               cached["Student"]);
+    takesCourse.newt_size += cached["Student"]->size();
+    takesCourse.total_tuples += cached["Student"]->size();
+    cached.clear();
+    Course.newt_self_deduplicate();
+    takesCourse.newt_self_deduplicate();
+    Course.persist_newt();
+    takesCourse.persist_newt();
+    std::cout << "takesCourse(?X, !Y), Course(!Y) :- Student(?X) ." << std::endl;
+
+
+    // Work(?X) :- Course(?X) .
+    vflog::multi_hisa Work(1, global_buffer);
+    Work.allocate_newt(Course.get_versioned_size(FULL));
+    vflog::column_copy_all(Course, FULL, 0, Work, NEWT, 0);
+    Work.newt_size += Course.get_versioned_size(FULL);
+    Work.total_tuples += Course.get_versioned_size(FULL);
+    Work.newt_self_deduplicate();
+    Work.persist_newt();
+
 
     // print the FULL size of each relation after looping
     std::cout << "Chair full size: " << Chair.get_versioned_size(FULL)
@@ -1276,6 +1168,13 @@ void lubm(char *data_path) {
     std::cout << "Faculty full size: " << Faculty.get_versioned_size(FULL)
               << std::endl;
     // Faculty.print_stats();
+    std::cout << "Organization full size: "
+              << Organization.get_versioned_size(FULL) << std::endl;
+    std::cout << "ResearchGroup full size: "
+              << ResearchGroup.get_versioned_size(FULL) << std::endl;
+    std::cout << "Course full size: " << Course.get_versioned_size(FULL)
+              << std::endl;
+
 
     timer.stop_timer();
     std::cout << "Compute time: " << timer.get_spent_time() << std::endl;
