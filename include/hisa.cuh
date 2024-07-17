@@ -26,7 +26,7 @@ struct multi_hisa {
 
     int arity;
 
-    using VersionedColumns = HOST_VECTOR<VerticalColumnGpu>;
+    using VersionedColumns = HOST_VECTOR<VerticalColumn>;
     VersionedColumns full_columns;
     VersionedColumns delta_columns;
     VersionedColumns newt_columns;
@@ -108,7 +108,7 @@ struct multi_hisa {
 
     internal_data_type *get_raw_data_ptrs(RelationVersion version,
                                           int column_idx) {
-        return data[version].data().get() +
+        return data[version].RAW_PTR +
                get_versioned_columns(version)[column_idx].raw_offset;
     }
 
@@ -147,7 +147,7 @@ struct multi_hisa {
     /**
      * @brief Build index for a specific column in the relation
      */
-    void build_index(VerticalColumnGpu &column, device_data_t &unique_offset,
+    void build_index(VerticalColumn &column, device_data_t &unique_offset,
                      bool sorted = false);
 
     void set_index_startegy(int column_idx, RelationVersion version,

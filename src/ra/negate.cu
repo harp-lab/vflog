@@ -31,7 +31,7 @@ void column_negate(multi_hisa &inner, RelationVersion inner_ver,
     }
     auto outer_raw_begin =
         outer.data[outer_idx].begin() + outer_column.raw_offset;
-    inner_column.unique_v_map->find(
+    inner_column.map_find(
         thrust::make_permutation_iterator(outer_raw_begin,
                                           outer_tuple_indices->begin()),
         thrust::make_permutation_iterator(outer_raw_begin,
@@ -42,14 +42,14 @@ void column_negate(multi_hisa &inner, RelationVersion inner_ver,
     for (auto &meta : cached_indices) {
         auto &outer_ts = meta.second;
         thrust::transform(
-            DEFAULT_DEVICE_POLICY, matched_ranges.begin(), matched_ranges.end(),
+            EXE_POLICY, matched_ranges.begin(), matched_ranges.end(),
             outer_ts->begin(), outer_ts->begin(),
-            [] __device__(auto &range, auto &outer_tuple_index) {
+            [] LAMBDA_TAG(auto &range, auto &outer_tuple_index) {
                 return range != UINT32_MAX ? UINT32_MAX : outer_tuple_index;
             });
 
         auto new_outer_tuple_end =
-            thrust::remove(DEFAULT_DEVICE_POLICY, outer_ts->begin(),
+            thrust::remove(EXE_POLICY, outer_ts->begin(),
                            outer_ts->end(), UINT32_MAX);
         outer_ts->resize(new_outer_tuple_end - outer_ts->begin());
     }

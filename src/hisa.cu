@@ -53,7 +53,7 @@ void multi_hisa::init_load_vectical(
         // extract the i-th column
         // thrust::device_vector<internal_data_type> column_data(total_tuples);
         data[i].resize(total_tuples);
-        cudaMemcpy(data[i].data().get(), tuples[i].data(),
+        cudaMemcpy(data[i].RAW_PTR, tuples[i].data(),
                    tuples[i].size() * sizeof(internal_data_type),
                    cudaMemcpyHostToDevice);
         // save columns raw
@@ -96,7 +96,7 @@ void multi_hisa::load_column_cpu(VetricalColumnCpu &columns_cpu,
     auto total_tuples = columns_cpu.raw_data.size();
     capacity = total_tuples;
     data[column_idx].resize(total_tuples);
-    cudaMemcpy(data[column_idx].data().get(), columns_cpu.raw_data.data(),
+    cudaMemcpy(data[column_idx].RAW_PTR, columns_cpu.raw_data.data(),
                columns_cpu.raw_data.size() * sizeof(internal_data_type),
                cudaMemcpyHostToDevice);
     this->total_tuples = total_tuples;
@@ -114,7 +114,7 @@ void multi_hisa::load_column_cpu(VetricalColumnCpu &columns_cpu,
     if (columns_cpu.full_size != 0) {
         full_columns[column_idx].sorted_indices.resize(columns_cpu.full_size);
         full_columns[column_idx].raw_size = columns_cpu.full_size;
-        cudaMemcpy(full_columns[column_idx].sorted_indices.data().get(),
+        cudaMemcpy(full_columns[column_idx].sorted_indices.RAW_PTR,
                    columns_cpu.full_sorted_indices.data(),
                    columns_cpu.full_sorted_indices.size() *
                        sizeof(internal_data_type),
@@ -123,7 +123,7 @@ void multi_hisa::load_column_cpu(VetricalColumnCpu &columns_cpu,
     if (columns_cpu.delta_size != 0) {
         delta_columns[column_idx].sorted_indices.resize(columns_cpu.delta_size);
         delta_columns[column_idx].raw_size = columns_cpu.delta_size;
-        cudaMemcpy(delta_columns[column_idx].sorted_indices.data().get(),
+        cudaMemcpy(delta_columns[column_idx].sorted_indices.RAW_PTR,
                    columns_cpu.delta_sorted_indices.data(),
                    columns_cpu.delta_sorted_indices.size() *
                        sizeof(internal_data_type),
@@ -132,7 +132,7 @@ void multi_hisa::load_column_cpu(VetricalColumnCpu &columns_cpu,
     if (columns_cpu.newt_size != 0) {
         newt_columns[column_idx].sorted_indices.resize(columns_cpu.newt_size);
         newt_columns[column_idx].raw_size = columns_cpu.newt_size;
-        cudaMemcpy(newt_columns[column_idx].sorted_indices.data().get(),
+        cudaMemcpy(newt_columns[column_idx].sorted_indices.RAW_PTR,
                    columns_cpu.newt_sorted_indices.data(),
                    columns_cpu.newt_sorted_indices.size() *
                        sizeof(internal_data_type),
@@ -172,7 +172,7 @@ void multi_hisa::print_raw_data(RelationVersion ver) {
     for (int i = 0; i < arity; i++) {
         columns_host[i].resize(get_versioned_size(ver));
         cudaMemcpy(columns_host[i].data(),
-                   data[i].data().get() +
+                   data[i].RAW_PTR +
                        get_versioned_columns(ver)[i].raw_offset,
                    get_versioned_size(ver) * sizeof(internal_data_type),
                    cudaMemcpyDeviceToHost);

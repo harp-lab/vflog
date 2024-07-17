@@ -23,7 +23,7 @@ void column_copy(multi_hisa &src, RelationVersion src_ver, size_t src_idx,
         dst.data[dst_idx].begin() +
         dst.get_versioned_columns(dst_ver)[dst_idx].raw_offset +
         dst.get_versioned_columns(dst_ver)[dst_idx].raw_size;
-    thrust::gather(DEFAULT_DEVICE_POLICY, indices->begin(), indices->end(),
+    thrust::gather(EXE_POLICY, indices->begin(), indices->end(),
                    src_raw_begin, dst_raw_begin);
     // TODO: check this
     dst.get_versioned_columns(dst_ver)[dst_idx].raw_size += indices->size();
@@ -40,7 +40,7 @@ void column_copy_all(multi_hisa &src, RelationVersion src_version,
     auto src_raw_begin = src.data[src_idx].begin() + src_column.raw_offset;
     auto dst_raw_begin =
         dst.data[dst_idx].begin() + dst_column.raw_offset + dst_column.raw_size;
-    thrust::copy(DEFAULT_DEVICE_POLICY, src_raw_begin,
+    thrust::copy(EXE_POLICY, src_raw_begin,
                  src_raw_begin + src_column.raw_size, dst_raw_begin);
     dst_column.raw_size += src_column.raw_size;
 }
@@ -62,9 +62,9 @@ void column_copy_indices(multi_hisa &src, RelationVersion src_version,
     auto id_begin = indices->begin();
     // add the uid to the top 4 bit of the sequenced value
     thrust::transform(
-        DEFAULT_DEVICE_POLICY, id_begin, id_begin + indices->size(),
+        EXE_POLICY, id_begin, id_begin + indices->size(),
         dst_raw_begin,
-        [uid = src.uid] __device__(auto &x) { return x | (uid << 28); });
+        [uid = src.uid] LAMBDA_TAG(auto &x) { return x | (uid << 28); });
     dst_column.raw_size += indices->size();
 }
 

@@ -22,17 +22,17 @@ void merge_column0_index(multi_hisa &h) {
 
     DEVICE_VECTOR<internal_data_type *> all_col_ptrs(h.arity);
     for (int i = 0; i < h.arity; i++) {
-        all_col_ptrs[i] = h.data[i].data().get();
+        all_col_ptrs[i] = h.data[i].RAW_PTR;
     }
     device_indices_t merged_idx(h.full_size + h.newt_size);
     thrust::merge(
-        DEFAULT_DEVICE_POLICY, full_column0.sorted_indices.begin(),
+        EXE_POLICY, full_column0.sorted_indices.begin(),
         full_column0.sorted_indices.end(),
         thrust::make_counting_iterator<uint32_t>(h.full_size),
         thrust::make_counting_iterator<uint32_t>(h.full_size + h.newt_size),
         merged_idx.begin(),
         [arity = h.arity, default_index_column = h.default_index_column,
-         raw_data = all_col_ptrs.data().get()] __device__(auto full_idx,
+         raw_data = all_col_ptrs.RAW_PTR] LAMBDA_TAG(auto full_idx,
                                                           auto new_idx) {
             // compare the default index column then the other in lexical order
             if (raw_data[default_index_column][full_idx] !=
@@ -62,7 +62,7 @@ void multi_hisa::persist_newt() {
         delta_columns[i].unique_v.shrink_to_fit();
         delta_columns[i].clear_unique_v();
         if (delta_columns[i].unique_v_map) {
-            delta_columns[i].unique_v_map->clear();
+            delta_columns[i].clear_map();
         }
         delta_columns[i].raw_offset = full_size;
         delta_columns[i].raw_size = 0;
@@ -126,13 +126,13 @@ void multi_hisa::persist_newt() {
 
         newt_column.sorted_indices.resize(newt_size);
         auto newt_head = data[i].begin() + newt_column.raw_offset;
-        thrust::copy(DEFAULT_DEVICE_POLICY, newt_head, newt_head + newt_size,
+        thrust::copy(EXE_POLICY, newt_head, newt_head + newt_size,
                      tmp_newt_v.begin());
-        thrust::sequence(DEFAULT_DEVICE_POLICY,
+        thrust::sequence(EXE_POLICY,
                          newt_column.sorted_indices.begin(),
                          newt_column.sorted_indices.end(), full_size);
         thrust::stable_sort_by_key(
-            DEFAULT_DEVICE_POLICY,
+            EXE_POLICY,
             thrust::make_permutation_iterator(
                 data[i].begin(), newt_column.sorted_indices.begin()),
             thrust::make_permutation_iterator(data[i].begin(),
@@ -148,7 +148,7 @@ void multi_hisa::persist_newt() {
         // std::cout << "data size: " << data[i].size() << std::endl;
 
         thrust::merge_by_key(
-            DEFAULT_DEVICE_POLICY,
+            EXE_POLICY,
             thrust::make_permutation_iterator(
                 data[i].begin(), newt_column.sorted_indices.begin()),
             thrust::make_permutation_iterator(data[i].begin(),
@@ -163,7 +163,7 @@ void multi_hisa::persist_newt() {
         full_column.sorted_indices.swap(merged_column);
         // buffer->swap(full_column.sorted_indices);
         // minus size of full on all newt indices
-        thrust::transform(DEFAULT_DEVICE_POLICY,
+        thrust::transform(EXE_POLICY,
                           newt_column.sorted_indices.begin(),
                           newt_column.sorted_indices.end(),
                           thrust::make_constant_iterator(full_size),

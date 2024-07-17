@@ -67,7 +67,16 @@
         "typeinfo": "cpp",
         "charconv": "cpp",
         "list": "cpp",
-        "fstream": "cpp"
+        "fstream": "cpp",
+        "stream_ref": "cpp",
+        "variant": "cpp",
+        "any": "cpp",
+        "bitset": "cpp",
+        "codecvt": "cpp",
+        "csignal": "cpp",
+        "unordered_set": "cpp",
+        "regex": "cpp",
+        "span": "cpp"
     },
     "codeQL.githubDatabase.download": "never",
     "C_Cpp.errorSquiggles": "enabled"

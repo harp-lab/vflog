@@ -36,27 +36,27 @@ void sg_barebone(char *data_path) {
     // sg(x, y) :- edge(a, x), edge(a, y), x != y.
     matched_x_ptr->resize(edge.get_versioned_size(FULL));
     cached["edge1"] = matched_x_ptr;
-    thrust::sequence(DEFAULT_DEVICE_POLICY, cached["edge1"]->begin(),
+    thrust::sequence(EXE_POLICY, cached["edge1"]->begin(),
                      cached["edge1"]->end());
     vflog::column_join(edge, FULL, 0, edge, FULL, 0, cached, "edge1",
                        matched_y_ptr);
     cached["edge2"] = matched_y_ptr;
     // filter match x y
     vflog::device_bitmap_t filter_bitmap(matched_x_ptr->size(), false);
-    thrust::transform(DEFAULT_DEVICE_POLICY, matched_x_ptr->begin(), matched_x_ptr->end(),
+    thrust::transform(EXE_POLICY, matched_x_ptr->begin(), matched_x_ptr->end(),
                       matched_y_ptr->begin(), filter_bitmap.begin(),
                       [x_ptrs = edge.get_raw_data_ptrs(FULL, 1),
                        y_ptrs = edge.get_raw_data_ptrs(
-                           FULL, 1)] __device__(auto &x, auto &y) {
+                           FULL, 1)] LAMBDA_TAG(auto &x, auto &y) {
                           return x_ptrs[x] != y_ptrs[y];
                       });
     // filter x y
     auto matched_x_end = thrust::remove_if(
-        DEFAULT_DEVICE_POLICY, matched_x_ptr->begin(), matched_x_ptr->end(),
+        EXE_POLICY, matched_x_ptr->begin(), matched_x_ptr->end(),
         filter_bitmap.begin(), thrust::logical_not<bool>());
     matched_x_ptr->resize(matched_x_end - matched_x_ptr->begin());
     auto matched_y_end = thrust::remove_if(
-        DEFAULT_DEVICE_POLICY, matched_y_ptr->begin(), matched_y_ptr->end(),
+        EXE_POLICY, matched_y_ptr->begin(), matched_y_ptr->end(),
         filter_bitmap.begin(), thrust::logical_not<bool>());
     matched_y_ptr->resize(matched_y_end - matched_y_ptr->begin());
 

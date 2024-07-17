@@ -5,20 +5,6 @@
 #include <thrust/sequence.h>
 #include <rmm/mr/device/managed_memory_resource.hpp>
 
-void print_index_map(std::shared_ptr<vflog::GpuMap> &unique_v_map) {
-    auto uniq_size = unique_v_map->size();
-    vflog::device_data_t all_unqiue_values(uniq_size);
-    vflog::device_ranges_t all_ranges(uniq_size);
-    unique_v_map->retrieve_all(all_unqiue_values.begin(), all_ranges.begin());
-    // print all unique values and ranges
-    for (size_t i = 0; i < uniq_size; i++) {
-        uint64_t range = all_ranges[i];
-        std::cout << "Unique value: " << all_unqiue_values[i] << " Range: ("
-                  << (range >> 32) << ", " << (range & 0xFFFFFFFF) << ")"
-                  << std::endl;
-    }
-}
-
 void tc_barebone(char *data_path) {
     auto global_buffer = std::make_shared<vflog::d_buffer>(40960);
     vflog::multi_hisa edge(2, global_buffer);
@@ -46,6 +32,7 @@ void tc_barebone(char *data_path) {
     auto &edge_full = edge.get_versioned_columns(FULL);
     auto &path_newt = path.get_versioned_columns(NEWT);
     auto input_indices_ptr = std::make_shared<vflog::device_indices_t>();
+    input_indices_ptr->resize(edge_full[0].size());
     thrust::sequence(input_indices_ptr->begin(), input_indices_ptr->end());
     for (size_t i = 0; i < edge.arity; i++) {
         std::cout << "edge full size " << edge_full[i].size() << std::endl;
@@ -57,7 +44,7 @@ void tc_barebone(char *data_path) {
     std::cout << "Copied edge to path" << std::endl;
     path.newt_self_deduplicate();
     path.persist_newt();
-    std::cout << "Path full size: " << path.get_versioned_size(FULL)
+    std::cout << "Path DELTA size: " << path.get_versioned_size(FULL)
               << std::endl;
 
     // evaluate loop

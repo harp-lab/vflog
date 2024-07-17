@@ -1,9 +1,18 @@
 
 #pragma once
 
+#include "buffer.cuh"
 #include "utils.cuh"
 #include <cuco/dynamic_map.cuh>
 #include <cuco/static_map.cuh>
+#include <cuda/functional>
+
+#define CREATE_V_MAP(uniq_size)                                                \
+    std::make_unique<vflog::GpuMap>(                                           \
+        uniq_size, DEFAULT_LOAD_FACTOR,                                        \
+        cuco::empty_key<vflog::internal_data_type>{UINT32_MAX},                \
+        cuco::empty_value<vflog::offset_type>{UINT32_MAX})
+#define HASH_NAMESPACE cuco
 
 namespace vflog {
 
@@ -29,12 +38,9 @@ using GpuMapReadRef = GpuMap::ref_type<cuco::find_tag>;
 // using GpuMap = cuco::dynamic_map<internal_data_type, comp_range_t>;
 using GpuMapPair = cuco::pair<internal_data_type, comp_range_t>;
 
-// using GpuMap = bght::bcht<internal_data_type, comp_range_t>;
-// using GpuMapPair = bght::pair<internal_data_type, comp_range_t
-
 // CSR stype column entryunique values aray in the column, sharing the same
 // prefix
-struct VerticalColumnGpu {
+struct VerticalColumn {
 
     // FIXME: remove this, this is redundant
     // all unique values in the column, sharing the same prefix
@@ -51,7 +57,7 @@ struct VerticalColumnGpu {
     // device_internal_data_ptr raw_data = nullptr;
     size_t raw_offset = 0;
 
-    VerticalColumnGpu() = default;
+    VerticalColumn() = default;
 
     size_t size() const { return raw_size; }
 
@@ -65,9 +71,66 @@ struct VerticalColumnGpu {
 
     bool use_real_map = DEFAULT_SET_HASH_MAP;
 
-    void clear_unique_v();
+    void clear_unique_v() {
+        if (unique_v_map) {
+            // delete unique_v_map;
+            unique_v_map = nullptr;
+        }
+    }
 
-    ~VerticalColumnGpu();
+    ~VerticalColumn() { clear_unique_v(); }
+
+    template <typename IteratorFrom, typename IteratorTo>
+    void map_find(IteratorFrom from_start, IteratorFrom from_end,
+                  IteratorTo to) {
+        if (unique_v_map) {
+            unique_v_map->find(from_start, from_end, to);
+        } else {
+            throw std::runtime_error("not implemented");
+        }
+    }
+
+    void map_insert(device_data_t &raw_data, size_t uniq_size, d_buffer_ptr &buffer) {
+        if (unique_v_map) {
+            // columns[i].unique_v_map->reserve(uniq_size);
+            if (unique_v_map->size() > uniq_size + 1) {
+                unique_v_map->clear();
+            } else {
+                unique_v_map = nullptr;
+                unique_v_map = CREATE_V_MAP(uniq_size);
+            }
+        } else {
+            unique_v_map = CREATE_V_MAP(uniq_size);
+        }
+        auto insertpair_begin = thrust::make_transform_iterator(
+            thrust::make_counting_iterator<uint32_t>(0),
+            cuda::proclaim_return_type<GpuMapPair>(
+                [uniq_offset_raw = buffer->data(), uniq_size,
+                 sorted_idx = sorted_indices.RAW_PTR,
+                 raw_head = raw_data.RAW_PTR + raw_offset,
+                 column_size = raw_size] LAMBDA_TAG(auto &idx) {
+                    // compute the offset by idx+1 - idx, if idx is the last
+                    // one, then the offset is the size of the column - idx
+                    auto val = raw_head[sorted_idx[uniq_offset_raw[idx]]];
+                    auto range_size =
+                        idx == uniq_size - 1
+                            ? column_size - uniq_offset_raw[idx]
+                            : uniq_offset_raw[idx + 1] - uniq_offset_raw[idx];
+                    return HASH_NAMESPACE::make_pair(
+                        val,
+                        (static_cast<uint64_t>(uniq_offset_raw[idx]) << 32) +
+                            (static_cast<uint64_t>(range_size)));
+                }));
+        unique_v_map->insert(insertpair_begin, insertpair_begin + uniq_size);
+    }
+
+    void clear_map() {
+        if (unique_v_map) {
+            unique_v_map->clear();
+        } else {
+            throw std::runtime_error("not implemented");
+        }
+    }
 };
 
 // a vertical column in CPU memory

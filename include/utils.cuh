@@ -34,6 +34,9 @@ inline void gpuAssert(cudaError_t code, const char *file, int line,
     }
 }
 
+#define LAMBDA_TAG __device__
+#define RAW_PTR data().get()
+
 struct KernelTimer {
     cudaEvent_t start;
     cudaEvent_t stop;
@@ -63,9 +66,9 @@ struct KernelTimer {
 
 enum RelationVersion { DELTA, FULL, NEWT };
 
-// #define DEFAULT_DEVICE_POLICY thrust::device
+// #define EXE_POLICY thrust::device
 // #define DEVICE_VECTOR thrust::device_vector
-#define DEFAULT_DEVICE_POLICY rmm::exec_policy()
+#define EXE_POLICY rmm::exec_policy()
 #define DEVICE_VECTOR rmm::device_vector
 #define HOST_VECTOR thrust::host_vector
 #define DEFAULT_SET_HASH_MAP true
@@ -102,14 +105,14 @@ inline uint64_t __device__ __host__ compress_u32(uint32_t &a, uint32_t &b) {
 
 // functor to get the higher 32 bit
 struct get_higher {
-    __host__ __device__ uint32_t operator()(const uint64_t &x) const {
+    __host__ __device__ __host__ uint32_t operator()(const uint64_t &x) const {
         return (uint32_t)(x >> 32);
     }
 };
 
 // functor to get the lower 32 bit
 struct get_lower {
-    __host__ __device__ uint32_t operator()(const uint64_t &x) const {
+    __host__ __device__ __host__ uint32_t operator()(const uint64_t &x) const {
         return (uint32_t)(x & 0xFFFFFFFF);
     }
 };

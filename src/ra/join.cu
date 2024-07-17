@@ -8,80 +8,6 @@
 #include <thrust/remove.h>
 
 namespace vflog {
-/**
- * filter each joined columns
- */
-// void binary_join_filter(HOST_VECTOR<column_ref> &columns,
-//                         device_data_t &outer_indices_buf,
-//                         device_ranges_t &matched_ranges) {
-
-//     // find the largest column
-//     auto largest_col_size = 0;
-//     for (auto &col : columns) {
-//         auto &rel = col.relation.get();
-//         auto &column = rel.get_versioned_columns(col.version)[col.index];
-//         if (column.size() > largest_col_size) {
-//             largest_col_size = column.size();
-//         }
-//     }
-//     outer_indices_buf.resize(largest_col_size);
-//     matched_ranges.resize(largest_col_size);
-//     device_bitmap_t result_bitmap(largest_col_size);
-
-//     for (size_t i = 0; i < columns.size() - 1; i++) {
-
-//         auto &outer_rel = columns[i].relation.get();
-//         auto &inner_rel = columns[i + 1].relation.get();
-//         auto &outer_bitmap = columns[i].selected;
-//         auto outer_size = outer_rel.get_versioned_size(columns[i].version);
-//         auto outer_column = outer_rel.get_versioned_columns(
-//             columns[i].version)[columns[i].index];
-//         auto outer_raw_ver_begin =
-//             outer_rel.data[outer_column.column_idx].begin() +
-//             outer_column.raw_offset;
-//         auto &inner_bitmap = columns[i + 1].selected;
-//         auto inner_size = inner_rel.get_versioned_size(columns[i +
-//         1].version);
-
-//         // find the outer indices
-//         auto &inner_uniq_map =
-//             inner_rel
-//                 .get_versioned_columns(
-//                     columns[i + 1].version)[columns[i + 1].index]
-//                 .unique_v_map;
-//         inner_uniq_map->find(outer_raw_ver_begin,
-//                              outer_raw_ver_begin + outer_size,
-//                              matched_ranges.begin());
-//         // update the outer bitmap
-//         thrust::transform(DEFAULT_DEVICE_POLICY, matched_ranges.begin(),
-//                           matched_ranges.end(), outer_bitmap.get().begin(),
-//                           outer_bitmap.get().begin(),
-//                           [] __device__(auto &t, auto &b) {
-//                               return t == UINT32_MAX ? false : b;
-//                           });
-//         // update the inner bitmap
-//         // fill result
-//         thrust::fill(DEFAULT_DEVICE_POLICY, result_bitmap.begin(),
-//                      result_bitmap.end(), false);
-//         thrust::for_each(
-//             DEFAULT_DEVICE_POLICY, matched_ranges.begin(),
-//             matched_ranges.end(), [res_bits = result_bitmap.data().get()]
-//             __device__(auto &range) {
-//                 if (range != UINT32_MAX) {
-//                     auto start_pos = range >> 32;
-//                     auto size = range & 0xFFFFFFFF;
-//                     for (int i = 0; i < size; i++) {
-//                         res_bits[start_pos + i] = true;
-//                     }
-//                 }
-//             });
-//         thrust::transform(DEFAULT_DEVICE_POLICY, inner_bitmap.get().begin(),
-//                           inner_bitmap.get().end(), result_bitmap.begin(),
-//                           inner_bitmap.get().begin(),
-//                           [] __device__(auto &b, auto &r) { return b && r;
-//                           });
-//     }
-// }
 
 void column_join(multi_hisa &inner, RelationVersion inner_ver, size_t inner_idx,
                  multi_hisa &outer, RelationVersion outer_ver, size_t outer_idx,
@@ -106,7 +32,7 @@ void column_join(multi_hisa &inner, RelationVersion inner_ver, size_t inner_idx,
     }
     auto outer_raw_begin =
         outer.data[outer_idx].begin() + outer_column.raw_offset;
-    inner_column.unique_v_map->find(
+    inner_column.map_find(
         thrust::make_permutation_iterator(outer_raw_begin,
                                           outer_tuple_indices->begin()),
         thrust::make_permutation_iterator(outer_raw_begin,
@@ -120,40 +46,37 @@ void column_join(multi_hisa &inner, RelationVersion inner_ver, size_t inner_idx,
     for (auto &meta : cached_indices) {
         auto &outer_ts = meta.second;
         thrust::transform(
-            DEFAULT_DEVICE_POLICY, matched_ranges.begin(), matched_ranges.end(),
+            EXE_POLICY, matched_ranges.begin(), matched_ranges.end(),
             outer_ts->begin(), outer_ts->begin(),
-            [] __device__(auto &range, auto &outer_tuple_index) {
+            [] LAMBDA_TAG(auto &range, auto &outer_tuple_index) {
                 return range == UINT32_MAX ? UINT32_MAX : outer_tuple_index;
             });
 
-        auto new_outer_tuple_end =
-            thrust::remove(DEFAULT_DEVICE_POLICY, outer_ts->begin(),
-                           outer_ts->end(), UINT32_MAX);
+        auto new_outer_tuple_end = thrust::remove(EXE_POLICY, outer_ts->begin(),
+                                                  outer_ts->end(), UINT32_MAX);
         outer_ts->resize(new_outer_tuple_end - outer_ts->begin());
     }
-    auto new_range_end =
-        thrust::remove(DEFAULT_DEVICE_POLICY, matched_ranges.begin(),
-                       matched_ranges.end(), UINT32_MAX);
+    auto new_range_end = thrust::remove(EXE_POLICY, matched_ranges.begin(),
+                                        matched_ranges.end(), UINT32_MAX);
     matched_ranges.resize(new_range_end - matched_ranges.begin());
 
     // materialize the matched_indices
     device_data_t size_vec(matched_ranges.size());
-    thrust::transform(
-        DEFAULT_DEVICE_POLICY, matched_ranges.begin(), matched_ranges.end(),
-        size_vec.begin(),
-        [] __device__(auto &t) { return static_cast<uint32_t>(t); });
+    thrust::transform(EXE_POLICY, matched_ranges.begin(), matched_ranges.end(),
+                      size_vec.begin(), [] LAMBDA_TAG(auto &t) {
+                          return static_cast<uint32_t>(t);
+                      });
 
     device_ranges_t &offset_vec = matched_ranges;
     thrust::transform(
-        DEFAULT_DEVICE_POLICY, offset_vec.begin(), offset_vec.end(),
-        offset_vec.begin(),
-        [] __device__(auto &t) { return static_cast<uint64_t>(t >> 32); });
+        EXE_POLICY, offset_vec.begin(), offset_vec.end(), offset_vec.begin(),
+        [] LAMBDA_TAG(auto &t) { return static_cast<uint64_t>(t >> 32); });
 
     uint32_t total_matched_size =
-        thrust::reduce(DEFAULT_DEVICE_POLICY, size_vec.begin(), size_vec.end());
+        thrust::reduce(EXE_POLICY, size_vec.begin(), size_vec.end());
     device_data_t size_offset_tmp(size_vec.size());
-    thrust::exclusive_scan(DEFAULT_DEVICE_POLICY, size_vec.begin(),
-                           size_vec.end(), size_offset_tmp.begin());
+    thrust::exclusive_scan(EXE_POLICY, size_vec.begin(), size_vec.end(),
+                           size_offset_tmp.begin());
 
     device_data_t materialized_outer(total_matched_size);
     matched_indices->resize(total_matched_size);
@@ -166,17 +89,17 @@ void column_join(multi_hisa &inner, RelationVersion inner_ver, size_t inner_idx,
             // in the first iteration also update the matched inner indices
             if (!pop_outer) {
                 thrust::for_each(
-                    DEFAULT_DEVICE_POLICY,
+                    EXE_POLICY,
                     thrust::make_zip_iterator(thrust::make_tuple(
                         outer_ts->begin(), offset_vec.begin(), size_vec.begin(),
                         size_offset_tmp.begin())),
                     thrust::make_zip_iterator(thrust::make_tuple(
                         outer_ts->end(), offset_vec.end(), size_vec.end(),
                         size_offset_tmp.end())),
-                    [res_inner = matched_indices->data().get(),
-                     res_outer = materialized_outer.data().get(),
-                     inner_sorted_idx = inner_column.sorted_indices.data()
-                                            .get()] __device__(auto &t) {
+                    [res_inner = matched_indices->RAW_PTR,
+                     res_outer = materialized_outer.RAW_PTR,
+                     inner_sorted_idx = inner_column.sorted_indices
+                                            .RAW_PTR] LAMBDA_TAG(auto &t) {
                         auto outer_pos = thrust::get<0>(t);
                         auto &inner_pos = thrust::get<1>(t);
                         auto &size = thrust::get<2>(t);
@@ -192,16 +115,16 @@ void column_join(multi_hisa &inner, RelationVersion inner_ver, size_t inner_idx,
                 // no need care about the outer any more don't touch it
                 // only mod the inner indices
                 thrust::for_each(
-                    DEFAULT_DEVICE_POLICY,
+                    EXE_POLICY,
                     thrust::make_zip_iterator(
                         thrust::make_tuple(offset_vec.begin(), size_vec.begin(),
                                            size_offset_tmp.begin())),
                     thrust::make_zip_iterator(
                         thrust::make_tuple(offset_vec.end(), size_vec.end(),
                                            size_offset_tmp.end())),
-                    [res_inner = matched_indices->data().get(),
-                     inner_sorted_idx = inner_column.sorted_indices.data()
-                                            .get()] __device__(auto &t) {
+                    [res_inner = matched_indices->RAW_PTR,
+                     inner_sorted_idx = inner_column.sorted_indices
+                                            .RAW_PTR] LAMBDA_TAG(auto &t) {
                         auto &inner_pos = thrust::get<0>(t);
                         auto &size = thrust::get<1>(t);
                         auto &start = thrust::get<2>(t);
@@ -214,14 +137,13 @@ void column_join(multi_hisa &inner, RelationVersion inner_ver, size_t inner_idx,
         } else {
             // only update the outer indices
             thrust::for_each(
-                DEFAULT_DEVICE_POLICY,
+                EXE_POLICY,
                 thrust::make_zip_iterator(
                     thrust::make_tuple(outer_ts->begin(), size_vec.begin(),
                                        size_offset_tmp.begin())),
                 thrust::make_zip_iterator(thrust::make_tuple(
                     outer_ts->end(), size_vec.end(), size_offset_tmp.end())),
-                [res_outer =
-                     materialized_outer.data().get()] __device__(auto &t) {
+                [res_outer = materialized_outer.RAW_PTR] LAMBDA_TAG(auto &t) {
                     auto outer_pos = thrust::get<0>(t);
                     auto &size = thrust::get<1>(t);
                     auto &start = thrust::get<2>(t);
