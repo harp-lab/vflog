@@ -53,9 +53,7 @@ void multi_hisa::init_load_vectical(
         // extract the i-th column
         // thrust::device_vector<internal_data_type> column_data(total_tuples);
         data[i].resize(total_tuples);
-        cudaMemcpy(data[i].RAW_PTR, tuples[i].data(),
-                   tuples[i].size() * sizeof(internal_data_type),
-                   cudaMemcpyHostToDevice);
+        thrust::copy(tuples[i].begin(), tuples[i].end(), data[i].begin());
         // save columns raw
     }
     this->total_tuples = total_tuples;
@@ -175,7 +173,7 @@ void multi_hisa::print_raw_data(RelationVersion ver) {
                    data[i].RAW_PTR +
                        get_versioned_columns(ver)[i].raw_offset,
                    get_versioned_size(ver) * sizeof(internal_data_type),
-                   cudaMemcpyDeviceToHost);
+                   COPYD2H);
     }
     // radix sort host
     thrust::host_vector<internal_data_type> column_host(

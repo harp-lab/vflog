@@ -97,7 +97,8 @@ void multi_hisa::newt_self_deduplicate() {
     total_tuples = newt_size + full_size;
 }
 
-inline __device__ __host__ bool
+// inline __device__ __host__ 
+bool
 tuple_compare(uint32_t **full, uint32_t full_idx, uint32_t **newt,
               uint32_t newt_idx, int arity, int default_index_column) {
     if (full[default_index_column][full_idx] !=
@@ -116,7 +117,8 @@ tuple_compare(uint32_t **full, uint32_t full_idx, uint32_t **newt,
     return false;
 }
 
-inline __device__ __host__ bool tuple_eq(uint32_t **full, uint32_t full_idx,
+// inline __device__ __host__ 
+bool tuple_eq(uint32_t **full, uint32_t full_idx,
                                          uint32_t **newt, uint32_t newt_idx,
                                          int arity, int default_index_column) {
     if (full[default_index_column][full_idx] !=
@@ -154,6 +156,7 @@ void multi_hisa::newt_full_deduplicate() {
     }
     device_bitmap_t dup_newt_flags(newt_size, false);
     thrust::transform(
+        EXE_POLICY,
         thrust::make_counting_iterator<uint32_t>(0),
         thrust::make_counting_iterator<uint32_t>(newt_size),
         matched_ranges.begin(), dup_newt_flags.begin(),
@@ -162,7 +165,7 @@ void multi_hisa::newt_full_deduplicate() {
          all_col_full_idx_ptrs =
              full_columns[default_index_column].sorted_indices.RAW_PTR,
          default_index_column = default_index_column,
-         arity = arity] LAMBDA_TAG(auto newt_index, uint64_t range) -> bool {
+         arity = arity] __host__ (auto newt_index, uint64_t range) -> bool {
             if (range == UINT32_MAX) {
                 return false;
             }

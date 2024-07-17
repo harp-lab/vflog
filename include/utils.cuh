@@ -1,5 +1,6 @@
 
 #pragma once
+#define THRUST_HOST_SYSTEM THRUST_HOST_SYSTEM_TBB
 
 #include <cstdint>
 #include <map>
@@ -19,6 +20,9 @@
 #include <thrust/execution_policy.h>
 #include <thrust/memory.h>
 
+// #define THRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_TBB
+#define COPYD2H cudaMemcpyHostToHost
+
 #define checkCuda(ans)                                                         \
     { gpuAssert((ans), __FILE__, __LINE__); }
 
@@ -34,8 +38,8 @@ inline void gpuAssert(cudaError_t code, const char *file, int line,
     }
 }
 
-#define LAMBDA_TAG __device__
-#define RAW_PTR data().get()
+#define LAMBDA_TAG __host__
+#define RAW_PTR data()
 
 struct KernelTimer {
     cudaEvent_t start;
@@ -68,8 +72,8 @@ enum RelationVersion { DELTA, FULL, NEWT };
 
 // #define EXE_POLICY thrust::device
 // #define DEVICE_VECTOR thrust::device_vector
-#define EXE_POLICY rmm::exec_policy()
-#define DEVICE_VECTOR rmm::device_vector
+#define EXE_POLICY thrust::host
+#define DEVICE_VECTOR thrust::host_vector
 #define HOST_VECTOR thrust::host_vector
 #define DEFAULT_SET_HASH_MAP true
 #define DEFAULT_LOAD_FACTOR 0.9
@@ -85,7 +89,7 @@ using device_data_t = DEVICE_VECTOR<internal_data_type>;
 using device_indices_t = DEVICE_VECTOR<internal_data_type>;
 using device_bitmap_t = DEVICE_VECTOR<bool>;
 
-using device_internal_data_ptr = thrust::device_ptr<internal_data_type>;
+using device_internal_data_ptr = internal_data_type*;
 
 // higher 32 bit is the postion in sorted indices, lower is offset
 using device_ranges_t = DEVICE_VECTOR<comp_range_t>;

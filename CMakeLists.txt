@@ -7,10 +7,10 @@ if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
     set(CMAKE_CUDA_ARCHITECTURES 80)
 endif()
 
-# find_package(MPI REQUIRED)
+find_package(MPI REQUIRED)
 
 # # openmp and tbb for CPU backend
-# find_package(OpenMP REQUIRED)
+find_package(OpenMP REQUIRED)
 # find_package(TBB REQUIRED)
 
 if(OPENMP_FOUND)
@@ -136,6 +136,13 @@ endfunction()
 
 rapids_cpm_rmm()
 
+# add oneTBB in CPM
+CPMAddPackage(
+    NAME TBB
+    GIT_REPOSITORY https://github.com/oneapi-src/oneTBB.git
+    GIT_TAG v2021.13.0
+)
+
 # using test
 include(CTest)
 
@@ -163,7 +170,7 @@ target_compile_features(gpu_ra PUBLIC cxx_std_17)
 target_compile_definitions(gpu_ra PUBLIC)
 target_include_directories(gpu_ra PUBLIC ${gpu_ra_include})
 
-target_link_libraries(gpu_ra rmm::rmm cuco)
+target_link_libraries(gpu_ra rmm::rmm cuco TBB::tbb) 
 
 set_target_properties(gpu_ra PROPERTIES CUDA_SEPARABLE_COMPILATION ON CUDA_ARCHITECTURES "80")
 target_compile_options(gpu_ra PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:
