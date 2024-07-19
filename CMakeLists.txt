@@ -1,11 +1,10 @@
 cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
-project(vflog LANGUAGES CXX CUDA)
+project(vflog LANGUAGES CXX HIP)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE CACHE INTERNAL "")
 
-if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
-    set(CMAKE_CUDA_ARCHITECTURES 80)
-endif()
+
+
 
 # find_package(MPI REQUIRED)
 
@@ -13,13 +12,6 @@ endif()
 # find_package(OpenMP REQUIRED)
 # find_package(TBB REQUIRED)
 
-if(OPENMP_FOUND)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    # set nvcc cmake flag for openmp
-    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -fopenmp")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-endif()
 
 # # Add the cuco and rmm dependencies
 # if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/gdlog_RAPIDS.cmake)
@@ -164,8 +156,8 @@ set(gpu_ra_include "${PROJECT_SOURCE_DIR}/include")
 # set(test_dir "${PROJECT_SOURCE_DIR}/test")
 
 file(GLOB source_file_gpu_ra
-    "${gpu_ra_src}/*.cu"
-    "${gpu_ra_src}/ra/*.cu"
+    "${gpu_ra_src}/*.hip"
+    "${gpu_ra_src}/ra/*.hip"
     "${gpu_ra_src}/*.cpp"
     "${gpu_ra_include}/*.h"
     "${gpu_ra_include}/*.cuh"
@@ -178,7 +170,7 @@ target_include_directories(gpu_ra PUBLIC ${gpu_ra_include})
 
 target_link_libraries(gpu_ra)
 
-set_target_properties(gpu_ra PROPERTIES CUDA_SEPARABLE_COMPILATION ON CUDA_ARCHITECTURES "80")
+set_target_properties(gpu_ra PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 target_compile_options(gpu_ra PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:
     -lineinfo
     --expt-relaxed-constexpr

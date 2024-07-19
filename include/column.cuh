@@ -5,7 +5,6 @@
 #include "hash.cuh"
 // #include <cuco/dynamic_map.cuh>
 // #include <cuco/static_map.cuh>
-#include <cuda/functional>
 
 namespace vflog {
 

@@ -23,13 +23,13 @@
 #define checkCuda(ans)                                                         \
     { gpuAssert((ans), __FILE__, __LINE__); }
 
-inline void gpuAssert(cudaError_t code, const char *file, int line,
+inline void gpuAssert(hipError_t code, const char *file, int line,
                       bool abort = true) {
-    if (code != cudaSuccess) {
-        fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file,
+    if (code != hipSuccess) {
+        fprintf(stderr, "GPUassert: %s %s %d\n", hipGetErrorString(code), file,
                 line);
         if (abort) {
-            cudaDeviceReset();
+            hipDeviceReset();
             exit(code);
         }
     }
@@ -39,27 +39,27 @@ inline void gpuAssert(cudaError_t code, const char *file, int line,
 #define RAW_PTR data().get()
 
 struct KernelTimer {
-    cudaEvent_t start;
-    cudaEvent_t stop;
+    hipEvent_t start;
+    hipEvent_t stop;
 
     KernelTimer() {
-        cudaEventCreate(&start);
-        cudaEventCreate(&stop);
+        hipEventCreate(&start);
+        hipEventCreate(&stop);
     }
 
     ~KernelTimer() {
-        cudaEventDestroy(start);
-        cudaEventDestroy(stop);
+        hipEventDestroy(start);
+        hipEventDestroy(stop);
     }
 
-    void start_timer() { cudaEventRecord(start, 0); }
+    void start_timer() { hipEventRecord(start, 0); }
 
-    void stop_timer() { cudaEventRecord(stop, 0); }
+    void stop_timer() { hipEventRecord(stop, 0); }
 
     float get_spent_time() {
         float elapsed;
-        cudaEventSynchronize(stop);
-        cudaEventElapsedTime(&elapsed, start, stop);
+        hipEventSynchronize(stop);
+        hipEventElapsedTime(&elapsed, start, stop);
         elapsed /= 1000.0;
         return elapsed;
     }

@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include <cuda/functional>
 
 #include "buffer.cuh"
 #include "column.cuh"
