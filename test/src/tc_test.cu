@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <thrust/sequence.h>
-#include <rmm/mr/device/managed_memory_resource.hpp>
+// #include <rmm/mr/device/managed_memory_resource.hpp>
 
 void tc_barebone(char *data_path) {
     auto global_buffer = std::make_shared<vflog::d_buffer>(40960);
@@ -105,23 +105,23 @@ int main(int argc, char **argv) {
         return 1;
     }
     // enable_rmm_allocator();
-    rmm::mr::cuda_memory_resource cuda_mr{};
+    // rmm::mr::cuda_memory_resource cuda_mr{};
     // rmm::mr::set_current_device_resource(&cuda_mr);
     // first arg is data path
     char *data_path = argv[1];
     int memory_system_flag = atoi(argv[2]);
-    if (memory_system_flag == 0) {
-        rmm::mr::set_current_device_resource(&cuda_mr);
-    } else if (memory_system_flag == 1) {
-        rmm::mr::pool_memory_resource<rmm::mr::cuda_memory_resource> mr{
-        &cuda_mr, 4 * 256 * 1024};
-        rmm::mr::set_current_device_resource(&mr);
-    } else if (memory_system_flag == 2) {
-        rmm::mr::managed_memory_resource mr{};
-        rmm::mr::set_current_device_resource(&mr);
-    } else {
-        rmm::mr::set_current_device_resource(&cuda_mr);
-    }
+    // if (memory_system_flag == 0) {
+    //     rmm::mr::set_current_device_resource(&cuda_mr);
+    // } else if (memory_system_flag == 1) {
+    //     rmm::mr::pool_memory_resource<rmm::mr::cuda_memory_resource> mr{
+    //     &cuda_mr, 4 * 256 * 1024};
+    //     rmm::mr::set_current_device_resource(&mr);
+    // } else if (memory_system_flag == 2) {
+    //     rmm::mr::managed_memory_resource mr{};
+    //     rmm::mr::set_current_device_resource(&mr);
+    // } else {
+    //     rmm::mr::set_current_device_resource(&cuda_mr);
+    // }
 
     tc_barebone(data_path);
     return 0;

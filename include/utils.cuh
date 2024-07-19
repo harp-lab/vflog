@@ -6,16 +6,17 @@
 #include <memory>
 #include <string>
 #include <thrust/host_vector.h>
+#include <thrust/device_vector.h>
 
 #include <assert.h>
 // #include <cuda_runtime.h>
 #include <iostream>
 
 // use librmm
-#include <rmm/device_vector.hpp>
-#include <rmm/exec_policy.hpp>
-#include <rmm/mr/device/cuda_memory_resource.hpp>
-#include <rmm/mr/device/per_device_resource.hpp>
+// #include <rmm/device_vector.hpp>
+// #include <rmm/exec_policy.hpp>
+// #include <rmm/mr/device/cuda_memory_resource.hpp>
+// #include <rmm/mr/device/per_device_resource.hpp>
 #include <thrust/execution_policy.h>
 #include <thrust/memory.h>
 
@@ -66,11 +67,10 @@ struct KernelTimer {
 
 enum RelationVersion { DELTA, FULL, NEWT };
 
-
-// #define EXE_POLICY thrust::device
-// #define DEVICE_VECTOR thrust::device_vector
-#define EXE_POLICY rmm::exec_policy()
-#define DEVICE_VECTOR rmm::device_vector
+#define EXE_POLICY thrust::device
+#define DEVICE_VECTOR thrust::device_vector
+// #define EXE_POLICY rmm::exec_policy()
+// #define DEVICE_VECTOR rmm::device_vector
 #define HOST_VECTOR thrust::host_vector
 #define DEFAULT_SET_HASH_MAP true
 #define DEFAULT_LOAD_FACTOR 0.9
@@ -122,11 +122,11 @@ enum IndexStrategy { EAGER, LAZY };
 
 } // namespace vflog
 
-#include <rmm/mr/device/pool_memory_resource.hpp>
+// #include <rmm/mr/device/pool_memory_resource.hpp>
 
-inline void enable_rmm_allocator() {
-    rmm::mr::cuda_memory_resource cuda_mr{};
-    // rmm::mr::pool_memory_resource<rmm::mr::cuda_memory_resource> mr{
-    //     &cuda_mr, 4 * 256 * 1024};
-    // rmm::mr::set_current_device_resource(&mr);
-}
+// inline void enable_rmm_allocator() {
+//     rmm::mr::cuda_memory_resource cuda_mr{};
+//     // rmm::mr::pool_memory_resource<rmm::mr::cuda_memory_resource> mr{
+//     //     &cuda_mr, 4 * 256 * 1024};
+//     // rmm::mr::set_current_device_resource(&mr);
+// }

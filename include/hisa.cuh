@@ -11,7 +11,7 @@
 #include <cstdint>
 // #include <functional>
 
-#include <cuda/std/chrono>
+#include <chrono>
 #include <iostream>
 #include <memory>
 #include <thrust/device_ptr.h>

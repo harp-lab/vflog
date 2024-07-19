@@ -13,6 +13,7 @@
 #include <thrust/count.h>
 #include <thrust/remove.h>
 #include <thrust/iterator/discard_iterator.h>
+#include <thrust/iterator/constant_iterator.h>
 
 namespace vflog {
 
@@ -57,9 +58,9 @@ void multi_hisa::persist_newt() {
     // clear the index of delta
     for (int i = 0; i < arity; i++) {
         delta_columns[i].sorted_indices.resize(0);
-        delta_columns[i].sorted_indices.shrink_to_fit();
+        // delta_columns[i].sorted_indices.shrink_to_fit();
         delta_columns[i].unique_v.resize(0);
-        delta_columns[i].unique_v.shrink_to_fit();
+        // delta_columns[i].unique_v.shrink_to_fit();
         delta_columns[i].clear_unique_v();
         if (delta_columns[i].unique_v_map) {
             delta_columns[i].clear_map();
@@ -109,7 +110,6 @@ void multi_hisa::persist_newt() {
 
     auto merge_start = std::chrono::high_resolution_clock::now();
     // sort and merge newt
-    device_data_t tmp_newt_v(newt_size);
     // device_data_t tmp_full_v(full_size+newt_size);
     // merge column 0, this is different then the other columns
     merge_column0_index(*this);
@@ -126,8 +126,6 @@ void multi_hisa::persist_newt() {
 
         newt_column.sorted_indices.resize(newt_size);
         auto newt_head = data[i].begin() + newt_column.raw_offset;
-        thrust::copy(EXE_POLICY, newt_head, newt_head + newt_size,
-                     tmp_newt_v.begin());
         thrust::sequence(EXE_POLICY,
                          newt_column.sorted_indices.begin(),
                          newt_column.sorted_indices.end(), full_size);
@@ -172,8 +170,6 @@ void multi_hisa::persist_newt() {
         full_column.raw_size = full_size + newt_size;
     }
     full_size += newt_size;
-    tmp_newt_v.resize(0);
-    tmp_newt_v.shrink_to_fit();
     auto merge_end = std::chrono::high_resolution_clock::now();
     merge_time += std::chrono::duration_cast<std::chrono::microseconds>(
                       merge_end - merge_start)
