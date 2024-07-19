@@ -18,7 +18,7 @@ enum class RAOperatorType {
 };
 
 struct RelationalAlgebraOperator {
-    using ID_t = uint32_t;
+    using ID_t = unsigned int;
     ID_t id;
     RAOperatorType type;
     bool debug_flag = false;

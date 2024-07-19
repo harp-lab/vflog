@@ -66,6 +66,7 @@ void tc_barebone(char *data_path) {
         vflog::column_join(edge, FULL, 0, path, path_version, 1, cached, "path", matched_edge_ptr);
         cached["edge"] = matched_edge_ptr;
         size_t raw_newt_size = cached["path"]->size();
+        // std::cout << "Raw newt size: " << raw_newt_size << std::endl;
         // materialize
         path.allocate_newt(raw_newt_size);
         vflog::column_copy(path, path_version, 0, path, NEWT, 0, cached["path"]);

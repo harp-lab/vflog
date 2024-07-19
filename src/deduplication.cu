@@ -54,12 +54,12 @@ void multi_hisa::newt_self_deduplicate() {
         all_col_ptrs[i] = data[i].RAW_PTR + columns[i].raw_offset;
     }
     thrust::transform(
-        thrust::make_counting_iterator<uint32_t>(0),
-        thrust::make_counting_iterator<uint32_t>(dup_flags.size()),
+        thrust::make_counting_iterator<unsigned int>(0),
+        thrust::make_counting_iterator<unsigned int>(dup_flags.size()),
         dup_flags.begin(),
         [all_col_ptrs = all_col_ptrs.data(), total = dup_flags.size(),
          sorted_indices = sorted_indices.RAW_PTR,
-         arity = arity] LAMBDA_TAG(uint32_t i) -> bool {
+         arity = arity] LAMBDA_TAG(unsigned int i) -> bool {
             if (i == 0) {
                 return false;
             } else {
@@ -98,8 +98,8 @@ void multi_hisa::newt_self_deduplicate() {
 }
 
 inline __device__ __host__ bool
-tuple_compare(uint32_t **full, uint32_t full_idx, uint32_t **newt,
-              uint32_t newt_idx, int arity, int default_index_column) {
+tuple_compare(unsigned int **full, unsigned int full_idx, unsigned int **newt,
+              unsigned int newt_idx, int arity, int default_index_column) {
     if (full[default_index_column][full_idx] !=
         newt[default_index_column][newt_idx]) {
         return full[default_index_column][full_idx] <
@@ -116,8 +116,8 @@ tuple_compare(uint32_t **full, uint32_t full_idx, uint32_t **newt,
     return false;
 }
 
-inline __device__ __host__ bool tuple_eq(uint32_t **full, uint32_t full_idx,
-                                         uint32_t **newt, uint32_t newt_idx,
+inline __device__ __host__ bool tuple_eq(unsigned int **full, unsigned int full_idx,
+                                         unsigned int **newt, unsigned int newt_idx,
                                          int arity, int default_index_column) {
     if (full[default_index_column][full_idx] !=
         newt[default_index_column][newt_idx]) {
@@ -154,22 +154,22 @@ void multi_hisa::newt_full_deduplicate() {
     }
     device_bitmap_t dup_newt_flags(newt_size, false);
     thrust::transform(
-        thrust::make_counting_iterator<uint32_t>(0),
-        thrust::make_counting_iterator<uint32_t>(newt_size),
+        thrust::make_counting_iterator<unsigned int>(0),
+        thrust::make_counting_iterator<unsigned int>(newt_size),
         matched_ranges.begin(), dup_newt_flags.begin(),
         [all_col_news_ptrs = all_col_news_ptrs.RAW_PTR,
          all_col_fulls_ptrs = all_col_fulls_ptrs.RAW_PTR,
          all_col_full_idx_ptrs =
              full_columns[default_index_column].sorted_indices.RAW_PTR,
          default_index_column = default_index_column,
-         arity = arity] LAMBDA_TAG(auto newt_index, uint64_t range) -> bool {
+         arity = arity] LAMBDA_TAG(auto newt_index, unsigned long long range) -> bool {
             if (range == UINT32_MAX) {
                 return false;
             }
             // higher 32 bit is the start index, lower 32 bit is the offset
-            uint32_t full_pos_start = static_cast<uint32_t>(range >> 32);
-            uint32_t full_pos_offset =
-                static_cast<uint32_t>(range & 0xFFFFFFFF);
+            unsigned int full_pos_start = static_cast<unsigned int>(range >> 32);
+            unsigned int full_pos_offset =
+                static_cast<unsigned int>(range & 0xFFFFFFFF);
             // binary search
             int left = 0;
             int right = full_pos_offset - 1;

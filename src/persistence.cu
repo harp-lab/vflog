@@ -28,8 +28,8 @@ void merge_column0_index(multi_hisa &h) {
     thrust::merge(
         EXE_POLICY, full_column0.sorted_indices.begin(),
         full_column0.sorted_indices.end(),
-        thrust::make_counting_iterator<uint32_t>(h.full_size),
-        thrust::make_counting_iterator<uint32_t>(h.full_size + h.newt_size),
+        thrust::make_counting_iterator<unsigned int>(h.full_size),
+        thrust::make_counting_iterator<unsigned int>(h.full_size + h.newt_size),
         merged_idx.begin(),
         [arity = h.arity, default_index_column = h.default_index_column,
          raw_data = all_col_ptrs.RAW_PTR] LAMBDA_TAG(auto full_idx,

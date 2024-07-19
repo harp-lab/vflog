@@ -136,6 +136,19 @@ endfunction()
 
 rapids_cpm_rmm()
 
+# include CPM
+# CPMAddPackage(
+#   NAME TBB
+#   VERSION 2021.13.0
+#   GITHUB_REPOSITORY oneapi-src/oneTBB
+# )
+
+# CPMAddPackage(
+#     NAME Kokkos
+#     GITHUB_REPOSITORY kokkos/kokkos
+#     GIT_TAG develop
+# )
+
 # using test
 include(CTest)
 

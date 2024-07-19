@@ -76,7 +76,12 @@
         "csignal": "cpp",
         "unordered_set": "cpp",
         "regex": "cpp",
-        "span": "cpp"
+        "span": "cpp",
+        "propagate_const": "cpp",
+        "typeindex": "cpp",
+        "forward_list": "cpp",
+        "__verbose_abort": "cpp",
+        "__config": "cpp"
     },
     "codeQL.githubDatabase.download": "never",
     "C_Cpp.errorSquiggles": "enabled"

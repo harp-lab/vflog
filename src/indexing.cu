@@ -36,7 +36,7 @@ void multi_hisa::build_index(VerticalColumn &column,
         buffer->reserve(uniq_size);
         auto uniq_end = thrust::unique_by_key_copy(
             EXE_POLICY, column_data.begin(), column_data.end(),
-            thrust::make_counting_iterator<uint32_t>(0),
+            thrust::make_counting_iterator<unsigned int>(0),
             thrust::make_discard_iterator(), buffer->data());
     } else {
         if (unique_gather_flag) {
@@ -56,7 +56,7 @@ void multi_hisa::build_index(VerticalColumn &column,
                                               column.sorted_indices.begin()),
             thrust::make_permutation_iterator(raw_ver_head,
                                               column.sorted_indices.end()),
-            thrust::make_counting_iterator<uint32_t>(0),
+            thrust::make_counting_iterator<unsigned int>(0),
             thrust::make_discard_iterator(), buffer->data());
         if (!unique_gather_flag) {
             uniq_size = uniq_end.second - buffer->data();

@@ -27,13 +27,13 @@ void read_kary_relation(const std::string &filename, vflog::multi_hisa &h,
     HOST_VECTOR<HOST_VECTOR<vflog::internal_data_type>> tuples_vertical(k);
 
     std::string line;
-    uint32_t line_count = 0;
+    unsigned int line_count = 0;
     while (std::getline(file, line)) {
         std::istringstream iss(line);
         HOST_VECTOR<vflog::internal_data_type> tokens;
         std::string token;
         while (std::getline(iss, token, '\t')) {
-            // trim whitespace on the token and convert into a uint32_t
+            // trim whitespace on the token and convert into a unsigned int
             auto trimmed = trim(token);
             tokens.push_back(std::stoi(trimmed));
         }
@@ -71,14 +71,14 @@ void read_kary_relation(const std::string &filename, vflog::multi_hisa &h,
     HOST_VECTOR<HOST_VECTOR<vflog::internal_data_type>> tuples_vertical(k);
 
     std::string line;
-    uint32_t line_count = 0;
+    unsigned int line_count = 0;
 
     while (std::getline(file, line)) {
         std::istringstream iss(line);
         HOST_VECTOR<vflog::internal_data_type> tokens;
         std::string token;
         while (std::getline(iss, token, '\t')) {
-            // trim whitespace on the token and convert into a uint32_t
+            // trim whitespace on the token and convert into a unsigned int
             auto trimmed = trim(token);
             if (is_number(trimmed)) {
                 tokens.push_back(std::stoi(trimmed));

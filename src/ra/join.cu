@@ -64,15 +64,15 @@ void column_join(multi_hisa &inner, RelationVersion inner_ver, size_t inner_idx,
     device_data_t size_vec(matched_ranges.size());
     thrust::transform(EXE_POLICY, matched_ranges.begin(), matched_ranges.end(),
                       size_vec.begin(), [] LAMBDA_TAG(auto &t) {
-                          return static_cast<uint32_t>(t);
+                          return static_cast<unsigned int>(t);
                       });
 
     device_ranges_t &offset_vec = matched_ranges;
     thrust::transform(
         EXE_POLICY, offset_vec.begin(), offset_vec.end(), offset_vec.begin(),
-        [] LAMBDA_TAG(auto &t) { return static_cast<uint64_t>(t >> 32); });
+        [] LAMBDA_TAG(auto &t) { return static_cast<unsigned long long>(t >> 32); });
 
-    uint32_t total_matched_size =
+    unsigned int total_matched_size =
         thrust::reduce(EXE_POLICY, size_vec.begin(), size_vec.end());
     device_data_t size_offset_tmp(size_vec.size());
     thrust::exclusive_scan(EXE_POLICY, size_vec.begin(), size_vec.end(),
@@ -104,6 +104,7 @@ void column_join(multi_hisa &inner, RelationVersion inner_ver, size_t inner_idx,
                         auto &inner_pos = thrust::get<1>(t);
                         auto &size = thrust::get<2>(t);
                         auto &start = thrust::get<3>(t);
+                        // printf("outer_pos: %d, inner_pos: %d, size: %d, start: %d\n", outer_pos, inner_pos, size, start);
                         for (int i = 0; i < size; i++) {
                             res_inner[start + i] =
                                 inner_sorted_idx[inner_pos + i];

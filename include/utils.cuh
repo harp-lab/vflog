@@ -66,6 +66,7 @@ struct KernelTimer {
 
 enum RelationVersion { DELTA, FULL, NEWT };
 
+
 // #define EXE_POLICY thrust::device
 // #define DEVICE_VECTOR thrust::device_vector
 #define EXE_POLICY rmm::exec_policy()
@@ -75,11 +76,11 @@ enum RelationVersion { DELTA, FULL, NEWT };
 #define DEFAULT_LOAD_FACTOR 0.9
 
 namespace vflog {
-using internal_data_type = uint32_t;
+using internal_data_type = unsigned int;
 
-using offset_type = uint64_t;
-using comp_range_t = uint64_t;
-using comp_pair_t = uint64_t;
+using offset_type = unsigned long long;
+using comp_range_t = unsigned long long;
+using comp_pair_t = unsigned long long;
 
 using device_data_t = DEVICE_VECTOR<internal_data_type>;
 using device_indices_t = DEVICE_VECTOR<internal_data_type>;
@@ -99,21 +100,21 @@ using ptr_and_size_t =
 using thrust_buffer_ptr_t =
     thrust::pointer<internal_data_type, thrust::device_system_tag>;
 
-inline uint64_t __device__ __host__ compress_u32(uint32_t &a, uint32_t &b) {
-    return ((uint64_t)a << 32) | b;
+inline unsigned long long __device__ __host__ compress_u32(unsigned int &a, unsigned int &b) {
+    return ((unsigned long long)a << 32) | b;
 }
 
 // functor to get the higher 32 bit
 struct get_higher {
-    __host__ __device__ __host__ uint32_t operator()(const uint64_t &x) const {
-        return (uint32_t)(x >> 32);
+    __host__ __device__ __host__ unsigned int operator()(const unsigned long long &x) const {
+        return (unsigned int)(x >> 32);
     }
 };
 
 // functor to get the lower 32 bit
 struct get_lower {
-    __host__ __device__ __host__ uint32_t operator()(const uint64_t &x) const {
-        return (uint32_t)(x & 0xFFFFFFFF);
+    __host__ __device__ __host__ unsigned int operator()(const unsigned long long &x) const {
+        return (unsigned int)(x & 0xFFFFFFFF);
     }
 };
 

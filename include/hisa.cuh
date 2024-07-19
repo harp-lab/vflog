@@ -38,25 +38,25 @@ struct multi_hisa {
     multi_hisa(int arity, d_buffer_ptr buf = nullptr, size_t default_idx = 0);
 
     // HOST_VECTOR<int> indexed_columns;
-    uint64_t hash_time = 0;
-    uint64_t dedup_time = 0;
-    uint64_t sort_time = 0;
-    uint64_t load_time = 0;
-    uint64_t merge_time = 0;
+    unsigned long long hash_time = 0;
+    unsigned long long dedup_time = 0;
+    unsigned long long sort_time = 0;
+    unsigned long long load_time = 0;
+    unsigned long long merge_time = 0;
 
     bool indexed = false;
     bool unique_gather_flag = false;
 
-    uint32_t full_size = 0;
-    uint32_t delta_size = 0;
-    uint32_t newt_size = 0;
+    unsigned int full_size = 0;
+    unsigned int delta_size = 0;
+    unsigned int newt_size = 0;
 
     size_t default_index_column = 0;
 
     // data array, full/delta/newt all in one
     HOST_VECTOR<device_data_t> data;
     // lexical order of the data in the full
-    // thrust::device_vector<uint32_t> full_lexical_order;
+    // thrust::device_vector<unsigned int> full_lexical_order;
 
     d_buffer_ptr buffer = nullptr;
     device_data_t data_buffer;
@@ -126,7 +126,7 @@ struct multi_hisa {
         }
     }
 
-    uint32_t get_versioned_size(RelationVersion version) {
+    unsigned int get_versioned_size(RelationVersion version) {
         switch (version) {
         case FULL:
             return full_size;
@@ -140,7 +140,7 @@ struct multi_hisa {
     }
 
     // void newt_self_deduplicate();
-    uint32_t get_total_tuples() const { return total_tuples; }
+    unsigned int get_total_tuples() const { return total_tuples; }
 
     offset_type get_capacity() const { return capacity; }
 
