@@ -53,7 +53,7 @@ void merge_column0_index(multi_hisa &h) {
     full_column0.sorted_indices.swap(merged_idx);
 }
 
-void multi_hisa::persist_newt() {
+void multi_hisa::persist_newt(bool dedup) {
     // clear the index of delta
     for (int i = 0; i < arity; i++) {
         delta_columns[i].sorted_indices.resize(0);
@@ -91,7 +91,9 @@ void multi_hisa::persist_newt() {
         return;
     }
 
-    newt_full_deduplicate();
+    if (dedup) {
+        newt_full_deduplicate();
+    }
 
     if (newt_size == 0) {
         // set current delta to 0

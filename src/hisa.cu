@@ -1,5 +1,6 @@
 
 #include "hisa.cuh"
+#include "io.cuh"
 #include <iostream>
 
 #include <thrust/adjacent_difference.h>
@@ -43,6 +44,35 @@ multi_hisa::multi_hisa(int arity, d_buffer_ptr buffer, size_t default_idx) {
         newt_columns[i].column_idx = i;
     }
     set_default_index_column(default_idx);
+}
+
+multi_hisa::multi_hisa(int arity, const char *filename,
+                       d_buffer_ptr buffer, size_t default_idx) {
+    this->arity = arity;
+    newt_size = 0;
+    full_size = 0;
+    delta_size = 0;
+    full_columns.resize(arity);
+    delta_columns.resize(arity);
+    newt_columns.resize(arity);
+    data.resize(arity);
+    if (buffer) {
+        this->buffer = buffer;
+    } else {
+        this->buffer = std::make_shared<d_buffer>(40960);
+    }
+
+    for (int i = 0; i < arity; i++) {
+        full_columns[i].column_idx = i;
+        delta_columns[i].column_idx = i;
+        newt_columns[i].column_idx = i;
+    }
+    set_default_index_column(default_idx);
+
+    // read data from file
+    read_kary_relation(filename, *this, arity);
+    newt_self_deduplicate();
+    persist_newt();
 }
 
 void multi_hisa::init_load_vectical(

@@ -1,0 +1,4 @@
+@source edge[2]: load-csv("../../data/vsp_finan.csv") .
+
+sg(?X, ?Z) :- edge(?X, ?Y), edge(?X, ?Z).
+sg(?X, ?Y) :- sg(?A, ?B), edge(?A, ?X), edge(?B, ?Y) .  

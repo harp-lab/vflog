@@ -76,8 +76,10 @@
         "csignal": "cpp",
         "unordered_set": "cpp",
         "regex": "cpp",
-        "span": "cpp"
+        "span": "cpp",
+        "forward_list": "cpp",
+        "hash_map": "cpp",
+        "hash_set": "cpp",
+        "valarray": "cpp"
     },
-    "codeQL.githubDatabase.download": "never",
-    "C_Cpp.errorSquiggles": "enabled"
 }

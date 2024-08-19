@@ -100,7 +100,7 @@ void column_join(multi_hisa &inner, RelationVersion inner_ver, size_t inner_idx,
                      res_outer = materialized_outer.RAW_PTR,
                      inner_sorted_idx = inner_column.sorted_indices
                                             .RAW_PTR] LAMBDA_TAG(auto &t) {
-                        auto outer_pos = thrust::get<0>(t);
+                        auto &outer_pos = thrust::get<0>(t);
                         auto &inner_pos = thrust::get<1>(t);
                         auto &size = thrust::get<2>(t);
                         auto &start = thrust::get<3>(t);

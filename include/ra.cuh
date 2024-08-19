@@ -63,4 +63,10 @@ void column_copy_indices(multi_hisa &src, RelationVersion src_version,
                          std::shared_ptr<device_indices_t> &indices,
                          bool append = false);
 
+void relational_copy(multi_hisa &src, RelationVersion src_version,
+                     multi_hisa &dst, RelationVersion dst_version,
+                     host_buf_ref_t &cached_indices,
+                     std::vector<std::string> input_meta_vars,
+                     std::vector<std::string> output_meta_vars);
+
 } // namespace vflog

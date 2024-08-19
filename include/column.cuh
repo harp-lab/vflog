@@ -33,8 +33,14 @@ struct GpuSimplMap {
 // higher 32 bit is the value, lower is offset in data
 // using index_value = uint64_t;
 // using Map = std::unordered_map<internal_data_type, offset_type>;
-using GpuMap = cuco::static_map<internal_data_type, comp_range_t>;
-using GpuMapReadRef = GpuMap::ref_type<cuco::find_tag>;
+using GpuMap = cuco::static_map<
+    internal_data_type,
+    comp_range_t,
+    cuco::extent<std::size_t>,
+    cuda::thread_scope_device,
+    thrust::equal_to<internal_data_type>,
+    cuco::linear_probing<4, cuco::default_hash_function<internal_data_type>>>;
+// using GpuMapReadRef = GpuMap::ref_type<cuco::find_tag>;
 // using GpuMap = cuco::dynamic_map<internal_data_type, comp_range_t>;
 using GpuMapPair = cuco::pair<internal_data_type, comp_range_t>;
 

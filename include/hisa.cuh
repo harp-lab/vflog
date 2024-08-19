@@ -37,6 +37,10 @@ struct multi_hisa {
 
     multi_hisa(int arity, d_buffer_ptr buf = nullptr, size_t default_idx = 0);
 
+    // contstruct with init data
+    multi_hisa(int arity, const char *filename, d_buffer_ptr buf = nullptr,
+               size_t default_idx = 0);
+
     // HOST_VECTOR<int> indexed_columns;
     uint64_t hash_time = 0;
     uint64_t dedup_time = 0;
@@ -94,7 +98,10 @@ struct multi_hisa {
     // 2. merge newt to full
     // 3. create the index of newt, rename to delta
     // 4. swap the newt and delta
-    void persist_newt();
+    void persist_newt(bool dedup = true);
+
+    void diff(multi_hisa &other, RelationVersion version,
+              device_indices_t &diff_indices);
 
     void print_all(bool sorted = false);
 
@@ -105,6 +112,22 @@ struct multi_hisa {
     void clear();
 
     void allocate_newt(size_t size);
+
+    void set_versioned_size(RelationVersion version, uint32_t size) {
+        switch (version) {
+        case FULL:
+            full_size = size;
+            break;
+        case DELTA:
+            delta_size = size;
+            break;
+        case NEWT:
+            newt_size = size;
+            break;
+        default:
+            break;
+        }
+    }
 
     internal_data_type *get_raw_data_ptrs(RelationVersion version,
                                           int column_idx) {

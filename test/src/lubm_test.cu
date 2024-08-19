@@ -13,176 +13,119 @@ void lubm(char *data_path) {
     KernelTimer timer;
     timer.start_timer();
     // input relations
-    vflog::multi_hisa src_advisor(2);
     std::string src_advisor_file =
         std::string(data_path) + "/src_advisor.facts";
-    vflog::read_kary_relation(src_advisor_file.c_str(), src_advisor, 2);
-    vflog::multi_hisa src_AssistantProfessor(1);
+    vflog::multi_hisa src_advisor(2, src_advisor_file.c_str(), global_buffer);
     std::string src_AssistantProfessor_file =
         std::string(data_path) + "/src_AssistantProfessor.facts";
-    vflog::read_kary_relation(src_AssistantProfessor_file.c_str(),
-                              src_AssistantProfessor, 1);
-    vflog::multi_hisa src_AssociateProfessor(1);
+    vflog::multi_hisa src_AssistantProfessor(
+        1, src_AssistantProfessor_file.c_str(), global_buffer);
     std::string src_AssociateProfessor_file =
         std::string(data_path) + "/src_AssociateProfessor.facts";
-    vflog::read_kary_relation(src_AssociateProfessor_file.c_str(),
-                              src_AssociateProfessor, 1);
-    vflog::multi_hisa src_Course(1);
+    vflog::multi_hisa src_AssociateProfessor(
+        1, src_AssociateProfessor_file.c_str(), global_buffer);
     std::string src_Course_file = std::string(data_path) + "/src_Course.facts";
-    vflog::read_kary_relation(src_Course_file.c_str(), src_Course, 1);
-    vflog::multi_hisa src_Department(1);
+    vflog::multi_hisa src_Course(1, src_Course_file.c_str(), global_buffer);
     std::string src_Department_file =
         std::string(data_path) + "/src_Department.facts";
-    vflog::read_kary_relation(src_Department_file.c_str(), src_Department, 1);
-    vflog::multi_hisa src_doctoralDegreeFrom(2);
+    vflog::multi_hisa src_Department(1, src_Department_file.c_str(),
+                                     global_buffer);
     std::string src_doctoralDegreeFrom_file =
         std::string(data_path) + "/src_doctoralDegreeFrom.facts";
-    vflog::read_kary_relation(src_doctoralDegreeFrom_file.c_str(),
-                              src_doctoralDegreeFrom, 2);
-    vflog::multi_hisa src_emailAddress(2);
+    vflog::multi_hisa src_doctoralDegreeFrom(
+        2, src_doctoralDegreeFrom_file.c_str(), global_buffer);
     std::string src_emailAddress_file =
         std::string(data_path) + "/src_emailAddress.facts";
-    vflog::read_kary_relation(src_emailAddress_file.c_str(), src_emailAddress,
-                              2);
-    vflog::multi_hisa src_FullProfessor(1);
+    vflog::multi_hisa src_emailAddress(2, src_emailAddress_file.c_str(),
+                                       global_buffer);
     std::string src_FullProfessor_file =
         std::string(data_path) + "/src_FullProfessor.facts";
-    vflog::read_kary_relation(src_FullProfessor_file.c_str(), src_FullProfessor,
-                              1);
-    vflog::multi_hisa src_GraduateCourse(1);
+    vflog::multi_hisa src_FullProfessor(1, src_FullProfessor_file.c_str(),
+                                        global_buffer);
     std::string src_GraduateCourse_file =
         std::string(data_path) + "/src_GraduateCourse.facts";
-    vflog::read_kary_relation(src_GraduateCourse_file.c_str(),
-                              src_GraduateCourse, 1);
-    vflog::multi_hisa src_GraduateStudent(1);
+    vflog::multi_hisa src_GraduateCourse(1, src_GraduateCourse_file.c_str(),
+                                         global_buffer);
     std::string src_GraduateStudent_file =
         std::string(data_path) + "/src_GraduateStudent.facts";
-    vflog::read_kary_relation(src_GraduateStudent_file.c_str(),
-                              src_GraduateStudent, 1);
-    vflog::multi_hisa src_headOf(2);
+    vflog::multi_hisa src_GraduateStudent(1, src_GraduateStudent_file.c_str(),
+                                          global_buffer);
     std::string src_headOf_file = std::string(data_path) + "/src_headOf.facts";
-    vflog::read_kary_relation(src_headOf_file.c_str(), src_headOf, 2);
-    vflog::multi_hisa src_Lecturer(1);
+    vflog::multi_hisa src_headOf(2, src_headOf_file.c_str(), global_buffer);
     std::string src_Lecturer_file =
         std::string(data_path) + "/src_Lecturer.facts";
-    vflog::read_kary_relation(src_Lecturer_file.c_str(), src_Lecturer, 1);
-    vflog::multi_hisa src_mastersDegreeFrom(2);
+    vflog::multi_hisa src_Lecturer(1, src_Lecturer_file.c_str(), global_buffer);
     std::string src_mastersDegreeFrom_file =
         std::string(data_path) + "/src_mastersDegreeFrom.facts";
-    vflog::read_kary_relation(src_mastersDegreeFrom_file.c_str(),
-                              src_mastersDegreeFrom, 2);
-    vflog::multi_hisa src_memberOf(2);
+    vflog::multi_hisa src_mastersDegreeFrom(
+        2, src_mastersDegreeFrom_file.c_str(), global_buffer);
     std::string src_memberOf_file =
         std::string(data_path) + "/src_memberOf.facts";
-    vflog::read_kary_relation(src_memberOf_file.c_str(), src_memberOf, 2);
-    vflog::multi_hisa src_name(2);
+    vflog::multi_hisa src_memberOf(2, src_memberOf_file.c_str(), global_buffer);
     std::string src_name_file = std::string(data_path) + "/src_name.facts";
-    vflog::read_kary_relation(src_name_file.c_str(), src_name, 2);
-    vflog::multi_hisa src_Publication(1);
+    vflog::multi_hisa src_name(2, src_name_file.c_str(), global_buffer);
     std::string src_Publication_file =
         std::string(data_path) + "/src_Publication.facts";
-    vflog::read_kary_relation(src_Publication_file.c_str(), src_Publication, 1);
-    vflog::multi_hisa src_publicationAuthor(2);
+    vflog::multi_hisa src_Publication(1, src_Publication_file.c_str(),
+                                      global_buffer);
     std::string src_publicationAuthor_file =
         std::string(data_path) + "/src_publicationAuthor.facts";
-    vflog::read_kary_relation(src_publicationAuthor_file.c_str(),
-                              src_publicationAuthor, 2);
-    vflog::multi_hisa src_ResearchAssistant(1);
+    vflog::multi_hisa src_publicationAuthor(
+        2, src_publicationAuthor_file.c_str(), global_buffer);
     std::string src_ResearchAssistant_file =
         std::string(data_path) + "/src_ResearchAssistant.facts";
-    vflog::read_kary_relation(src_ResearchAssistant_file.c_str(),
-                              src_ResearchAssistant, 1);
-    vflog::multi_hisa src_ResearchGroup(1);
+    vflog::multi_hisa src_ResearchAssistant(
+        1, src_ResearchAssistant_file.c_str(), global_buffer);
     std::string src_ResearchGroup_file =
         std::string(data_path) + "/src_ResearchGroup.facts";
-    vflog::read_kary_relation(src_ResearchGroup_file.c_str(), src_ResearchGroup,
-                              1);
-    vflog::multi_hisa src_researchInterest(2);
+    vflog::multi_hisa src_ResearchGroup(1, src_ResearchGroup_file.c_str(),
+                                        global_buffer);
     std::string src_researchInterest_file =
         std::string(data_path) + "/src_researchInterest.facts";
-    vflog::read_kary_relation(src_researchInterest_file.c_str(),
-                              src_researchInterest, 2);
-    vflog::multi_hisa src_subOrganizationOf(2, global_buffer, 1);
+    vflog::multi_hisa src_researchInterest(2, src_researchInterest_file.c_str(),
+                                           global_buffer);
     std::string src_subOrganizationOf_file =
         std::string(data_path) + "/src_subOrganizationOf.facts";
-    vflog::read_kary_relation(src_subOrganizationOf_file.c_str(),
-                              src_subOrganizationOf, 2);
-    vflog::multi_hisa src_takesCourse(2);
+    vflog::multi_hisa src_subOrganizationOf(
+        2, src_subOrganizationOf_file.c_str(), global_buffer, 1);
     std::string src_takesCourse_file =
         std::string(data_path) + "/src_takesCourse.facts";
-    vflog::read_kary_relation(src_takesCourse_file.c_str(), src_takesCourse, 2);
-    vflog::multi_hisa src_teacherOf(2);
+    vflog::multi_hisa src_takesCourse(2, src_takesCourse_file.c_str(),
+                                      global_buffer);
     std::string src_teacherOf_file =
         std::string(data_path) + "/src_teacherOf.facts";
-    vflog::read_kary_relation(src_teacherOf_file.c_str(), src_teacherOf, 2);
-    vflog::multi_hisa src_TeachingAssistant(1);
+    vflog::multi_hisa src_teacherOf(2, src_teacherOf_file.c_str(),
+                                    global_buffer);
     std::string src_TeachingAssistant_file =
         std::string(data_path) + "/src_TeachingAssistant.facts";
-    vflog::read_kary_relation(src_TeachingAssistant_file.c_str(),
-                              src_TeachingAssistant, 1);
-    vflog::multi_hisa src_teachingAssistantOf(2);
+    vflog::multi_hisa src_TeachingAssistant(
+        1, src_TeachingAssistant_file.c_str(), global_buffer);
     std::string src_teachingAssistantOf_file =
         std::string(data_path) + "/src_teachingAssistantOf.facts";
-    vflog::read_kary_relation(src_teachingAssistantOf_file.c_str(),
-                              src_teachingAssistantOf, 2);
-    vflog::multi_hisa src_telephone(2);
+    vflog::multi_hisa src_teachingAssistantOf(
+        2, src_teachingAssistantOf_file.c_str(), global_buffer);
     std::string src_telephone_file =
         std::string(data_path) + "/src_telephone.facts";
-    vflog::read_kary_relation(src_telephone_file.c_str(), src_telephone, 2);
-    vflog::multi_hisa src_undergraduateDegreeFrom(2);
+    vflog::multi_hisa src_telephone(2, src_telephone_file.c_str(),
+                                    global_buffer);
     std::string src_undergraduateDegreeFrom_file =
         std::string(data_path) + "/src_undergraduateDegreeFrom.facts";
-    vflog::read_kary_relation(src_undergraduateDegreeFrom_file.c_str(),
-                              src_undergraduateDegreeFrom, 2);
-    vflog::multi_hisa src_UndergraduateStudent(1);
+    vflog::multi_hisa src_undergraduateDegreeFrom(
+        2, src_undergraduateDegreeFrom_file.c_str(), global_buffer);
     std::string src_UndergraduateStudent_file =
         std::string(data_path) + "/src_UndergraduateStudent.facts";
-    vflog::read_kary_relation(src_UndergraduateStudent_file.c_str(),
-                              src_UndergraduateStudent, 1);
-    vflog::multi_hisa src_University(1);
+    vflog::multi_hisa src_UndergraduateStudent(
+        1, src_UndergraduateStudent_file.c_str(), global_buffer);
     std::string src_University_file =
         std::string(data_path) + "/src_University.facts";
-    vflog::read_kary_relation(src_University_file.c_str(), src_University, 1);
-    vflog::multi_hisa src_worksFor(2);
+    vflog::multi_hisa src_University(1, src_University_file.c_str(),
+                                     global_buffer);
     std::string src_worksFor_file =
         std::string(data_path) + "/src_worksFor.facts";
-    vflog::read_kary_relation(src_worksFor_file.c_str(), src_worksFor, 2);
+    vflog::multi_hisa src_worksFor(2, src_worksFor_file.c_str(), global_buffer);
     timer.stop_timer();
     std::cout << "CPU Read time: " << timer.get_spent_time() << std::endl;
 
-    timer.start_timer();
-    // deduplicate
-    src_advisor.newt_self_deduplicate();
-    src_AssistantProfessor.newt_self_deduplicate();
-    src_AssociateProfessor.newt_self_deduplicate();
-    src_Course.newt_self_deduplicate();
-    src_Department.newt_self_deduplicate();
-    src_doctoralDegreeFrom.newt_self_deduplicate();
-    src_emailAddress.newt_self_deduplicate();
-    src_FullProfessor.newt_self_deduplicate();
-    src_GraduateCourse.newt_self_deduplicate();
-    src_GraduateStudent.newt_self_deduplicate();
-    src_headOf.newt_self_deduplicate();
-    src_Lecturer.newt_self_deduplicate();
-    src_mastersDegreeFrom.newt_self_deduplicate();
-    src_memberOf.newt_self_deduplicate();
-    src_name.newt_self_deduplicate();
-    src_Publication.newt_self_deduplicate();
-    src_publicationAuthor.newt_self_deduplicate();
-    src_ResearchAssistant.newt_self_deduplicate();
-    src_ResearchGroup.newt_self_deduplicate();
-    src_researchInterest.newt_self_deduplicate();
-    src_subOrganizationOf.newt_self_deduplicate();
-    src_takesCourse.newt_self_deduplicate();
-    src_teacherOf.newt_self_deduplicate();
-    src_TeachingAssistant.newt_self_deduplicate();
-    src_teachingAssistantOf.newt_self_deduplicate();
-    src_telephone.newt_self_deduplicate();
-    src_undergraduateDegreeFrom.newt_self_deduplicate();
-    src_UndergraduateStudent.newt_self_deduplicate();
-    src_University.newt_self_deduplicate();
-    src_worksFor.newt_self_deduplicate();
-    timer.stop_timer();
     std::cout << "Src Dedup time: " << timer.get_spent_time() << std::endl;
 
     // st-tgds
@@ -190,293 +133,293 @@ void lubm(char *data_path) {
     // create relation first
     timer.start_timer();
     vflog::multi_hisa advisor(2, global_buffer);
-    advisor.allocate_newt(src_advisor.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_advisor, NEWT, 0, advisor, NEWT, 0);
-    vflog::column_copy_all(src_advisor, NEWT, 1, advisor, NEWT, 1);
-    advisor.newt_size = src_advisor.get_versioned_size(NEWT);
-    advisor.total_tuples += src_advisor.get_versioned_size(NEWT);
+    advisor.allocate_newt(src_advisor.get_versioned_size(FULL));
+    vflog::column_copy_all(src_advisor, FULL, 0, advisor, NEWT, 0);
+    vflog::column_copy_all(src_advisor, FULL, 1, advisor, NEWT, 1);
+    advisor.newt_size = src_advisor.get_versioned_size(FULL);
+    advisor.total_tuples += src_advisor.get_versioned_size(FULL);
     advisor.newt_self_deduplicate();
     advisor.persist_newt();
     vflog::multi_hisa AssistantProfessor(1, global_buffer);
     AssistantProfessor.allocate_newt(
-        src_AssistantProfessor.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_AssistantProfessor, NEWT, 0, AssistantProfessor,
+        src_AssistantProfessor.get_versioned_size(FULL));
+    vflog::column_copy_all(src_AssistantProfessor, FULL, 0, AssistantProfessor,
                            NEWT, 0);
     AssistantProfessor.newt_size =
-        src_AssistantProfessor.get_versioned_size(NEWT);
+        src_AssistantProfessor.get_versioned_size(FULL);
     AssistantProfessor.total_tuples +=
-        src_AssistantProfessor.get_versioned_size(NEWT);
+        src_AssistantProfessor.get_versioned_size(FULL);
     AssistantProfessor.newt_self_deduplicate();
     AssistantProfessor.persist_newt();
     vflog::multi_hisa AssociateProfessor(1, global_buffer);
     AssociateProfessor.allocate_newt(
-        src_AssociateProfessor.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_AssociateProfessor, NEWT, 0, AssociateProfessor,
+        src_AssociateProfessor.get_versioned_size(FULL));
+    vflog::column_copy_all(src_AssociateProfessor, FULL, 0, AssociateProfessor,
                            NEWT, 0);
     AssociateProfessor.newt_size =
-        src_AssociateProfessor.get_versioned_size(NEWT);
+        src_AssociateProfessor.get_versioned_size(FULL);
     AssociateProfessor.total_tuples +=
-        src_AssociateProfessor.get_versioned_size(NEWT);
+        src_AssociateProfessor.get_versioned_size(FULL);
     AssociateProfessor.newt_self_deduplicate();
     AssociateProfessor.persist_newt();
     vflog::multi_hisa Course(1, global_buffer);
-    Course.allocate_newt(src_Course.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_Course, NEWT, 0, Course, NEWT, 0);
-    Course.newt_size = src_Course.get_versioned_size(NEWT);
-    Course.total_tuples += src_Course.get_versioned_size(NEWT);
+    Course.allocate_newt(src_Course.get_versioned_size(FULL));
+    vflog::column_copy_all(src_Course, FULL, 0, Course, NEWT, 0);
+    Course.newt_size = src_Course.get_versioned_size(FULL);
+    Course.total_tuples += src_Course.get_versioned_size(FULL);
     Course.newt_self_deduplicate();
     Course.persist_newt();
     vflog::multi_hisa Department(1, global_buffer);
-    Department.allocate_newt(src_Department.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_Department, NEWT, 0, Department, NEWT, 0);
-    Department.newt_size = src_Department.get_versioned_size(NEWT);
-    Department.total_tuples += src_Department.get_versioned_size(NEWT);
+    Department.allocate_newt(src_Department.get_versioned_size(FULL));
+    vflog::column_copy_all(src_Department, FULL, 0, Department, NEWT, 0);
+    Department.newt_size = src_Department.get_versioned_size(FULL);
+    Department.total_tuples += src_Department.get_versioned_size(FULL);
     Department.newt_self_deduplicate();
     Department.persist_newt();
     vflog::multi_hisa doctoralDegreeFrom(2, global_buffer);
     doctoralDegreeFrom.allocate_newt(
-        src_doctoralDegreeFrom.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_doctoralDegreeFrom, NEWT, 0, doctoralDegreeFrom,
+        src_doctoralDegreeFrom.get_versioned_size(FULL));
+    vflog::column_copy_all(src_doctoralDegreeFrom, FULL, 0, doctoralDegreeFrom,
                            NEWT, 0);
-    vflog::column_copy_all(src_doctoralDegreeFrom, NEWT, 1, doctoralDegreeFrom,
+    vflog::column_copy_all(src_doctoralDegreeFrom, FULL, 1, doctoralDegreeFrom,
                            NEWT, 1);
     doctoralDegreeFrom.newt_size =
-        src_doctoralDegreeFrom.get_versioned_size(NEWT);
+        src_doctoralDegreeFrom.get_versioned_size(FULL);
     doctoralDegreeFrom.total_tuples +=
-        src_doctoralDegreeFrom.get_versioned_size(NEWT);
+        src_doctoralDegreeFrom.get_versioned_size(FULL);
     doctoralDegreeFrom.newt_self_deduplicate();
     doctoralDegreeFrom.persist_newt();
     vflog::multi_hisa emailAddress(2, global_buffer);
-    emailAddress.allocate_newt(src_emailAddress.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_emailAddress, NEWT, 0, emailAddress, NEWT, 0);
-    vflog::column_copy_all(src_emailAddress, NEWT, 1, emailAddress, NEWT, 1);
-    emailAddress.newt_size = src_emailAddress.get_versioned_size(NEWT);
-    emailAddress.total_tuples += src_emailAddress.get_versioned_size(NEWT);
+    emailAddress.allocate_newt(src_emailAddress.get_versioned_size(FULL));
+    vflog::column_copy_all(src_emailAddress, FULL, 0, emailAddress, NEWT, 0);
+    vflog::column_copy_all(src_emailAddress, FULL, 1, emailAddress, NEWT, 1);
+    emailAddress.newt_size = src_emailAddress.get_versioned_size(FULL);
+    emailAddress.total_tuples += src_emailAddress.get_versioned_size(FULL);
     emailAddress.newt_self_deduplicate();
     emailAddress.persist_newt();
     vflog::multi_hisa FullProfessor(1, global_buffer);
-    FullProfessor.allocate_newt(src_FullProfessor.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_FullProfessor, NEWT, 0, FullProfessor, NEWT, 0);
-    FullProfessor.newt_size = src_FullProfessor.get_versioned_size(NEWT);
-    FullProfessor.total_tuples += src_FullProfessor.get_versioned_size(NEWT);
+    FullProfessor.allocate_newt(src_FullProfessor.get_versioned_size(FULL));
+    vflog::column_copy_all(src_FullProfessor, FULL, 0, FullProfessor, NEWT, 0);
+    FullProfessor.newt_size = src_FullProfessor.get_versioned_size(FULL);
+    FullProfessor.total_tuples += src_FullProfessor.get_versioned_size(FULL);
     FullProfessor.newt_self_deduplicate();
     FullProfessor.persist_newt();
     vflog::multi_hisa GraduateCourse(1, global_buffer);
-    GraduateCourse.allocate_newt(src_GraduateCourse.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_GraduateCourse, NEWT, 0, GraduateCourse, NEWT,
+    GraduateCourse.allocate_newt(src_GraduateCourse.get_versioned_size(FULL));
+    vflog::column_copy_all(src_GraduateCourse, FULL, 0, GraduateCourse, NEWT,
                            0);
-    GraduateCourse.newt_size = src_GraduateCourse.get_versioned_size(NEWT);
-    GraduateCourse.total_tuples += src_GraduateCourse.get_versioned_size(NEWT);
+    GraduateCourse.newt_size = src_GraduateCourse.get_versioned_size(FULL);
+    GraduateCourse.total_tuples += src_GraduateCourse.get_versioned_size(FULL);
     GraduateCourse.newt_self_deduplicate();
     GraduateCourse.persist_newt();
     vflog::multi_hisa GraduateStudent(1, global_buffer);
-    GraduateStudent.allocate_newt(src_GraduateStudent.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_GraduateStudent, NEWT, 0, GraduateStudent, NEWT,
+    GraduateStudent.allocate_newt(src_GraduateStudent.get_versioned_size(FULL));
+    vflog::column_copy_all(src_GraduateStudent, FULL, 0, GraduateStudent, NEWT,
                            0);
-    GraduateStudent.newt_size = src_GraduateStudent.get_versioned_size(NEWT);
+    GraduateStudent.newt_size = src_GraduateStudent.get_versioned_size(FULL);
     GraduateStudent.total_tuples +=
-        src_GraduateStudent.get_versioned_size(NEWT);
+        src_GraduateStudent.get_versioned_size(FULL);
     GraduateStudent.newt_self_deduplicate();
     GraduateStudent.persist_newt();
     vflog::multi_hisa headOf(2, global_buffer);
     headOf.set_index_startegy(1, FULL, vflog::IndexStrategy::EAGER);
-    headOf.allocate_newt(src_headOf.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_headOf, NEWT, 0, headOf, NEWT, 0);
-    vflog::column_copy_all(src_headOf, NEWT, 1, headOf, NEWT, 1);
-    headOf.newt_size = src_headOf.get_versioned_size(NEWT);
-    headOf.total_tuples += src_headOf.get_versioned_size(NEWT);
+    headOf.allocate_newt(src_headOf.get_versioned_size(FULL));
+    vflog::column_copy_all(src_headOf, FULL, 0, headOf, NEWT, 0);
+    vflog::column_copy_all(src_headOf, FULL, 1, headOf, NEWT, 1);
+    headOf.newt_size = src_headOf.get_versioned_size(FULL);
+    headOf.total_tuples += src_headOf.get_versioned_size(FULL);
     headOf.newt_self_deduplicate();
     headOf.persist_newt();
     vflog::multi_hisa Lecturer(1, global_buffer);
-    Lecturer.allocate_newt(src_Lecturer.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_Lecturer, NEWT, 0, Lecturer, NEWT, 0);
-    Lecturer.newt_size = src_Lecturer.get_versioned_size(NEWT);
-    Lecturer.total_tuples += src_Lecturer.get_versioned_size(NEWT);
+    Lecturer.allocate_newt(src_Lecturer.get_versioned_size(FULL));
+    vflog::column_copy_all(src_Lecturer, FULL, 0, Lecturer, NEWT, 0);
+    Lecturer.newt_size = src_Lecturer.get_versioned_size(FULL);
+    Lecturer.total_tuples += src_Lecturer.get_versioned_size(FULL);
     Lecturer.newt_self_deduplicate();
     Lecturer.persist_newt();
     vflog::multi_hisa mastersDegreeFrom(2, global_buffer);
     mastersDegreeFrom.allocate_newt(
-        src_mastersDegreeFrom.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_mastersDegreeFrom, NEWT, 0, mastersDegreeFrom,
+        src_mastersDegreeFrom.get_versioned_size(FULL));
+    vflog::column_copy_all(src_mastersDegreeFrom, FULL, 0, mastersDegreeFrom,
                            NEWT, 0);
-    vflog::column_copy_all(src_mastersDegreeFrom, NEWT, 1, mastersDegreeFrom,
+    vflog::column_copy_all(src_mastersDegreeFrom, FULL, 1, mastersDegreeFrom,
                            NEWT, 1);
     mastersDegreeFrom.newt_size =
-        src_mastersDegreeFrom.get_versioned_size(NEWT);
+        src_mastersDegreeFrom.get_versioned_size(FULL);
     mastersDegreeFrom.total_tuples +=
-        src_mastersDegreeFrom.get_versioned_size(NEWT);
+        src_mastersDegreeFrom.get_versioned_size(FULL);
     mastersDegreeFrom.newt_self_deduplicate();
     mastersDegreeFrom.persist_newt();
     vflog::multi_hisa memberOf(2, global_buffer);
-    memberOf.allocate_newt(src_memberOf.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_memberOf, NEWT, 0, memberOf, NEWT, 0);
-    vflog::column_copy_all(src_memberOf, NEWT, 1, memberOf, NEWT, 1);
+    memberOf.allocate_newt(src_memberOf.get_versioned_size(FULL));
+    vflog::column_copy_all(src_memberOf, FULL, 0, memberOf, NEWT, 0);
+    vflog::column_copy_all(src_memberOf, FULL, 1, memberOf, NEWT, 1);
     memberOf.newt_size = src_memberOf.get_versioned_size(NEWT);
     memberOf.total_tuples += src_memberOf.get_versioned_size(NEWT);
     memberOf.newt_self_deduplicate();
     memberOf.persist_newt();
     vflog::multi_hisa name(2, global_buffer);
-    name.allocate_newt(src_name.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_name, NEWT, 0, name, NEWT, 0);
-    vflog::column_copy_all(src_name, NEWT, 1, name, NEWT, 1);
-    name.newt_size = src_name.get_versioned_size(NEWT);
-    name.total_tuples += src_name.get_versioned_size(NEWT);
+    name.allocate_newt(src_name.get_versioned_size(FULL));
+    vflog::column_copy_all(src_name, FULL, 0, name, NEWT, 0);
+    vflog::column_copy_all(src_name, FULL, 1, name, NEWT, 1);
+    name.newt_size = src_name.get_versioned_size(FULL);
+    name.total_tuples += src_name.get_versioned_size(FULL);
     name.newt_self_deduplicate();
     name.persist_newt();
     vflog::multi_hisa Publication(1, global_buffer);
-    Publication.allocate_newt(src_Publication.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_Publication, NEWT, 0, Publication, NEWT, 0);
-    Publication.newt_size = src_Publication.get_versioned_size(NEWT);
-    Publication.total_tuples += src_Publication.get_versioned_size(NEWT);
+    Publication.allocate_newt(src_Publication.get_versioned_size(FULL));
+    vflog::column_copy_all(src_Publication, FULL, 0, Publication, NEWT, 0);
+    Publication.newt_size = src_Publication.get_versioned_size(FULL);
+    Publication.total_tuples += src_Publication.get_versioned_size(FULL);
     Publication.newt_self_deduplicate();
     Publication.persist_newt();
     vflog::multi_hisa publicationAuthor(2, global_buffer);
     publicationAuthor.allocate_newt(
-        src_publicationAuthor.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_publicationAuthor, NEWT, 0, publicationAuthor,
+        src_publicationAuthor.get_versioned_size(FULL));
+    vflog::column_copy_all(src_publicationAuthor, FULL, 0, publicationAuthor,
                            NEWT, 0);
-    vflog::column_copy_all(src_publicationAuthor, NEWT, 1, publicationAuthor,
+    vflog::column_copy_all(src_publicationAuthor, FULL, 1, publicationAuthor,
                            NEWT, 1);
     publicationAuthor.newt_size =
-        src_publicationAuthor.get_versioned_size(NEWT);
+        src_publicationAuthor.get_versioned_size(FULL);
     publicationAuthor.total_tuples +=
-        src_publicationAuthor.get_versioned_size(NEWT);
+        src_publicationAuthor.get_versioned_size(FULL);
     publicationAuthor.newt_self_deduplicate();
     publicationAuthor.persist_newt();
     vflog::multi_hisa ResearchAssistant(1, global_buffer);
     ResearchAssistant.allocate_newt(
-        src_ResearchAssistant.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_ResearchAssistant, NEWT, 0, ResearchAssistant,
+        src_ResearchAssistant.get_versioned_size(FULL));
+    vflog::column_copy_all(src_ResearchAssistant, FULL, 0, ResearchAssistant,
                            NEWT, 0);
     ResearchAssistant.newt_size =
-        src_ResearchAssistant.get_versioned_size(NEWT);
+        src_ResearchAssistant.get_versioned_size(FULL);
     ResearchAssistant.total_tuples +=
-        src_ResearchAssistant.get_versioned_size(NEWT);
+        src_ResearchAssistant.get_versioned_size(FULL);
     ResearchAssistant.newt_self_deduplicate();
     ResearchAssistant.persist_newt();
     vflog::multi_hisa ResearchGroup(1, global_buffer);
-    ResearchGroup.allocate_newt(src_ResearchGroup.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_ResearchGroup, NEWT, 0, ResearchGroup, NEWT, 0);
-    ResearchGroup.newt_size = src_ResearchGroup.get_versioned_size(NEWT);
-    ResearchGroup.total_tuples += src_ResearchGroup.get_versioned_size(NEWT);
+    ResearchGroup.allocate_newt(src_ResearchGroup.get_versioned_size(FULL));
+    vflog::column_copy_all(src_ResearchGroup, FULL, 0, ResearchGroup, NEWT, 0);
+    ResearchGroup.newt_size = src_ResearchGroup.get_versioned_size(FULL);
+    ResearchGroup.total_tuples += src_ResearchGroup.get_versioned_size(FULL);
     ResearchGroup.newt_self_deduplicate();
     ResearchGroup.persist_newt();
     vflog::multi_hisa researchInterest(2, global_buffer);
     researchInterest.allocate_newt(
-        src_researchInterest.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_researchInterest, NEWT, 0, researchInterest,
+        src_researchInterest.get_versioned_size(FULL));
+    vflog::column_copy_all(src_researchInterest, FULL, 0, researchInterest,
                            NEWT, 0);
-    vflog::column_copy_all(src_researchInterest, NEWT, 1, researchInterest,
+    vflog::column_copy_all(src_researchInterest, FULL, 1, researchInterest,
                            NEWT, 1);
-    researchInterest.newt_size = src_researchInterest.get_versioned_size(NEWT);
+    researchInterest.newt_size = src_researchInterest.get_versioned_size(FULL);
     researchInterest.total_tuples +=
-        src_researchInterest.get_versioned_size(NEWT);
+        src_researchInterest.get_versioned_size(FULL);
     researchInterest.newt_self_deduplicate();
     researchInterest.persist_newt();
     vflog::multi_hisa subOrganizationOf(2, global_buffer);
     subOrganizationOf.allocate_newt(
-        src_subOrganizationOf.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_subOrganizationOf, NEWT, 0, subOrganizationOf,
+        src_subOrganizationOf.get_versioned_size(FULL));
+    vflog::column_copy_all(src_subOrganizationOf, FULL, 0, subOrganizationOf,
                            NEWT, 0);
-    vflog::column_copy_all(src_subOrganizationOf, NEWT, 1, subOrganizationOf,
+    vflog::column_copy_all(src_subOrganizationOf, FULL, 1, subOrganizationOf,
                            NEWT, 1);
     subOrganizationOf.newt_size =
-        src_subOrganizationOf.get_versioned_size(NEWT);
+        src_subOrganizationOf.get_versioned_size(FULL);
     subOrganizationOf.total_tuples +=
-        src_subOrganizationOf.get_versioned_size(NEWT);
+        src_subOrganizationOf.get_versioned_size(FULL);
     subOrganizationOf.newt_self_deduplicate();
     subOrganizationOf.persist_newt();
     src_subOrganizationOf.persist_newt();
     vflog::multi_hisa takesCourse(2, global_buffer);
     takesCourse.set_index_startegy(1, FULL, vflog::IndexStrategy::EAGER);
-    takesCourse.allocate_newt(src_takesCourse.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_takesCourse, NEWT, 0, takesCourse, NEWT, 0);
-    vflog::column_copy_all(src_takesCourse, NEWT, 1, takesCourse, NEWT, 1);
-    takesCourse.newt_size = src_takesCourse.get_versioned_size(NEWT);
-    takesCourse.total_tuples += src_takesCourse.get_versioned_size(NEWT);
+    takesCourse.allocate_newt(src_takesCourse.get_versioned_size(FULL));
+    vflog::column_copy_all(src_takesCourse, FULL, 0, takesCourse, NEWT, 0);
+    vflog::column_copy_all(src_takesCourse, FULL, 1, takesCourse, NEWT, 1);
+    takesCourse.newt_size = src_takesCourse.get_versioned_size(FULL);
+    takesCourse.total_tuples += src_takesCourse.get_versioned_size(FULL);
     takesCourse.newt_self_deduplicate();
     takesCourse.persist_newt();
     vflog::multi_hisa teacherOf(2, global_buffer);
-    teacherOf.allocate_newt(src_teacherOf.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_teacherOf, NEWT, 0, teacherOf, NEWT, 0);
-    vflog::column_copy_all(src_teacherOf, NEWT, 1, teacherOf, NEWT, 1);
-    teacherOf.newt_size = src_teacherOf.get_versioned_size(NEWT);
-    teacherOf.total_tuples += src_teacherOf.get_versioned_size(NEWT);
+    teacherOf.allocate_newt(src_teacherOf.get_versioned_size(FULL));
+    vflog::column_copy_all(src_teacherOf, FULL, 0, teacherOf, NEWT, 0);
+    vflog::column_copy_all(src_teacherOf, FULL, 1, teacherOf, NEWT, 1);
+    teacherOf.newt_size = src_teacherOf.get_versioned_size(FULL);
+    teacherOf.total_tuples += src_teacherOf.get_versioned_size(FULL);
     teacherOf.newt_self_deduplicate();
     teacherOf.persist_newt();
     vflog::multi_hisa TeachingAssistant(1, global_buffer);
     TeachingAssistant.allocate_newt(
-        src_TeachingAssistant.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_TeachingAssistant, NEWT, 0, TeachingAssistant,
+        src_TeachingAssistant.get_versioned_size(FULL));
+    vflog::column_copy_all(src_TeachingAssistant, FULL, 0, TeachingAssistant,
                            NEWT, 0);
     TeachingAssistant.newt_size =
-        src_TeachingAssistant.get_versioned_size(NEWT);
+        src_TeachingAssistant.get_versioned_size(FULL);
     TeachingAssistant.total_tuples +=
-        src_TeachingAssistant.get_versioned_size(NEWT);
+        src_TeachingAssistant.get_versioned_size(FULL);
     TeachingAssistant.newt_self_deduplicate();
     TeachingAssistant.persist_newt();
     vflog::multi_hisa teachingAssistantOf(2, global_buffer);
     teachingAssistantOf.set_index_startegy(1, FULL,
                                            vflog::IndexStrategy::EAGER);
     teachingAssistantOf.allocate_newt(
-        src_teachingAssistantOf.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_teachingAssistantOf, NEWT, 0,
+        src_teachingAssistantOf.get_versioned_size(FULL));
+    vflog::column_copy_all(src_teachingAssistantOf, FULL, 0,
                            teachingAssistantOf, NEWT, 0);
-    vflog::column_copy_all(src_teachingAssistantOf, NEWT, 1,
+    vflog::column_copy_all(src_teachingAssistantOf, FULL, 1,
                            teachingAssistantOf, NEWT, 1);
     teachingAssistantOf.newt_size =
-        src_teachingAssistantOf.get_versioned_size(NEWT);
+        src_teachingAssistantOf.get_versioned_size(FULL);
     teachingAssistantOf.total_tuples +=
-        src_teachingAssistantOf.get_versioned_size(NEWT);
+        src_teachingAssistantOf.get_versioned_size(FULL);
     teachingAssistantOf.newt_self_deduplicate();
     teachingAssistantOf.persist_newt();
     vflog::multi_hisa telephone(2, global_buffer);
-    telephone.allocate_newt(src_telephone.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_telephone, NEWT, 0, telephone, NEWT, 0);
-    vflog::column_copy_all(src_telephone, NEWT, 1, telephone, NEWT, 1);
-    telephone.newt_size = src_telephone.get_versioned_size(NEWT);
-    telephone.total_tuples += src_telephone.get_versioned_size(NEWT);
+    telephone.allocate_newt(src_telephone.get_versioned_size(FULL));
+    vflog::column_copy_all(src_telephone, FULL, 0, telephone, NEWT, 0);
+    vflog::column_copy_all(src_telephone, FULL, 1, telephone, NEWT, 1);
+    telephone.newt_size = src_telephone.get_versioned_size(FULL);
+    telephone.total_tuples += src_telephone.get_versioned_size(FULL);
     telephone.newt_self_deduplicate();
     telephone.persist_newt();
     vflog::multi_hisa undergraduateDegreeFrom(2, global_buffer);
     undergraduateDegreeFrom.allocate_newt(
-        src_undergraduateDegreeFrom.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_undergraduateDegreeFrom, NEWT, 0,
+        src_undergraduateDegreeFrom.get_versioned_size(FULL));
+    vflog::column_copy_all(src_undergraduateDegreeFrom, FULL, 0,
                            undergraduateDegreeFrom, NEWT, 0);
-    vflog::column_copy_all(src_undergraduateDegreeFrom, NEWT, 1,
+    vflog::column_copy_all(src_undergraduateDegreeFrom, FULL, 1,
                            undergraduateDegreeFrom, NEWT, 1);
     undergraduateDegreeFrom.newt_size =
-        src_undergraduateDegreeFrom.get_versioned_size(NEWT);
+        src_undergraduateDegreeFrom.get_versioned_size(FULL);
     undergraduateDegreeFrom.total_tuples +=
-        src_undergraduateDegreeFrom.get_versioned_size(NEWT);
+        src_undergraduateDegreeFrom.get_versioned_size(FULL);
     undergraduateDegreeFrom.newt_self_deduplicate();
     undergraduateDegreeFrom.persist_newt();
     vflog::multi_hisa UndergraduateStudent(1, global_buffer);
     UndergraduateStudent.allocate_newt(
-        src_UndergraduateStudent.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_UndergraduateStudent, NEWT, 0,
+        src_UndergraduateStudent.get_versioned_size(FULL));
+    vflog::column_copy_all(src_UndergraduateStudent, FULL, 0,
                            UndergraduateStudent, NEWT, 0);
     UndergraduateStudent.newt_size =
-        src_UndergraduateStudent.get_versioned_size(NEWT);
+        src_UndergraduateStudent.get_versioned_size(FULL);
     UndergraduateStudent.total_tuples +=
-        src_UndergraduateStudent.get_versioned_size(NEWT);
+        src_UndergraduateStudent.get_versioned_size(FULL);
     UndergraduateStudent.newt_self_deduplicate();
     UndergraduateStudent.persist_newt();
     vflog::multi_hisa University(1, global_buffer);
-    University.allocate_newt(src_University.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_University, NEWT, 0, University, NEWT, 0);
-    University.newt_size = src_University.get_versioned_size(NEWT);
-    University.total_tuples += src_University.get_versioned_size(NEWT);
+    University.allocate_newt(src_University.get_versioned_size(FULL));
+    vflog::column_copy_all(src_University, FULL, 0, University, NEWT, 0);
+    University.newt_size = src_University.get_versioned_size(FULL);
+    University.total_tuples += src_University.get_versioned_size(FULL);
     University.newt_self_deduplicate();
     University.persist_newt();
     vflog::multi_hisa worksFor(2, global_buffer);
     worksFor.set_index_startegy(1, FULL, vflog::IndexStrategy::EAGER);
     // worksFor.set_index_startegy(1, DELTA, vflog::IndexStrategy::EAGER);
-    worksFor.allocate_newt(src_worksFor.get_versioned_size(NEWT));
-    vflog::column_copy_all(src_worksFor, NEWT, 0, worksFor, NEWT, 0);
-    vflog::column_copy_all(src_worksFor, NEWT, 1, worksFor, NEWT, 1);
-    worksFor.newt_size = src_worksFor.get_versioned_size(NEWT);
-    worksFor.total_tuples += src_worksFor.get_versioned_size(NEWT);
+    worksFor.allocate_newt(src_worksFor.get_versioned_size(FULL));
+    vflog::column_copy_all(src_worksFor, FULL, 0, worksFor, NEWT, 0);
+    vflog::column_copy_all(src_worksFor, FULL, 1, worksFor, NEWT, 1);
+    worksFor.newt_size = src_worksFor.get_versioned_size(FULL);
+    worksFor.total_tuples += src_worksFor.get_versioned_size(FULL);
     worksFor.newt_self_deduplicate();
     worksFor.persist_newt();
     timer.stop_timer();
@@ -1113,8 +1056,8 @@ void lubm(char *data_path) {
     takesCourse.newt_self_deduplicate();
     Course.persist_newt();
     takesCourse.persist_newt();
-    std::cout << "takesCourse(?X, !Y), Course(!Y) :- Student(?X) ." << std::endl;
-
+    std::cout << "takesCourse(?X, !Y), Course(!Y) :- Student(?X) ."
+              << std::endl;
 
     // Work(?X) :- Course(?X) .
     vflog::multi_hisa Work(1, global_buffer);
@@ -1124,7 +1067,6 @@ void lubm(char *data_path) {
     Work.total_tuples += Course.get_versioned_size(FULL);
     Work.newt_self_deduplicate();
     Work.persist_newt();
-
 
     // print the FULL size of each relation after looping
     std::cout << "Chair full size: " << Chair.get_versioned_size(FULL)
@@ -1174,7 +1116,6 @@ void lubm(char *data_path) {
               << ResearchGroup.get_versioned_size(FULL) << std::endl;
     std::cout << "Course full size: " << Course.get_versioned_size(FULL)
               << std::endl;
-
 
     timer.stop_timer();
     std::cout << "Compute time: " << timer.get_spent_time() << std::endl;

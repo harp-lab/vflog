@@ -1,4 +1,4 @@
-import edge :- tsv {resource = "../../data/data_49152.txt"} .
+@import edge :- tsv {resource = "../../data/vsp_finan512_scagr7-2c_rlfddd.mtx"} .
 
 sg(?X, ?Z) :- edge(?X, ?Y), edge(?X, ?Z), ?Y != ?Z .
 sg(?X, ?Y) :- sg(?A, ?B), edge(?A, ?X), edge(?B, ?Y) .  

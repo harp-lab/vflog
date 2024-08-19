@@ -1,4 +1,5 @@
 
+#include "utils.cuh"
 #include "vflog.cuh"
 
 #include <iostream>
@@ -6,25 +7,11 @@
 #include <rmm/mr/device/managed_memory_resource.hpp>
 
 void tc_barebone(char *data_path) {
+    vflog::device_indices_t _indices_default;
     auto global_buffer = std::make_shared<vflog::d_buffer>(40960);
-    vflog::multi_hisa edge(2, global_buffer);
-    edge.set_default_index_column(0);
-    edge.set_index_startegy(0, FULL, vflog::IndexStrategy::EAGER);
-    edge.set_index_startegy(1, FULL, vflog::IndexStrategy::LAZY);
-    vflog::read_kary_relation(data_path, edge, 2);
-    edge.newt_self_deduplicate();
-    std::cout << "Edge newt size: " << edge.get_versioned_size(NEWT)
-              << std::endl;
-    edge.persist_newt();
-    std::cout << "Edge full size: " << edge.get_versioned_size(FULL)
-              << std::endl;
+    vflog::multi_hisa edge(2, data_path, global_buffer);
 
     vflog::multi_hisa path(2, global_buffer);
-    path.set_default_index_column(1);
-    path.set_index_startegy(0, FULL, vflog::IndexStrategy::LAZY);
-    path.set_index_startegy(0, DELTA, vflog::IndexStrategy::LAZY);
-    path.set_index_startegy(1, DELTA, vflog::IndexStrategy::LAZY);
-    path.set_index_startegy(1, FULL, vflog::IndexStrategy::EAGER);
     auto init_size = edge.total_tuples;
     // allocate newt on path
     path.allocate_newt(init_size);
@@ -49,8 +36,8 @@ void tc_barebone(char *data_path) {
 
     // evaluate loop
     size_t iteration = 0;
-    auto matched_path_ptr = std::make_shared<vflog::device_indices_t>();
-    auto matched_edge_ptr = std::make_shared<vflog::device_indices_t>();
+    auto tmp_id0 = std::make_shared<vflog::device_indices_t>();
+    auto tmp_id1 = std::make_shared<vflog::device_indices_t>();
     KernelTimer timer;
     timer.start_timer();
     while (true) {
@@ -60,11 +47,11 @@ void tc_barebone(char *data_path) {
 
         // join edge's delta with path's full
         // path(a, c) :- path(a, b), edge(b, c).
-        cached["path"] = matched_path_ptr;
+        cached["path"] = tmp_id0;
         cached["path"]->resize(path.get_versioned_size(path_version));
         thrust::sequence(cached["path"]->begin(), cached["path"]->end());
-        vflog::column_join(edge, FULL, 0, path, path_version, 1, cached, "path", matched_edge_ptr);
-        cached["edge"] = matched_edge_ptr;
+        vflog::column_join(edge, FULL, 0, path, path_version, 1, cached, "path", tmp_id1);
+        cached["edge"] = tmp_id1;
         size_t raw_newt_size = cached["path"]->size();
         // materialize
         path.allocate_newt(raw_newt_size);
@@ -73,7 +60,8 @@ void tc_barebone(char *data_path) {
         path.newt_size = raw_newt_size;
         path.total_tuples += raw_newt_size;
         path.newt_self_deduplicate();
-        path.persist_newt();
+        path.diff(path, NEWT, _indices_default);
+        path.persist_newt(false);
         cached.clear();
 
         auto delta_size = path.get_versioned_size(DELTA);
