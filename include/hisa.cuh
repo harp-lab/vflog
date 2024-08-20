@@ -12,12 +12,9 @@
 // #include <functional>
 
 #include <cuda/std/chrono>
-#include <iostream>
-#include <memory>
 #include <thrust/device_ptr.h>
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
-#include <vector>
 
 namespace vflog {
 

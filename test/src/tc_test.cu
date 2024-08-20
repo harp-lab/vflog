@@ -12,6 +12,7 @@ void tc_barebone(char *data_path) {
     vflog::multi_hisa edge(2, data_path, global_buffer);
 
     vflog::multi_hisa path(2, global_buffer);
+    vflog::multi_hisa path_ext(2, global_buffer);
     auto init_size = edge.total_tuples;
     // allocate newt on path
     path.allocate_newt(init_size);
@@ -40,6 +41,7 @@ void tc_barebone(char *data_path) {
     auto tmp_id1 = std::make_shared<vflog::device_indices_t>();
     KernelTimer timer;
     timer.start_timer();
+    int splite_iter = 50;
     while (true) {
         std::cout << "Iteration " << iteration << std::endl;
         RelationVersion path_version = DELTA;
@@ -48,24 +50,60 @@ void tc_barebone(char *data_path) {
         // join edge's delta with path's full
         // path(a, c) :- path(a, b), edge(b, c).
         cached["path"] = tmp_id0;
-        cached["path"]->resize(path.get_versioned_size(path_version));
+        if (iteration <= splite_iter) {
+             cached["path"]->resize(path.get_versioned_size(path_version));
+        } else {
+            cached["path"]->resize(path_ext.get_versioned_size(path_version));
+        }
+        // cached["path"]->resize(path.get_versioned_size(path_version));
         thrust::sequence(cached["path"]->begin(), cached["path"]->end());
-        vflog::column_join(edge, FULL, 0, path, path_version, 1, cached, "path", tmp_id1);
+        // vflog::column_join(edge, FULL, 0, path, path_version, 1, cached, "path", tmp_id1);
+        if (iteration <= splite_iter) {
+            vflog::column_join(edge, FULL, 0, path, path_version, 1, cached, "path", tmp_id1);
+        } else {
+            vflog::column_join(edge, FULL, 0, path_ext, path_version, 1, cached, "path", tmp_id1);
+        }
         cached["edge"] = tmp_id1;
         size_t raw_newt_size = cached["path"]->size();
         // materialize
-        path.allocate_newt(raw_newt_size);
-        vflog::column_copy(path, path_version, 0, path, NEWT, 0, cached["path"]);
-        vflog::column_copy(edge, FULL, 1, path, NEWT, 1, cached["edge"]);
-        path.newt_size = raw_newt_size;
-        path.total_tuples += raw_newt_size;
-        path.newt_self_deduplicate();
-        path.diff(path, NEWT, _indices_default);
-        path.persist_newt(false);
+        if (iteration < splite_iter) {
+            path.allocate_newt(raw_newt_size);
+            vflog::column_copy(path, path_version, 0, path, NEWT, 0, cached["path"]);
+            vflog::column_copy(edge, FULL, 1, path, NEWT, 1, cached["edge"]);
+            path.newt_size = raw_newt_size;
+            path.total_tuples += raw_newt_size;
+            path.newt_self_deduplicate();
+            path.diff(path, NEWT, _indices_default);
+            path.persist_newt(false);
+        } else {
+            path_ext.allocate_newt(raw_newt_size);
+            if (iteration == splite_iter) {
+                vflog::column_copy(path, path_version, 0, path_ext, NEWT, 0, cached["path"]);
+            } else {
+                vflog::column_copy(path_ext, path_version, 0, path_ext, NEWT, 0, cached["path"]);
+            }
+            vflog::column_copy(edge, FULL, 1, path_ext, NEWT, 1, cached["edge"]);
+            path_ext.newt_size = raw_newt_size;
+            path_ext.total_tuples += raw_newt_size;
+            path_ext.newt_self_deduplicate();
+            if (iteration != splite_iter) {
+                path_ext.diff(path_ext, NEWT, _indices_default);
+                path.diff(path_ext, NEWT, _indices_default);
+            }
+            // auto newt_size = path_ext.get_versioned_size(NEWT);
+            
+            // auto updated_size =  path_ext.get_versioned_size(NEWT);
+            // std::cout << "Newt size: " << newt_size << " Updated size: " << updated_size << std::endl;
+            path_ext.persist_newt(false);
+        }
+
         cached.clear();
 
         auto delta_size = path.get_versioned_size(DELTA);
-        std::cout << "Full size: " << path.get_versioned_size(FULL)
+        if (iteration > splite_iter) {
+            delta_size = path_ext.get_versioned_size(DELTA);
+        }
+        std::cout << "Full size: " << path.get_versioned_size(FULL) + path_ext.get_versioned_size(FULL) 
                   << " Delta size: " << delta_size << std::endl;
         // if (iteration == 0) {
         //     break;
@@ -87,10 +125,11 @@ void tc_barebone(char *data_path) {
 
 int main(int argc, char **argv) {
     if (argc != 3) {
-        std::cerr << "Usage: " << argv[0] << " <data_path> <memory_system_flag>"
+        std::cerr << "Usage: " << argv[0] << " <data_path> <memory_system_flag> <split_at_iter>"
                   << std::endl;
         return 1;
     }
+
     // enable_rmm_allocator();
     rmm::mr::cuda_memory_resource cuda_mr{};
     // rmm::mr::set_current_device_resource(&cuda_mr);

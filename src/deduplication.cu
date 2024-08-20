@@ -217,11 +217,11 @@ void multi_hisa::diff(multi_hisa &other, RelationVersion version,
     // version
     auto before_dedup = std::chrono::high_resolution_clock::now();
     // difference other.ver and full
-    auto other_ver_size = other.get_versioned_size(version);
-    device_ranges_t matched_ranges(other_ver_size);
+    // auto other_ver_size = other.get_versioned_size(version);
+    device_ranges_t matched_ranges(other.newt_size);
     // do a column match on the default index column
     auto default_col_other_raw_begin =
-        other.get_raw_data_ptrs(version, default_index_column);
+        other.data[default_index_column].data().get() + other.full_size;
     if (diff_indices.size() != 0) {
         full_columns[default_index_column].map_find(
             thrust::make_permutation_iterator(default_col_other_raw_begin,
@@ -235,7 +235,7 @@ void multi_hisa::diff(multi_hisa &other, RelationVersion version,
             other.data[default_index_column].data().get() + other.full_size;
         full_columns[default_index_column].map_find(
             default_col_other_raw_begin,
-            default_col_other_raw_begin + other_ver_size,
+            default_col_other_raw_begin + other.newt_size,
             matched_ranges.begin());
     }
     // std::cout << "matched_ranges size: " << matched_ranges.size() <<
@@ -248,10 +248,10 @@ void multi_hisa::diff(multi_hisa &other, RelationVersion version,
         all_col_fulls_ptrs[i] = data[i].RAW_PTR;
     }
 
-    device_bitmap_t dup_other_flags(other_ver_size, false);
+    device_bitmap_t dup_other_flags(other.newt_size, false);
     thrust::transform(
         thrust::make_counting_iterator<uint32_t>(0),
-        thrust::make_counting_iterator<uint32_t>(other_ver_size),
+        thrust::make_counting_iterator<uint32_t>(other.newt_size),
         matched_ranges.begin(), dup_other_flags.begin(),
         [all_col_others_ptrs = all_col_others_ptrs.RAW_PTR,
          all_col_fulls_ptrs = all_col_fulls_ptrs.RAW_PTR,
@@ -290,7 +290,7 @@ void multi_hisa::diff(multi_hisa &other, RelationVersion version,
 
     auto dup_size = thrust::count(EXE_POLICY, dup_other_flags.begin(),
                                   dup_other_flags.end(), true);
-    // std::cout << "dup size: " << dup_size << std::endl;
+    std::cout << "dup size: " << dup_size << std::endl;
     auto after_dedup = std::chrono::high_resolution_clock::now();
     dedup_time += std::chrono::duration_cast<std::chrono::microseconds>(
                       after_dedup - before_dedup)
@@ -298,17 +298,15 @@ void multi_hisa::diff(multi_hisa &other, RelationVersion version,
     // clear other only keep match_other
     if (dup_size != 0) {
         for (size_t i = 0; i < arity; i++) {
-            auto other_begin = other.data[i].data().get() + other.full_size;
+            auto other_begin =
+                other.data[i].begin() + other.newt_columns[i].raw_offset;
             auto new_other_end = thrust::remove_if(
-                EXE_POLICY, other_begin, other_begin + other_ver_size,
+                EXE_POLICY, other_begin, other_begin + other.newt_size,
                 dup_other_flags.begin(), thrust::identity<bool>());
-            other.get_versioned_columns(version)[i].raw_size =
-                new_other_end - other_begin;
+            other.newt_columns[i].raw_size = new_other_end - other_begin;
         }
-        other.set_versioned_size(version, other_ver_size - dup_size);
+        other.newt_size = other.newt_size - dup_size;
     }
-    std::cout << "default_index_column: " << default_index_column << std::endl;
-
 }
 
 } // namespace vflog
