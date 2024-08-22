@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "../include/utils.cuh"
+#include "utils.cuh"
 #include <memory>
 
 namespace vflog {

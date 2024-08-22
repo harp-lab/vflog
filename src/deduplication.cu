@@ -213,11 +213,14 @@ void multi_hisa::newt_full_deduplicate() {
 
 void multi_hisa::diff(multi_hisa &other, RelationVersion version,
                       device_indices_t &diff_indices) {
+    if (full_size == 0) {
+        return;
+    }
     // deduplicate version of others use diff_indices as id, with full of this
     // version
     auto before_dedup = std::chrono::high_resolution_clock::now();
     // difference other.ver and full
-    // auto other_ver_size = other.get_versioned_size(version);
+    auto other_ver_size = other.get_versioned_size(version);
     device_ranges_t matched_ranges(other.newt_size);
     // do a column match on the default index column
     auto default_col_other_raw_begin =
@@ -230,7 +233,6 @@ void multi_hisa::diff(multi_hisa &other, RelationVersion version,
                                               diff_indices.end()),
             matched_ranges.begin());
     } else {
-        // std::cout << "other_ver_size: " << other_ver_size << std::endl;
         default_col_other_raw_begin =
             other.data[default_index_column].data().get() + other.full_size;
         full_columns[default_index_column].map_find(
@@ -307,6 +309,7 @@ void multi_hisa::diff(multi_hisa &other, RelationVersion version,
         }
         other.newt_size = other.newt_size - dup_size;
     }
+    other.total_tuples = other.newt_size + other.full_size;
 }
 
 } // namespace vflog

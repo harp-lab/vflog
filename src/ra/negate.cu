@@ -1,5 +1,6 @@
 
-#include "ra.cuh"
+#include "ram.cuh"
+#include "utils.cuh"
 
 #include <thrust/count.h>
 #include <thrust/for_each.h>
@@ -31,12 +32,11 @@ void column_negate(multi_hisa &inner, RelationVersion inner_ver,
     }
     auto outer_raw_begin =
         outer.data[outer_idx].begin() + outer_column.raw_offset;
-    inner_column.map_find(
-        thrust::make_permutation_iterator(outer_raw_begin,
-                                          outer_tuple_indices->begin()),
-        thrust::make_permutation_iterator(outer_raw_begin,
-                                          outer_tuple_indices->end()),
-        matched_ranges.begin());
+    inner_column.map_find(thrust::make_permutation_iterator(
+                              outer_raw_begin, outer_tuple_indices->begin()),
+                          thrust::make_permutation_iterator(
+                              outer_raw_begin, outer_tuple_indices->end()),
+                          matched_ranges.begin());
 
     // clear the unmatched tuples
     for (auto &meta : cached_indices) {
@@ -48,9 +48,8 @@ void column_negate(multi_hisa &inner, RelationVersion inner_ver,
                 return range != UINT32_MAX ? UINT32_MAX : outer_tuple_index;
             });
 
-        auto new_outer_tuple_end =
-            thrust::remove(EXE_POLICY, outer_ts->begin(),
-                           outer_ts->end(), UINT32_MAX);
+        auto new_outer_tuple_end = thrust::remove(EXE_POLICY, outer_ts->begin(),
+                                                  outer_ts->end(), UINT32_MAX);
         outer_ts->resize(new_outer_tuple_end - outer_ts->begin());
     }
 
@@ -59,5 +58,23 @@ void column_negate(multi_hisa &inner, RelationVersion inner_ver,
     }
 }
 
+void NegateOperator::execute(RelationalAlgebraMachine &ram) {
+    auto inner_rel_p = ram.rels[inner.rel];
+    if (inner.is_frozen()) {
+        inner_rel_p = ram.get_frozen(inner.rel, inner.frozen_idx);
+        if (inner_rel_p == nullptr) {
+            return;
+        }
+    }
+    if (ram.overflow_rel_name == outer.rel && outer.version == NEWT) {
+        column_negate(*inner_rel_p, inner.version, inner.idx,
+                      *ram.overflow_rel, outer.version, outer.idx,
+                      ram.cached_indices, meta_var, pop_outer);
+    } else {
+        column_negate(*inner_rel_p, inner.version, inner.idx,
+                      *ram.rels[outer.rel], outer.version, outer.idx,
+                      ram.cached_indices, meta_var, pop_outer);
+    }
+}
 
-}  // namespace vflog
+} // namespace vflog

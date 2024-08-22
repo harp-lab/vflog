@@ -1,5 +1,5 @@
 
-#include "ra.cuh"
+#include "ram.cuh"
 
 #include <thrust/count.h>
 #include <thrust/for_each.h>
@@ -23,6 +23,14 @@ void column_join(multi_hisa &inner, RelationVersion inner_ver, size_t inner_idx,
         matched_indices->resize(0);
         return;
     }
+    // if (inner.get_versioned_size(inner_ver) == 0) {
+    //     // clear all other in cache
+    //     for (auto &meta : cached_indices) {
+    //         meta.second->resize(0);
+    //     }
+    //     matched_indices->resize(0);
+    //     return;
+    // }
     device_ranges_t matched_ranges(outer_tuple_indices->size());
     // gather the outer values
     auto &outer_column = outer.get_versioned_columns(outer_ver)[outer_idx];
@@ -32,12 +40,11 @@ void column_join(multi_hisa &inner, RelationVersion inner_ver, size_t inner_idx,
     }
     auto outer_raw_begin =
         outer.data[outer_idx].begin() + outer_column.raw_offset;
-    inner_column.map_find(
-        thrust::make_permutation_iterator(outer_raw_begin,
-                                          outer_tuple_indices->begin()),
-        thrust::make_permutation_iterator(outer_raw_begin,
-                                          outer_tuple_indices->end()),
-        matched_ranges.begin());
+    inner_column.map_find(thrust::make_permutation_iterator(
+                              outer_raw_begin, outer_tuple_indices->begin()),
+                          thrust::make_permutation_iterator(
+                              outer_raw_begin, outer_tuple_indices->end()),
+                          matched_ranges.begin());
     // if (pop_outer) {
     //     outer_tuple_indices->clear();
     //     outer_tuple_indices->shrink_to_fit();
@@ -157,6 +164,38 @@ void column_join(multi_hisa &inner, RelationVersion inner_ver, size_t inner_idx,
     }
     if (pop_outer) {
         cached_indices.erase(meta_var);
+    }
+}
+
+void JoinOperator::execute(RelationalAlgebraMachine &ram) {
+    auto outer_rel_p = ram.rels[outer.rel];
+    if (ram.overflow_rel_name == outer.rel && outer.version == NEWT) {
+        outer_rel_p = ram.overflow_rel;
+    }
+
+    auto inner_rel_p = ram.rels[inner.rel];
+    if (inner.is_frozen()) {
+        inner_rel_p = ram.get_frozen(inner.rel, inner.frozen_idx);
+        if (inner_rel_p == nullptr) {
+            // frozen relation not generated yet
+            // clear all other in cache
+            for (auto &meta : ram.cached_indices) {
+                meta.second->resize(0);
+            }
+            matched_indices->resize(0);
+            return;
+        }
+    }
+    if (matched_indices != nullptr) {
+        column_join(*inner_rel_p, inner.version, inner.idx,
+                    *outer_rel_p, outer.version, outer.idx,
+                    ram.cached_indices, outer_meta_var, matched_indices,
+                    pop_outer);
+    } else {
+        column_join(*inner_rel_p, inner.version, inner.idx,
+                    *outer_rel_p, outer.version, outer.idx,
+                    ram.cached_indices, outer_meta_var,
+                    ram.register_map[result_register], pop_outer);
     }
 }
 

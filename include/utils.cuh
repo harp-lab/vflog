@@ -1,6 +1,7 @@
 
 #pragma once
 
+// #include "hisa.cuh"
 #include <cstdint>
 #include <map>
 #include <memory>
@@ -98,6 +99,7 @@ using ptr_and_size_t =
                  std::ptrdiff_t>;
 using thrust_buffer_ptr_t =
     thrust::pointer<internal_data_type, thrust::device_system_tag>;
+
 
 inline uint64_t __device__ __host__ compress_u32(uint32_t &a, uint32_t &b) {
     return ((uint64_t)a << 32) | b;

@@ -7,11 +7,12 @@
 
 #include "buffer.cuh"
 #include "column.cuh"
-// #include "utils.cuh"
+#include "utils.cuh"
 #include <cstdint>
 // #include <functional>
 
 #include <cuda/std/chrono>
+#include <sys/types.h>
 #include <thrust/device_ptr.h>
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
@@ -20,6 +21,10 @@ namespace vflog {
 
 struct multi_hisa {
     size_t uid = 0;
+
+    // uint32_t max_tuples = 327'680'000;
+    uint32_t max_tuples = UINT32_MAX;
+    uint32_t max_splits = 4;
 
     int arity;
 
@@ -110,6 +115,13 @@ struct multi_hisa {
 
     void allocate_newt(size_t size);
 
+    void split_when(uint32_t size, uint32_t max_splits) {
+        max_tuples = size;
+        max_splits = max_splits;
+    }
+
+    void stop_split() { max_tuples = UINT32_MAX; }
+
     void set_versioned_size(RelationVersion version, uint32_t size) {
         switch (version) {
         case FULL:
@@ -182,18 +194,19 @@ struct multi_hisa {
         set_index_startegy(column_idx, FULL, EAGER);
     }
 
+    void copy_meta(multi_hisa &other) {
+        arity = other.arity;
+        max_tuples = other.max_tuples;
+        max_splits = other.max_splits;
+        default_index_column = other.default_index_column;
+        for (int i = 0; i < arity; i++) {
+            full_columns[i].index_strategy = other.full_columns[i].index_strategy;
+            delta_columns[i].index_strategy = other.delta_columns[i].index_strategy;
+            newt_columns[i].index_strategy = other.newt_columns[i].index_strategy;
+        }
+    }
+
     void print_stats();
-};
-
-struct column_ref {
-    std::reference_wrapper<multi_hisa> relation;
-    RelationVersion version;
-    size_t index;
-
-    // std::reference_wrapper<device_bitmap_t> selected;
-
-    column_ref(multi_hisa &rel, RelationVersion ver, size_t idx)
-        : relation(rel), version(ver), index(idx) {}
 };
 
 } // namespace vflog

@@ -2,157 +2,96 @@
 #include "vflog.cuh"
 
 #include <iostream>
+#include <memory>
 #include <rmm/mr/device/managed_memory_resource.hpp>
 #include <thrust/remove.h>
 #include <thrust/sequence.h>
 #include <thrust/transform.h>
 
-void sg_barebone(char *data_path) {
-    auto global_buffer = std::make_shared<vflog::d_buffer>(40960);
-    // .decl edge(a: int, b: int)
-    vflog::multi_hisa edge(2, global_buffer);
-    edge.set_default_index_column(0);
-    edge.set_index_startegy(0, FULL, vflog::IndexStrategy::EAGER);
-    edge.set_index_startegy(1, FULL, vflog::IndexStrategy::LAZY);
-    vflog::read_kary_relation(data_path, edge, 2);
-    edge.newt_self_deduplicate();
-    edge.persist_newt();
-    std::cout << "Edge full size: " << edge.get_versioned_size(FULL)
-              << std::endl;
+void sg_ram(char *data_path) {
+    using namespace vflog;
+    auto ram = RelationalAlgebraMachine();
 
-    // .decl path(a: int, b: int)
-    vflog::multi_hisa sg(2, global_buffer);
-    sg.set_default_index_column(0);
+    auto edge = ram.create_rel("edge", 2, data_path);
+    auto sg = ram.create_rel("sg", 2);
 
-    // use ptr for buffer, because we want share buffer between different
-    // RA operations
-    auto matched_a_ptr = std::make_shared<vflog::device_indices_t>();
-    auto matched_b_ptr = std::make_shared<vflog::device_indices_t>();
-    auto matched_x_ptr = std::make_shared<vflog::device_indices_t>();
-    auto matched_y_ptr = std::make_shared<vflog::device_indices_t>();
+    ram.extend_register("r_a");
+    ram.extend_register("r_b");
+    ram.extend_register("r_x");
+    ram.extend_register("r_y");
 
-    // non recursive part
-    vflog::host_buf_ref_t cached;
-    // sg(x, y) :- edge(a, x), edge(a, y), x != y.
-    matched_x_ptr->resize(edge.get_versioned_size(FULL));
-    cached["edge1"] = matched_x_ptr;
-    thrust::sequence(EXE_POLICY, cached["edge1"]->begin(),
-                     cached["edge1"]->end());
-    vflog::column_join(edge, FULL, 0, edge, FULL, 0, cached, "edge1",
-                       matched_y_ptr);
-    cached["edge2"] = matched_y_ptr;
-    // filter match x y
-    vflog::device_bitmap_t filter_bitmap(matched_x_ptr->size(), false);
-    thrust::transform(EXE_POLICY, matched_x_ptr->begin(), matched_x_ptr->end(),
-                      matched_y_ptr->begin(), filter_bitmap.begin(),
-                      [x_ptrs = edge.get_raw_data_ptrs(FULL, 1),
-                       y_ptrs = edge.get_raw_data_ptrs(
-                           FULL, 1)] LAMBDA_TAG(auto &x, auto &y) {
-                          return x_ptrs[x] != y_ptrs[y];
-                      });
-    // filter x y
-    auto matched_x_end = thrust::remove_if(
-        EXE_POLICY, matched_x_ptr->begin(), matched_x_ptr->end(),
-        filter_bitmap.begin(), thrust::logical_not<bool>());
-    matched_x_ptr->resize(matched_x_end - matched_x_ptr->begin());
-    auto matched_y_end = thrust::remove_if(
-        EXE_POLICY, matched_y_ptr->begin(), matched_y_ptr->end(),
-        filter_bitmap.begin(), thrust::logical_not<bool>());
-    matched_y_ptr->resize(matched_y_end - matched_y_ptr->begin());
+    ram.add_operator({
+        // sg(x, y) :- edge(a, x), edge(a, y), x != y.
+        cache_update("c_edge1", "r_x"),
+        cache_init("c_edge1", rel_t("edge"), FULL),
+        join_op(column_t("edge", 0, FULL), column_t("edge", 0, FULL), "c_edge1",
+                "r_y"),
+        cache_update("c_edge2", "r_y"),
+        // filter match x y
+        custom_op([](RelationalAlgebraMachine &ram) {
+            device_bitmap_t filter_bitmap(ram.get_register("r_x")->size(),
+                                          false);
+            auto edge = ram.rels["edge"];
+            thrust::transform(EXE_POLICY, ram.get_register("r_x")->begin(),
+                              ram.get_register("r_x")->end(),
+                              ram.get_register("r_y")->begin(),
+                              filter_bitmap.begin(),
+                              [x_ptrs = edge->get_raw_data_ptrs(FULL, 1),
+                               y_ptrs = edge->get_raw_data_ptrs(
+                                   FULL, 1)] LAMBDA_TAG(auto &x, auto &y) {
+                                  return x_ptrs[x] != y_ptrs[y];
+                              });
+            auto matched_x_end = thrust::remove_if(
+                EXE_POLICY, ram.get_register("r_x")->begin(),
+                ram.get_register("r_x")->end(), filter_bitmap.begin(),
+                thrust::logical_not<bool>());
+            ram.get_register("r_x")->resize(matched_x_end -
+                                            ram.get_register("r_x")->begin());
+            auto matched_y_end = thrust::remove_if(
+                EXE_POLICY, ram.get_register("r_y")->begin(),
+                ram.get_register("r_y")->end(), filter_bitmap.begin(),
+                thrust::logical_not<bool>());
+            ram.get_register("r_y")->resize(matched_y_end -
+                                            ram.get_register("r_y")->begin());
+        }),
+        // materialize sg
+        prepare_materialization(rel_t("sg"), "c_edge2"),
+        project_op(column_t("edge", 1, FULL), column_t("sg", 0, NEWT), "c_edge1"),
+        project_op(column_t("edge", 1, FULL), column_t("sg", 1, NEWT), "c_edge2"),
+        end_materialization(rel_t("sg"), "c_edge2"),
+        persistent(rel_t("sg")),
+        print_size(rel_t("sg")),
+        cache_clear(),
+        fixpoint_op(
+            {
+                // sg(x, y) :-  sg(a, b), edge(a, x), edge(b, y).
+                cache_update("c_sg", "r_a"),
+                cache_init("c_sg", rel_t("sg"), DELTA),
+                join_op(column_t("edge", 0, FULL), column_t("sg", 0, DELTA), "c_sg",
+                        "r_x"),
+                cache_update("c_edge1", "r_x"),
+                join_op(column_t("edge", 0, FULL), column_t("sg", 1, DELTA), "c_sg",
+                        "r_y"),
+                cache_update("c_edge2", "r_y"),
+                prepare_materialization(rel_t("sg"), "c_edge2"),
+                project_op(column_t("edge", 1, FULL), column_t("sg", 0, NEWT),
+                           "c_edge1"),
+                project_op(column_t("edge", 1, FULL), column_t("sg", 1, NEWT),
+                           "c_edge2"),
+                end_materialization(rel_t("sg"), "c_edge2"),
+                persistent(rel_t("sg")),
+                print_size(rel_t("sg")),
+                cache_clear(),
+            },
+            {rel_t("sg")}),
+    });
 
-    // materialize sg
-    sg.allocate_newt(matched_x_ptr->size());
-    vflog::column_copy(edge, FULL, 1, sg, NEWT, 0, matched_x_ptr);
-    vflog::column_copy(edge, FULL, 1, sg, NEWT, 1, matched_y_ptr);
-    sg.newt_size = matched_x_ptr->size();
-    sg.total_tuples += matched_x_ptr->size();
-    sg.newt_self_deduplicate();
-    sg.persist_newt();
-    matched_x_ptr->clear();
-    matched_x_ptr->shrink_to_fit();
-    matched_y_ptr->clear();
-    matched_y_ptr->shrink_to_fit();
-    std::cout << "SG full size before : " << sg.get_versioned_size(FULL)
-              << std::endl;
-    // print delta size
-    std::cout << "SG delta size before : " << sg.get_versioned_size(DELTA)
-              << std::endl;
-
-    // evaluate loop
-    size_t iteration = 0;
     KernelTimer timer;
-    KernelTimer timer2;
-    float alloc_newt_time = 0;
-    float copy_time = 0;
-    float dedup_time = 0;
-    float persist_time = 0;
-    float join_time = 0;
     timer.start_timer();
-
-    while (true) {
-        std::cout << "Iteration " << iteration << std::endl;
-        RelationVersion sg_version = DELTA;
-
-        // sg(x, y) :-  sg(a, b), edge(a, x), edge(b, y).
-        timer2.start_timer();
-        vflog::host_buf_ref_t cached;
-        cached["sg"] = matched_a_ptr;
-        cached["sg"]->resize(sg.get_versioned_size(sg_version));
-        thrust::sequence(cached["sg"]->begin(), cached["sg"]->end());
-        vflog::column_join(edge, FULL, 0, sg, sg_version, 0, cached, "sg",
-                           matched_x_ptr);
-        cached["edge1"] = matched_x_ptr;
-        // metavar sg is useless after join pop it from cache
-        vflog::column_join(edge, FULL, 0, sg, sg_version, 1, cached, "sg",
-                           matched_y_ptr, true);
-        cached["edge2"] = matched_y_ptr;
-        timer2.stop_timer();
-        join_time += timer2.get_spent_time();
-        auto raw_newt_size = cached["edge2"]->size();
-        timer2.start_timer();
-        sg.allocate_newt(raw_newt_size);
-        timer2.stop_timer();
-        alloc_newt_time += timer2.get_spent_time();
-        timer2.start_timer();
-        vflog::column_copy(edge, FULL, 1, sg, NEWT, 0, cached["edge1"]);
-        vflog::column_copy(edge, FULL, 1, sg, NEWT, 1, cached["edge2"]);
-        timer2.stop_timer();
-        copy_time += timer2.get_spent_time();
-        sg.newt_size = raw_newt_size;
-        sg.total_tuples += raw_newt_size;
-
-        timer2.start_timer();
-        sg.newt_self_deduplicate();
-        timer2.stop_timer();
-        dedup_time += timer2.get_spent_time();
-        // sg.print_raw_data(NEWT);
-
-        timer2.start_timer();
-        sg.persist_newt();
-        timer2.stop_timer();
-        persist_time += timer2.get_spent_time();
-
-        // fixpoint check
-        auto delta_size = sg.get_versioned_size(DELTA);
-        if (delta_size == 0) {
-            break;
-        }
-        iteration++;
-    }
-
-    // sg.print_raw_data(DELTA);
+    ram.execute();
     timer.stop_timer();
     auto elapsed = timer.get_spent_time();
-
-    std::cout << "SG full size after : " << sg.get_versioned_size(FULL)
-              << std::endl;
     std::cout << "Elapsed time: " << elapsed << "s" << std::endl;
-    std::cout << "Join time: " << join_time << "s" << std::endl;
-    std::cout << "Alloc newt time: " << alloc_newt_time << "s" << std::endl;
-    std::cout << "Copy time: " << copy_time << "s" << std::endl;
-    std::cout << "Dedup time: " << dedup_time << "s" << std::endl;
-    std::cout << "Persist time: " << persist_time << "s" << std::endl;
-    sg.print_stats();
 }
 
 int main(int argc, char **argv) {
@@ -180,6 +119,6 @@ int main(int argc, char **argv) {
         rmm::mr::set_current_device_resource(&cuda_mr);
     }
 
-    sg_barebone(data_path);
+    sg_ram(data_path);
     return 0;
 }
