@@ -37,11 +37,24 @@ void PrepareMaterialization::execute(RelationalAlgebraMachine &ram) {
     }
     // check if overflow happens
     if (ram.overflow_rel == nullptr && ram.disable_split == false) {
-        if (rel_p->total_tuples + cached_indices[meta_var]->size() >
+        if (rel_p->split_mode == SPLIT_SIZE &&
+            rel_p->total_tuples + cached_indices[meta_var]->size() >
             rel_p->max_tuples) {
             // check if current newt size is empty
             if (rel_p->newt_size != 0) {
                 // TODO: unimplemented
+                throw std::runtime_error("Overflow happens, but newt is not empty");
+            }
+            // split the relation
+            ram.split_relation(rel.name);
+            ram.overflow_rel->allocate_newt(cached_indices[meta_var]->size());
+            return;
+        }
+        if (rel_p->split_mode == SPLIT_ITER &&
+            ram.iter_counter >= rel_p->split_iter_count) {
+            // check if current newt size is empty
+            if (rel_p->newt_size != 0) {
+                //  TODO: unimplemented
                 throw std::runtime_error("Overflow happens, but newt is not empty");
             }
             // split the relation
@@ -83,10 +96,10 @@ void Persistent::execute(RelationalAlgebraMachine &ram) {
     }
     auto rel_p = ram.rels[rel.name];
     // deduplicate will all frozen relations
+    rel_p->newt_self_deduplicate();
     for (auto &frozen : ram.frozen_rels[rel.name]) {
         frozen->diff(*rel_p, NEWT, _indices_default);
     }
-    rel_p->newt_self_deduplicate();
     rel_p->persist_newt();
 }
 

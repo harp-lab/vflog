@@ -14,6 +14,10 @@ void tc_split(char *data_path, int splits_mode) {
         path->split_when(327'680'000, 4);
     } else if (splits_mode == 2) {
         path->split_when(163'840'000, 4);
+    } else if (splits_mode == 3) {
+        path->split_when(327'680'000 * 2, 2);
+    } else if (splits_mode > 10) {
+        path->split_iter(splits_mode, 4);
     }
 
     auto input_indices_ptr = std::make_shared<vflog::device_indices_t>();

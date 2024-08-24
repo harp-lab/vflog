@@ -14,6 +14,8 @@ struct RelationalAlgebraMachine {
     host_buf_ref_t cached_indices;
     host_buf_ref_t register_map;
 
+    int iter_counter = 0;
+
     // a relation will be split into multiple relations if it exceeds max_tuples
     // during materialization, if overflow happens, the new relation will be
     // stored in overflow_rel, in each iteration, only 1 relation can be split.
@@ -77,6 +79,9 @@ struct RelationalAlgebraMachine {
     }
 
     bool has_overflow() { return overflow_rel != nullptr; }
+
+    void reset_iter_counter() { iter_counter = 0; }
+    void inc_iter_counter() { iter_counter += 1; }
 };
 
 } // namespace vflog

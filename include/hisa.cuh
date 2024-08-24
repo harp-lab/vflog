@@ -19,12 +19,17 @@
 
 namespace vflog {
 
+enum split_mode_type { SPLIT_ITER, SPLIT_SIZE, SPLIT_NONE };
+
 struct multi_hisa {
     size_t uid = 0;
 
     // uint32_t max_tuples = 327'680'000;
     uint32_t max_tuples = UINT32_MAX;
     uint32_t max_splits = 4;
+
+    split_mode_type split_mode = SPLIT_NONE;
+    uint32_t split_iter_count = 0;
 
     int arity;
 
@@ -66,6 +71,8 @@ struct multi_hisa {
 
     d_buffer_ptr buffer = nullptr;
     device_data_t data_buffer;
+
+    int iteration = 0;
 
     // load data from CPU Memory to Full, this misa must be empty
     void
@@ -118,9 +125,22 @@ struct multi_hisa {
     void split_when(uint32_t size, uint32_t max_splits) {
         max_tuples = size;
         max_splits = max_splits;
+        split_mode = SPLIT_SIZE;
     }
 
-    void stop_split() { max_tuples = UINT32_MAX; }
+    void split_iter(uint32_t iter, uint32_t max_splits) {
+        split_iter_count = iter;
+        split_mode = SPLIT_ITER;
+        max_splits = max_splits;
+    }
+
+    void stop_split() {
+        if (split_mode == SPLIT_SIZE) {
+            max_tuples = UINT32_MAX;
+        } else if (split_mode == SPLIT_ITER) {
+            split_iter_count = UINT32_MAX;
+        }
+    }
 
     void set_versioned_size(RelationVersion version, uint32_t size) {
         switch (version) {
@@ -199,14 +219,21 @@ struct multi_hisa {
         max_tuples = other.max_tuples;
         max_splits = other.max_splits;
         default_index_column = other.default_index_column;
+        split_mode = other.split_mode;
+        split_iter_count = other.split_iter_count;
         for (int i = 0; i < arity; i++) {
-            full_columns[i].index_strategy = other.full_columns[i].index_strategy;
-            delta_columns[i].index_strategy = other.delta_columns[i].index_strategy;
-            newt_columns[i].index_strategy = other.newt_columns[i].index_strategy;
+            full_columns[i].index_strategy =
+                other.full_columns[i].index_strategy;
+            delta_columns[i].index_strategy =
+                other.delta_columns[i].index_strategy;
+            newt_columns[i].index_strategy =
+                other.newt_columns[i].index_strategy;
         }
     }
 
     void print_stats();
+
+    void inc_iter() { iteration++; }
 };
 
 } // namespace vflog

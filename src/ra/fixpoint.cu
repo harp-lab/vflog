@@ -8,6 +8,7 @@ namespace vflog {
 void FixpointOperator::execute(RelationalAlgebraMachine &ram) {
     int iter = 0;
     KernelTimer timer;
+    ram.reset_iter_counter();
     while (true) {
         std::cout << "Iteration " << iter << std::endl;
         int i = 0;
@@ -42,6 +43,7 @@ void FixpointOperator::execute(RelationalAlgebraMachine &ram) {
             if (ram.has_overflow()) {
                 ram.flush_overflow();
             }
+            ram.rels[rel.name]->inc_iter();
         }
         if (max_iter != -1 && iter >= max_iter) {
             break;
@@ -50,6 +52,7 @@ void FixpointOperator::execute(RelationalAlgebraMachine &ram) {
             break;
         }
         iter += 1;
+        ram.inc_iter_counter();
         ram.cached_indices.clear();
     }
     double total_time = 0;
