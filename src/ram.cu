@@ -1,7 +1,13 @@
 
 #include "ram.cuh"
 
-namespace vflog {
+namespace vflog::ram {
+
+void RelationalAlgebraMachine::add_program(std::shared_ptr<RAMProgram> program) {
+    for (auto &op : program->instructions) {
+        operators.push_back(op);
+    }
+}
 
 void RelationalAlgebraMachine::add_operator(
     std::vector<std::shared_ptr<RAMInstruction>> new_operators) {

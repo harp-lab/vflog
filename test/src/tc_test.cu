@@ -1,12 +1,14 @@
 
+#include "mir.cuh"
 #include "vflog.cuh"
 
 #include <iostream>
 #include <rmm/mr/device/managed_memory_resource.hpp>
 #include <thrust/sequence.h>
 
-void tc_split(char *data_path, int splits_mode) {
-    auto ram = vflog::RelationalAlgebraMachine();
+void tc_ram(char *data_path, int splits_mode) {
+    using namespace vflog::ram;
+    auto ram = RelationalAlgebraMachine();
 
     auto edge = ram.create_rel("edge", 2, data_path);
     auto path = ram.create_rel("path", 2);
@@ -24,8 +26,6 @@ void tc_split(char *data_path, int splits_mode) {
     auto tmp_id0 = std::make_shared<vflog::device_indices_t>();
     auto tmp_id1 = std::make_shared<vflog::device_indices_t>();
     auto tmp_id2 = std::make_shared<vflog::device_indices_t>();
-
-    using namespace vflog;
 
     ram.add_operator({
         // path(a, b) :- edge(a, b).
@@ -61,11 +61,9 @@ void tc_split(char *data_path, int splits_mode) {
     };
 
     std::vector<std::shared_ptr<RAMInstruction>> fixpoint_instructions;
-    // for (int i = -1; i < 4; i++) {
     auto splited_instr = gen_join1(-1);
     fixpoint_instructions.insert(fixpoint_instructions.end(),
                                  splited_instr.begin(), splited_instr.end());
-    // }
     fixpoint_instructions.push_back(persistent(rel_t("path")));
     fixpoint_instructions.push_back(print_size(rel_t("path")));
     ram.add_operator({fixpoint_op(fixpoint_instructions, {rel_t("path")})});
@@ -74,6 +72,44 @@ void tc_split(char *data_path, int splits_mode) {
     KernelTimer timer;
     timer.start_timer();
     ram.execute();
+    timer.stop_timer();
+    auto elapsed = timer.get_spent_time();
+    std::cout << "Elapsed time: " << elapsed << "s" << std::endl;
+}
+
+void tc_mir(char *data_path, int splits_mode) {
+    using namespace vflog::mir;
+    auto prog = program({
+        declare("edge", {"a", "b"}, data_path),
+        declare("path", {"a", "b"}),
+        scc(
+            {
+                rule(head("path", {var("a"), var("b")}),
+                     {body("edge", {var("a"), var("b")})}),
+            },
+            false),
+        scc(
+            {
+                rule(head("path", {var("a"), var("c")}),
+                     {body("path", {var("a"), var("b")}),
+                      body("edge", {var("b"), var("c")})}),
+            },
+            true),
+    });
+
+    auto compiler = RAMGenPass(prog);
+    compiler.compile();
+    auto ram = compiler.ram_instructions;
+    std::cout << "Compiled RAM program" << std::endl;
+    std::cout << ram->to_string() << std::endl;
+    
+    vflog::ram::RelationalAlgebraMachine ram_machine;
+    ram_machine.add_program(ram);
+
+    std::cout << "Start executing" << std::endl;
+    KernelTimer timer;
+    timer.start_timer();
+    ram_machine.execute();
     timer.stop_timer();
     auto elapsed = timer.get_spent_time();
     std::cout << "Elapsed time: " << elapsed << "s" << std::endl;
@@ -107,6 +143,7 @@ int main(int argc, char **argv) {
     }
     int splits_mode = atoi(argv[3]);
 
-    tc_split(data_path, splits_mode);
+    // tc_ram(data_path, splits_mode);
+    tc_mir(data_path, splits_mode);
     return 0;
 }

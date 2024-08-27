@@ -58,23 +58,4 @@ void column_negate(multi_hisa &inner, RelationVersion inner_ver,
     }
 }
 
-void NegateOperator::execute(RelationalAlgebraMachine &ram) {
-    auto inner_rel_p = ram.rels[inner.rel];
-    if (inner.is_frozen()) {
-        inner_rel_p = ram.get_frozen(inner.rel, inner.frozen_idx);
-        if (inner_rel_p == nullptr) {
-            return;
-        }
-    }
-    if (ram.overflow_rel_name == outer.rel && outer.version == NEWT) {
-        column_negate(*inner_rel_p, inner.version, inner.idx,
-                      *ram.overflow_rel, outer.version, outer.idx,
-                      ram.cached_indices, meta_var, pop_outer);
-    } else {
-        column_negate(*inner_rel_p, inner.version, inner.idx,
-                      *ram.rels[outer.rel], outer.version, outer.idx,
-                      ram.cached_indices, meta_var, pop_outer);
-    }
-}
-
 } // namespace vflog

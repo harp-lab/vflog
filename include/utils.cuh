@@ -100,7 +100,6 @@ using ptr_and_size_t =
 using thrust_buffer_ptr_t =
     thrust::pointer<internal_data_type, thrust::device_system_tag>;
 
-
 inline uint64_t __device__ __host__ compress_u32(uint32_t &a, uint32_t &b) {
     return ((uint64_t)a << 32) | b;
 }
@@ -120,6 +119,38 @@ struct get_lower {
 };
 
 enum IndexStrategy { EAGER, LAZY };
+
+inline std::string index_strategy_to_string(IndexStrategy strategy) {
+    switch (strategy) {
+    case EAGER:
+        return "EAGER";
+    case LAZY:
+        return "LAZY";
+    default:
+        return "UNKNOWN";
+    }
+}
+
+// function to encode a 31-bit integer to a 32-bit unsigned integer
+__device__ __host__ inline uint32_t i2d(int x) { return (x << 1) ^ (x >> 31); }
+
+// function to decode a 32-bit unsigned integer to a 31-bit integer
+__device__ __host__ inline int d2i(uint32_t x) {
+    return (x >> 1) ^ (-(int)(x & 1));
+}
+
+inline std::string version_to_string(RelationVersion version) {
+    switch (version) {
+    case DELTA:
+        return "DELTA";
+    case FULL:
+        return "FULL";
+    case NEWT:
+        return "NEWT";
+    default:
+        return "UNKNOWN";
+    }
+}
 
 } // namespace vflog
 

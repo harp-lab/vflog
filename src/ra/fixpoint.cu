@@ -3,7 +3,7 @@
 #include <memory>
 #include <vector>
 
-namespace vflog {
+namespace vflog::ram {
 
 void FixpointOperator::execute(RelationalAlgebraMachine &ram) {
     int iter = 0;
@@ -63,4 +63,18 @@ void FixpointOperator::execute(RelationalAlgebraMachine &ram) {
     }
     std::cout << "Total time: " << total_time << "s" << std::endl;
 }
+
+std::string FixpointOperator::to_string() {
+    std::string ret = "\nfixpoint_op({\n";
+    for (auto &op : operators) {
+        ret += op->to_string() + ",\n";
+    }
+    ret += "}, {";
+    for (auto &rel : rels) {
+        ret += rel.to_string() + ",";
+    }
+    ret += "})";
+    return ret;
+}
+
 } // namespace vflog

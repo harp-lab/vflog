@@ -1,11 +1,13 @@
 
 #pragma once
 
-#include "ra.cuh"
+#include "ram_instruction.cuh"
 #include <string>
 #include <vector>
 
 namespace vflog {
+
+namespace ram {
 
 struct RelationalAlgebraMachine {
     std::vector<std::shared_ptr<RAMInstruction>> operators;
@@ -32,6 +34,8 @@ struct RelationalAlgebraMachine {
 
     void
     add_operator(std::vector<std::shared_ptr<RAMInstruction>> new_operators);
+
+    void add_program(std::shared_ptr<RAMProgram> program);
 
     void add_rel(std::string name, rel_ptr rel) { rels[name] = rel; }
 
@@ -83,5 +87,7 @@ struct RelationalAlgebraMachine {
     void reset_iter_counter() { iter_counter = 0; }
     void inc_iter_counter() { iter_counter += 1; }
 };
+
+} // namespace ram
 
 } // namespace vflog

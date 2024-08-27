@@ -68,28 +68,4 @@ void column_copy_indices(multi_hisa &src, RelationVersion src_version,
     dst_column.raw_size += indices->size();
 }
 
-void ProjectOperator::execute(RelationalAlgebraMachine &ram) {
-    auto src_ptr = ram.rels[src.rel];
-    if (src.version == FULL && src.is_frozen()) {
-        src_ptr = ram.get_frozen(src.rel, src.frozen_idx);
-        if (src_ptr == nullptr) {
-            // frozen relation not generated yet
-            return;
-        }
-    }
-    if (src_ptr->get_versioned_size(src.version) == 0) {
-        return;
-    }
-    if (ram.overflow_rel_name == dst.rel) {
-        std::cout << "<<<<< " << std::endl;
-        column_copy(*src_ptr, src.version, src.idx,
-                    *ram.overflow_rel, dst.version, dst.idx,
-                    ram.cached_indices[meta_var]);
-    } else {
-        column_copy(*src_ptr, src.version, src.idx,
-                    *ram.rels[dst.rel], dst.version, dst.idx,
-                    ram.cached_indices[meta_var]);
-    }
-}
-
 } // namespace vflog

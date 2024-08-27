@@ -9,7 +9,7 @@
 #include <thrust/transform.h>
 
 void sg_ram(char *data_path) {
-    using namespace vflog;
+    using namespace vflog::ram;
     auto ram = RelationalAlgebraMachine();
 
     auto edge = ram.create_rel("edge", 2, data_path);
@@ -29,7 +29,7 @@ void sg_ram(char *data_path) {
         cache_update("c_edge2", "r_y"),
         // filter match x y
         custom_op([](RelationalAlgebraMachine &ram) {
-            device_bitmap_t filter_bitmap(ram.get_register("r_x")->size(),
+            vflog::device_bitmap_t filter_bitmap(ram.get_register("r_x")->size(),
                                           false);
             auto edge = ram.rels["edge"];
             thrust::transform(EXE_POLICY, ram.get_register("r_x")->begin(),
