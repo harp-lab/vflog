@@ -13,14 +13,6 @@ void column_join(multi_hisa &inner, RelationVersion inner_ver, size_t inner_idx,
                  std::shared_ptr<device_indices_t> matched_indices,
                  bool pop_outer = false);
 
-void column_masked_join(multi_hisa &inner, RelationVersion inner_ver,
-                        size_t inner_idx, multi_hisa &outer,
-                        RelationVersion outer_ver, size_t outer_idx,
-                        device_bitmap_t &inner_mask,
-                        host_buf_ref_t &cached_indices, std::string meta_var,
-                        std::shared_ptr<device_indices_t> matched_indices,
-                        bool pop_outer = false);
-
 void column_negate(multi_hisa &inner, RelationVersion inner_ver,
                    size_t inner_idx, multi_hisa &outer,
                    RelationVersion outer_ver, size_t outer_idx,

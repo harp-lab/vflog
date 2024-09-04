@@ -92,6 +92,7 @@ void sg_ram(char *data_path) {
     timer.stop_timer();
     auto elapsed = timer.get_spent_time();
     std::cout << "Elapsed time: " << elapsed << "s" << std::endl;
+    ram.rels["sg"]->print_stats();
 }
 
 int main(int argc, char **argv) {

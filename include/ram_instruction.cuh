@@ -18,6 +18,7 @@ struct RelationalAlgebraMachine;
 
 enum class RAMInstructionType {
     JOIN,
+    FREE_JOIN,
     INDEX,
     PROJECT,
     FILTER,
@@ -265,6 +266,20 @@ struct JoinOperator : public RAMInstruction {
         : inner(inner), outer(outer), outer_meta_var(outer_meta_var),
           result_register(result_register), pop_outer(pop_outer) {
         type = RAMInstructionType::JOIN;
+    }
+
+    void execute(RelationalAlgebraMachine &ram) override;
+    std::string to_string() override;
+};
+
+struct FreeJoinOperator : public RAMInstruction {
+    std::vector<column_t> columns;
+    std::vector<std::string> meta_vars;
+
+    FreeJoinOperator(std::vector<column_t> columns,
+                     std::vector<std::string> meta_vars)
+        : columns(columns), meta_vars(meta_vars) {
+        type = RAMInstructionType::FREE_JOIN;
     }
 
     void execute(RelationalAlgebraMachine &ram) override;

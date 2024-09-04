@@ -34,11 +34,8 @@ struct GpuSimplMap {
 // using index_value = uint64_t;
 // using Map = std::unordered_map<internal_data_type, offset_type>;
 using GpuMap = cuco::static_map<
-    internal_data_type,
-    comp_range_t,
-    cuco::extent<std::size_t>,
-    cuda::thread_scope_device,
-    thrust::equal_to<internal_data_type>,
+    internal_data_type, comp_range_t, cuco::extent<std::size_t>,
+    cuda::thread_scope_device, thrust::equal_to<internal_data_type>,
     cuco::linear_probing<4, cuco::default_hash_function<internal_data_type>>>;
 // using GpuMapReadRef = GpuMap::ref_type<cuco::find_tag>;
 // using GpuMap = cuco::dynamic_map<internal_data_type, comp_range_t>;
@@ -96,7 +93,30 @@ struct VerticalColumn {
         }
     }
 
-    void map_insert(device_data_t &raw_data, size_t uniq_size, d_buffer_ptr &buffer) {
+    template <typename IteratorFrom, typename IteratorTo, typename IteratorRes>
+    void map_contains(IteratorFrom from_start, IteratorFrom from_end,
+                      IteratorRes to) {
+        if (unique_v_map) {
+            unique_v_map->contains(from_start, from_end, to);
+        } else {
+            throw std::runtime_error("not implemented");
+        }
+    }
+
+    template <typename IteratorInput, typename IteratorStencil,
+              typename IteratorRes>
+    void map_contains_if(IteratorInput from_start, IteratorInput from_end,
+                         IteratorStencil stencil_start, IteratorRes to) {
+        if (unique_v_map) {
+            unique_v_map->contains_if(from_start, from_end, stencil_start,
+                                      thrust::identity<bool>(), to);
+        } else {
+            throw std::runtime_error("not implemented");
+        }
+    }
+
+    void map_insert(device_data_t &raw_data, size_t uniq_size,
+                    d_buffer_ptr &buffer) {
         if (unique_v_map) {
             // columns[i].unique_v_map->reserve(uniq_size);
             if (unique_v_map->size() > uniq_size + 1) {

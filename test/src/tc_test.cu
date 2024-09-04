@@ -1,5 +1,7 @@
 
 #include "mir.cuh"
+#include "ram_instruction.cuh"
+#include "utils.cuh"
 #include "vflog.cuh"
 
 #include <iostream>
@@ -32,9 +34,9 @@ void tc_ram(char *data_path, int splits_mode) {
         cache_update("edge", input_indices_ptr),
         cache_init("edge", rel_t("edge"), FULL),
         prepare_materialization(rel_t("path"), "edge"),
-        project_op(column_t("edge", 0, FULL), column_t("path", 0, FULL),
+        project_op(column_t("edge", 0, FULL), column_t("path", 0, NEWT),
                    "edge"),
-        project_op(column_t("edge", 1, FULL), column_t("path", 1, FULL),
+        project_op(column_t("edge", 1, FULL), column_t("path", 1, NEWT),
                    "edge"),
         end_materialization(rel_t("path"), "edge"),
         persistent(rel_t("path")),
@@ -56,6 +58,7 @@ void tc_ram(char *data_path, int splits_mode) {
             project_op(column_t("edge", 1, FULL, frozen_idx),
                        column_t("path", 1, NEWT), "edge"),
             end_materialization(rel_t("path"), "path"),
+            print_size(rel_t("path")),
             cache_clear(),
         };
     };
@@ -143,7 +146,7 @@ int main(int argc, char **argv) {
     }
     int splits_mode = atoi(argv[3]);
 
-    // tc_ram(data_path, splits_mode);
-    tc_mir(data_path, splits_mode);
+    tc_ram(data_path, splits_mode);
+    // tc_mir(data_path, splits_mode);
     return 0;
 }
