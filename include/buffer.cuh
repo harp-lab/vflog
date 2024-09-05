@@ -14,6 +14,7 @@ namespace vflog {
 struct d_buffer {
 
     ptr_and_size_t ptr_and_size;
+    device_bitmap_t bitmap;
 
     thrust::device_system_tag tag = thrust::device;
 
@@ -30,6 +31,9 @@ struct d_buffer {
     }
 
     internal_data_type *data() { return ptr_and_size.first.get(); }
+    device_bitmap_t& get_bitmap() {
+        return bitmap;
+    }
 
     size_t size() { return ptr_and_size.second; }
 
@@ -40,6 +44,10 @@ struct d_buffer {
             ptr_and_size =
                 thrust::get_temporary_buffer<internal_data_type>(tag, size * ratio);
         }
+    }
+
+    void reserve_bitmap(size_t size) {
+        bitmap.reserve(size);
     }
 };
 

@@ -2,6 +2,7 @@
 #pragma once
 
 #include "ram_instruction.cuh"
+#include <map>
 #include <string>
 #include <vector>
 
@@ -16,6 +17,9 @@ struct RelationalAlgebraMachine {
     host_buf_ref_t cached_indices;
     host_buf_ref_t register_map;
 
+    // relation bitmap
+    std::map<std::string, device_bitmap_t> rel_bitmap;
+
     int iter_counter = 0;
 
     // a relation will be split into multiple relations if it exceeds max_tuples
@@ -24,7 +28,8 @@ struct RelationalAlgebraMachine {
     rel_ptr overflow_rel = nullptr;
     std::string overflow_rel_name;
 
-    // switch to disable split of relations, usually used when need operation on NEWT
+    // switch to disable split of relations, usually used when need operation on
+    // NEWT
     bool disable_split = false;
 
     std::map<std::string, std::vector<rel_ptr>> frozen_rels;
@@ -38,6 +43,13 @@ struct RelationalAlgebraMachine {
     void add_program(std::shared_ptr<RAMProgram> program);
 
     void add_rel(std::string name, rel_ptr rel) { rels[name] = rel; }
+
+    rel_ptr get_rel(std::string name) {
+        if (rels.find(name) == rels.end()) {
+            return nullptr;
+        }
+        return rels[name];
+    }
 
     void extend_register(std::string name) {
         register_map[name] = std::make_shared<device_indices_t>();
@@ -83,6 +95,17 @@ struct RelationalAlgebraMachine {
     }
 
     bool has_overflow() { return overflow_rel != nullptr; }
+
+    void bitmap_clear() {
+        rel_bitmap.clear();
+    }
+
+    device_bitmap_t &get_bitmap(std::string rel_name) {
+        if (rel_bitmap.find(rel_name) == rel_bitmap.end()) {
+            rel_bitmap[rel_name] = device_bitmap_t();
+        }
+        return rel_bitmap[rel_name];
+    }
 
     void reset_iter_counter() { iter_counter = 0; }
     void inc_iter_counter() { iter_counter += 1; }

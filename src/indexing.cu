@@ -23,16 +23,16 @@ void multi_hisa::build_index(VerticalColumn &column,
         thrust::sequence(EXE_POLICY, column.sorted_indices.begin(),
                          column.sorted_indices.end());
         // sort all values in the column
-        thrust::copy(EXE_POLICY, raw_ver_head,
-                     raw_ver_head + column.raw_size, column_data.begin());
+        thrust::copy(EXE_POLICY, raw_ver_head, raw_ver_head + column.raw_size,
+                     column_data.begin());
         // if (i != 0) {
         thrust::stable_sort_by_key(EXE_POLICY, column_data.begin(),
                                    column_data.end(),
                                    column.sorted_indices.begin());
         // }
         // count unique
-        uniq_size = thrust::unique_count(
-            EXE_POLICY, column_data.begin(), column_data.end());
+        uniq_size = thrust::unique_count(EXE_POLICY, column_data.begin(),
+                                         column_data.end());
         buffer->reserve(uniq_size);
         auto uniq_end = thrust::unique_by_key_copy(
             EXE_POLICY, column_data.begin(), column_data.end(),
@@ -109,5 +109,71 @@ void multi_hisa::build_index_all(RelationVersion version, bool sorted) {
         }
     }
     indexed = true;
+
+    sort_newt_clustered_index();
+    persist_newt_clustered_index();
 }
+
+void multi_hisa::sort_newt_clustered_index() {
+    auto start = std::chrono::high_resolution_clock::now();
+    for (auto &clustered_index : clustered_indices_newt) {
+        clustered_index.sorted_indices.resize(newt_size);
+        thrust::sequence(EXE_POLICY, clustered_index.sorted_indices.begin(),
+                         clustered_index.sorted_indices.end());
+        for (int i = clustered_index.column_indices.size() - 1; i >= 0; i--) {
+            auto &column = newt_columns[clustered_index.column_indices[i]];
+            auto column_head =
+                data[clustered_index.column_indices[i]].begin() + full_size;
+            thrust::stable_sort_by_key(
+                EXE_POLICY,
+                thrust::make_permutation_iterator(
+                    column_head, clustered_index.sorted_indices.begin()),
+                thrust::make_permutation_iterator(
+                    column_head, clustered_index.sorted_indices.end()),
+                clustered_index.sorted_indices.begin());
+        }
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    this->sort_time +=
+        std::chrono::duration_cast<std::chrono::microseconds>(end - start)
+            .count();
+}
+
+void multi_hisa::persist_newt_clustered_index() {
+    auto start = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < clustered_indices_newt.size(); i++) {
+        auto &cols_numbers = clustered_indices_newt[i].column_indices;
+        auto &newt_sorted_indices = clustered_indices_newt[i].sorted_indices;
+        auto &full_sorted_indices =
+            newt_columns[cols_numbers[0]].sorted_indices;
+
+        DEVICE_VECTOR<internal_data_type *> all_col_ptrs(arity);
+        for (int j = 0; j < cols_numbers.size(); j++) {
+            all_col_ptrs[j] = data[cols_numbers[j]].RAW_PTR + full_size;
+        }
+        device_data_t merged_column(full_size + newt_size);
+        thrust::merge(EXE_POLICY, full_sorted_indices.begin(),
+                      full_sorted_indices.end(), newt_sorted_indices.begin(),
+                      newt_sorted_indices.end(), merged_column.begin(),
+                      [arity = arity,
+                       all_col_ptrs =
+                           all_col_ptrs.data().get()] LAMBDA_TAG(auto full_idx,
+                                                                 auto new_idx) {
+                          for (int j = 0; j < arity; j++) {
+                              if (all_col_ptrs[j][full_idx] !=
+                                  all_col_ptrs[j][new_idx]) {
+                                  return all_col_ptrs[j][full_idx] <
+                                         all_col_ptrs[j][new_idx];
+                              }
+                          }
+                          return false;
+                      });
+        full_sorted_indices.swap(merged_column);
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    this->merge_time +=
+        std::chrono::duration_cast<std::chrono::microseconds>(end - start)
+            .count();
+}
+
 } // namespace vflog

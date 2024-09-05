@@ -1,0 +1,22 @@
+
+.decl isMainClass(x:number)
+.decl isSubClass(x:number)
+.decl conj(x:number, y:number, z:number)
+.decl exists(x:number, y:number, z:number)
+.decl subClassOf(x:number, y:number)
+.decl subPropChain(x:number, y:number, z:number)
+.decl subProp(x:number, y:number)
+.decl init(x:number)
+.decl ex(x:number, y:number, z:number)
+
+.input isMainClass
+.input isSubClass
+.input conj
+.input exists
+.input subClassOf
+.input subPropChain
+.input subProp
+
+init(C) :- isMainClass(C).
+// inf_init(C) :- ex(E, R, C).
+

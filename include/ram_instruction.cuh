@@ -17,6 +17,7 @@ namespace ram {
 struct RelationalAlgebraMachine;
 
 enum class RAMInstructionType {
+    MULIT_ARITY_JOIN,
     JOIN,
     FREE_JOIN,
     INDEX,
@@ -42,6 +43,7 @@ enum class RAMInstructionType {
     SET_COLUMN_STRATEGY,
     DEFAULT_COLUMN,
     LOAD_FILE,
+    FACT,
 };
 
 struct RAMInstruction {
@@ -121,28 +123,6 @@ struct ExtendRegister : RAMInstruction {
 };
 
 using rel_ptr = std::shared_ptr<multi_hisa>;
-
-struct column_t {
-    std::string rel;
-    size_t idx;
-    RelationVersion version;
-
-    int frozen_idx = -1;
-
-    column_t(std::string rel, size_t idx, RelationVersion version)
-        : rel(rel), idx(idx), version(version) {}
-    column_t(std::string rel, size_t idx, RelationVersion version,
-             int frozen_idx)
-        : rel(rel), idx(idx), version(version), frozen_idx(frozen_idx) {}
-
-    bool is_frozen() { return frozen_idx != -1; }
-
-    std::string to_string() {
-        std::string str = "column_t(\"" + rel + "\", " + std::to_string(idx) +
-                          ", " + version_to_string(version) + ")";
-        return str;
-    }
-};
 
 struct rel_t {
     std::string name;
@@ -248,6 +228,7 @@ struct JoinOperator : public RAMInstruction {
     column_t inner;
     column_t outer;
     std::string outer_meta_var; // the meta
+    std::string inner_meta_var = "";
     std::string result_register = "";
 
     std::shared_ptr<device_indices_t> matched_indices = nullptr;
@@ -268,7 +249,39 @@ struct JoinOperator : public RAMInstruction {
         type = RAMInstructionType::JOIN;
     }
 
+    JoinOperator(column_t inner, column_t outer, std::string inner_meta_var,
+                 std::string outer_meta_var, std::string result_register,
+                 bool pop_outer = false)
+        : inner(inner), outer(outer), inner_meta_var(inner_meta_var),
+          outer_meta_var(outer_meta_var), result_register(result_register),
+          pop_outer(pop_outer) {
+        type = RAMInstructionType::JOIN;
+    }
+
     void execute(RelationalAlgebraMachine &ram) override;
+    std::string to_string() override;
+};
+
+struct MultiArityJoinOperator : public RAMInstruction {
+    std::vector<column_t> inner_columns;
+    std::vector<column_t> outer_columns;
+    std::string inner_reg;
+    std::vector<std::string> outer_meta_vars;
+    bool pop_outer = false;
+
+    MultiArityJoinOperator(std::vector<column_t> inner_columns,
+                           std::vector<column_t> outer_columns,
+                           std::string inner_reg,
+                           std::vector<std::string> outer_meta_vars,
+                           bool pop_outer = false)
+        : inner_columns(inner_columns), outer_columns(outer_columns),
+          inner_reg(inner_reg), outer_meta_vars(outer_meta_vars),
+          pop_outer(pop_outer) {
+        type = RAMInstructionType::MULIT_ARITY_JOIN;
+    }
+
+    void execute(RelationalAlgebraMachine &ram) override;
+
     std::string to_string() override;
 };
 
@@ -402,6 +415,18 @@ struct SetColumnStrategy : RAMInstruction {
     std::string to_string() override;
 };
 
+struct Index : RAMInstruction {
+    rel_t rel;
+    std::vector<int> columns;
+
+    Index(rel_t rel, std::vector<int> columns) : rel(rel), columns(columns) {
+        type = RAMInstructionType::INDEX;
+    }
+
+    void execute(RelationalAlgebraMachine &ram) override;
+    std::string to_string() override;
+};
+
 struct DefaultColumn : RAMInstruction {
     rel_t rel;
     size_t column_idx;
@@ -417,12 +442,25 @@ struct DefaultColumn : RAMInstruction {
 
 struct LoadFile : RAMInstruction {
     rel_t rel;
-    char *file_path;
+    const char *file_path;
     int arity;
 
-    LoadFile(rel_t rel, char *file_path, int arity)
+    LoadFile(rel_t rel, const char *file_path, int arity)
         : rel(rel), file_path(file_path), arity(arity) {
         type = RAMInstructionType::LOAD_FILE;
+    }
+
+    void execute(RelationalAlgebraMachine &ram) override;
+    std::string to_string() override;
+};
+
+struct Fact : RAMInstruction {
+    rel_t rel;
+    std::vector<std::vector<uint32_t>> data;
+
+    Fact(rel_t rel, std::vector<std::vector<uint32_t>> data)
+        : rel(rel), data(data) {
+        type = RAMInstructionType::FACT;
     }
 
     void execute(RelationalAlgebraMachine &ram) override;
@@ -450,6 +488,24 @@ inline std::shared_ptr<JoinOperator> join_op(column_t inner, column_t outer,
                                              bool pop_outer = false) {
     return std::make_shared<JoinOperator>(inner, outer, outer_meta_var,
                                           result_register, pop_outer);
+}
+inline std::shared_ptr<JoinOperator> join_op2(column_t inner, column_t outer,
+                                              std::string inner_meta_var,
+                                              std::string outer_meta_var,
+                                              std::string result_register,
+                                              bool pop_outer = false) {
+    return std::make_shared<JoinOperator>(inner, outer, inner_meta_var,
+                                          outer_meta_var, result_register,
+                                          pop_outer);
+}
+
+inline std::shared_ptr<MultiArityJoinOperator>
+multi_arity_join_op(std::vector<column_t> inner_columns,
+                    std::vector<column_t> outer_columns, std::string inner_reg,
+                    std::vector<std::string> outer_meta_vars,
+                    bool pop_outer = false) {
+    return std::make_shared<MultiArityJoinOperator>(
+        inner_columns, outer_columns, inner_reg, outer_meta_vars, pop_outer);
 }
 
 inline std::shared_ptr<NegateOperator> negate_op(column_t inner, column_t outer,
@@ -594,9 +650,17 @@ default_column(rel_t rel, size_t column_idx, bool debug_flag = false) {
     return op;
 }
 
-inline std::shared_ptr<LoadFile> load_file(rel_t rel, char *file_path,
+inline std::shared_ptr<LoadFile> load_file(rel_t rel, const char *file_path,
                                            int arity, bool debug_flag = false) {
     auto op = std::make_shared<LoadFile>(rel, file_path, arity);
+    op->debug_flag = debug_flag;
+    return op;
+}
+
+inline std::shared_ptr<Fact> fact(rel_t rel,
+                                  std::vector<std::vector<uint32_t>> data,
+                                  bool debug_flag = false) {
+    auto op = std::make_shared<Fact>(rel, data);
     op->debug_flag = debug_flag;
     return op;
 }

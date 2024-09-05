@@ -61,6 +61,13 @@ RAMGenPass::declare_relations() {
 }
 
 std::shared_ptr<ram::RAMInstruction>
+RAMGenPass::compile_fact(std::shared_ptr<MIRFact> fact) {
+    auto rel = ram::rel_t(fact->rel_name);
+    auto instr = ram::fact(rel, fact->data);
+    return instr;
+}
+
+std::shared_ptr<ram::RAMInstruction>
 RAMGenPass::compile_scc(std::shared_ptr<MIRScc> scc) {
     // check all relation name in a scc
     std::vector<std::string> updated_rel_names;
@@ -95,6 +102,12 @@ RAMGenPass::compile_scc(std::shared_ptr<MIRScc> scc) {
                 compile_rule(rule, updated_rel_names, scc->recursive);
             fixpoint_instrs.insert(fixpoint_instrs.end(), rule_instrs.begin(),
                                    rule_instrs.end());
+        }
+        if (line->type == MIRNodeType::FACT) {
+            // cast to MIRFact
+            auto fact = std::dynamic_pointer_cast<MIRFact>(line);
+            auto fact_instr = compile_fact(fact);
+            fixpoint_instrs.push_back(fact_instr);
         }
     }
 
@@ -188,19 +201,18 @@ RAMGenPass::compile_copy_rules(std::shared_ptr<MIRRule> rule,
         ram::cache_init(body_clause->rel_name,
                         ram::rel_t(body_clause->rel_name), ver),
         ram::prepare_materialization(ram::rel_t(head_clause->rel_name),
-                                     body_clause->rel_name)
-    };
+                                     body_clause->rel_name)};
     // fill all const
     for (auto const_pair : const_column_map) {
-        compiled_instrs.push_back(ram::fill_op(
-            ram::column_t(body_clause->rel_name, const_pair.first, ver),
-            const_pair.second));
+        compiled_instrs.push_back(
+            ram::fill_op(column_t(body_clause->rel_name, const_pair.first, ver),
+                         const_pair.second));
     }
     // project all variables
     for (auto reordered_pair : reordered_column_map) {
         compiled_instrs.push_back(ram::project_op(
-            ram::column_t(body_clause->rel_name, reordered_pair.second, ver),
-            ram::column_t(head_clause->rel_name, reordered_pair.first, NEWT),
+            column_t(body_clause->rel_name, reordered_pair.second, ver),
+            column_t(head_clause->rel_name, reordered_pair.first, NEWT),
             body_clause->rel_name));
     }
 
@@ -301,10 +313,10 @@ RAMGenPass::compile_join_rules(std::shared_ptr<MIRRule> rule,
                                                 (is_recursive && j == 0) ? DELTA
                                                                          : FULL;
                                             rule_instrs.push_back(ram::join_op(
-                                                ram::column_t(
+                                                column_t(
                                                     cur_body_clause->rel_name,
                                                     l, FULL),
-                                                ram::column_t(
+                                                column_t(
                                                     prev_body_clause->rel_name,
                                                     k, outer_ver),
                                                 "c" + std::to_string(j),
@@ -361,10 +373,8 @@ RAMGenPass::compile_join_rules(std::shared_ptr<MIRRule> rule,
                                 RelationVersion ver =
                                     (is_recursive && j == 0) ? DELTA : FULL;
                                 rule_instrs.push_back(ram::project_op(
-                                    ram::column_t(body_clause->rel_name, k,
-                                                  ver),
-                                    ram::column_t(head_clause->rel_name, i,
-                                                  NEWT),
+                                    column_t(body_clause->rel_name, k, ver),
+                                    column_t(head_clause->rel_name, i, NEWT),
                                     "c" + std::to_string(j)));
                                 matched = true;
                                 break;
@@ -380,7 +390,7 @@ RAMGenPass::compile_join_rules(std::shared_ptr<MIRRule> rule,
         if (arg_node->type == MIRNodeType::NUMBER) {
             auto num_node = std::dynamic_pointer_cast<MIRNumber>(arg_node);
             rule_instrs.push_back(
-                ram::fill_op(ram::column_t(head_clause->rel_name, i, NEWT),
+                ram::fill_op(column_t(head_clause->rel_name, i, NEWT),
                              i2d(num_node->value)));
         }
     }
@@ -403,6 +413,9 @@ void RAMGenPass::compile() {
             auto scc = std::dynamic_pointer_cast<MIRScc>(line);
             auto fixpoint_op = compile_scc(scc);
             comp_instr.push_back(fixpoint_op);
+        } if (line->type == MIRNodeType::CUSTOM) {
+            auto custom_node = std::dynamic_pointer_cast<MIRCustomNode>(line);
+            comp_instr.push_back(ram::custom_op(custom_node->func));
         }
     }
 
@@ -418,7 +431,7 @@ void RAMGenPass::compile() {
         for (auto col_idx : columns) {
             if (col_idx != 0) {
                 ram_instructions->add_instruction(ram::set_column_strategy(
-                    ram::column_t(rel_name, col_idx, FULL), EAGER));
+                    column_t(rel_name, col_idx, FULL), EAGER));
             }
         }
     }

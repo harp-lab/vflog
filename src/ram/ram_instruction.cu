@@ -1,9 +1,11 @@
 
 #include "fmt/ostream.h"
 #include "io.cuh"
+#include "ra.cuh"
 #include "ram.cuh"
 #include "utils.cuh"
 #include <cstdint>
+#include <iostream>
 #include <string>
 
 namespace vflog::ram {
@@ -204,21 +206,55 @@ void JoinOperator::execute(RelationalAlgebraMachine &ram) {
             return;
         }
     }
-    if (matched_indices != nullptr) {
+
+    auto result_reg_ptr = matched_indices;
+    if (result_reg_ptr == nullptr) {
+        result_reg_ptr = ram.register_map[result_register];
+    }
+
+    if (inner_meta_var == "") {
         column_join(*inner_rel_p, inner.version, inner.idx, *outer_rel_p,
                     outer.version, outer.idx, ram.cached_indices,
-                    outer_meta_var, matched_indices, pop_outer);
+                    outer_meta_var, result_reg_ptr, pop_outer);
     } else {
-        column_join(*inner_rel_p, inner.version, inner.idx, *outer_rel_p,
-                    outer.version, outer.idx, ram.cached_indices,
-                    outer_meta_var, ram.register_map[result_register],
+        column_join(ram, *inner_rel_p, inner.version, inner.idx, *outer_rel_p,
+                    outer.version, outer.idx, result_register, outer_meta_var,
                     pop_outer);
     }
 }
 
 std::string JoinOperator::to_string() {
-    return "join_op(" + inner.to_string() + ", " + outer.to_string() + ", \"" +
-           result_register + "\", \"" + outer_meta_var + "\")";
+    if (inner_meta_var == "") {
+        return "join_op(" + inner.to_string() + ", " + outer.to_string() +
+               ", \"" + result_register + "\", \"" + outer_meta_var + "\")";
+    } else {
+        return "join_op(" + inner.to_string() + ", " + outer.to_string() +
+               ", \"" + inner_meta_var + "\", \"" + outer_meta_var + "\")";
+    }
+}
+
+void MultiArityJoinOperator::execute(RelationalAlgebraMachine &ram) {
+    // TODO: support frozen relations
+    multi_arities_join(ram, inner_columns, outer_columns, inner_reg,
+                       outer_meta_vars, pop_outer);
+}
+
+std::string MultiArityJoinOperator::to_string() {
+    std::string res = "multi_arity_join(";
+    res += "{";
+    for (auto &col : inner_columns) {
+        res += col.to_string() + ", ";
+    }
+    res += "}, {";
+    for (auto &col : outer_columns) {
+        res += col.to_string() + ", ";
+    }
+    res += "}, \"" + inner_reg + "\", {";
+    for (auto &meta : outer_meta_vars) {
+        res += "\"" + meta + "\", ";
+    }
+    res += "}, " + std::to_string(pop_outer) + ")";
+    return res;
 }
 
 void NegateOperator::execute(RelationalAlgebraMachine &ram) {
@@ -304,6 +340,29 @@ std::string SetColumnStrategy::to_string() {
            index_strategy_to_string(strategy) + ")";
 }
 
+void Index::execute(RelationalAlgebraMachine &ram) {
+    auto rel_p = ram.rels[rel.name];
+    if (columns.size() == 1) {
+        rel_p->set_index_startegy(columns[0], FULL, IndexStrategy::EAGER);
+    } else {
+        rel_p->add_clustered_index(columns);
+    }
+}
+
+std::string Index::to_string() {
+    if (columns.size() == 1) {
+        return "index(" + rel.to_string() + ", " + std::to_string(columns[0]) +
+               ")";
+    } else {
+        std::string res = "index(" + rel.to_string() + ", {";
+        for (auto &col : columns) {
+            res += std::to_string(col) + ", ";
+        }
+        res += "})";
+        return res;
+    }
+}
+
 void DefaultColumn::execute(RelationalAlgebraMachine &ram) {
     auto rel_p = ram.rels[rel.name];
     rel_p->set_default_index_column(column_idx);
@@ -328,7 +387,8 @@ std::string LoadFile::to_string() {
     if (file_path == nullptr) {
         return "load_file(\"" + rel.name + "\", " + rel.to_string() + ")";
     }
-    return "load_file(\"" + std::string(file_path) + "\", " + rel.to_string() + ")";
+    return "load_file(\"" + std::string(file_path) + "\", " + rel.to_string() +
+           ")";
 }
 
 } // namespace vflog::ram

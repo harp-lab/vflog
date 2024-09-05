@@ -152,6 +152,28 @@ inline std::string version_to_string(RelationVersion version) {
     }
 }
 
+struct column_t {
+    std::string rel;
+    size_t idx;
+    RelationVersion version;
+
+    int frozen_idx = -1;
+
+    column_t(std::string rel, size_t idx, RelationVersion version)
+        : rel(rel), idx(idx), version(version) {}
+    column_t(std::string rel, size_t idx, RelationVersion version,
+             int frozen_idx)
+        : rel(rel), idx(idx), version(version), frozen_idx(frozen_idx) {}
+
+    bool is_frozen() { return frozen_idx != -1; }
+
+    std::string to_string() {
+        std::string str = "column_t(\"" + rel + "\", " + std::to_string(idx) +
+                          ", " + version_to_string(version) + ")";
+        return str;
+    }
+};
+
 } // namespace vflog
 
 #include <rmm/mr/device/pool_memory_resource.hpp>

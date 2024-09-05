@@ -15,114 +15,135 @@ void lubm(char *data_path) {
     // input relations
     std::string src_advisor_file =
         std::string(data_path) + "/src_advisor.facts";
-    vflog::multi_hisa src_advisor(2, src_advisor_file.c_str(), global_buffer);
+    vflog::multi_hisa src_advisor("src_advisor", 2, src_advisor_file.c_str(),
+                                  global_buffer);
     std::string src_AssistantProfessor_file =
         std::string(data_path) + "/src_AssistantProfessor.facts";
     vflog::multi_hisa src_AssistantProfessor(
-        1, src_AssistantProfessor_file.c_str(), global_buffer);
+        "src_AssistantProfessor", 1, src_AssistantProfessor_file.c_str(),
+        global_buffer);
     std::string src_AssociateProfessor_file =
         std::string(data_path) + "/src_AssociateProfessor.facts";
     vflog::multi_hisa src_AssociateProfessor(
-        1, src_AssociateProfessor_file.c_str(), global_buffer);
+        "src_AssociateProfessor", 1, src_AssociateProfessor_file.c_str(),
+        global_buffer);
     std::string src_Course_file = std::string(data_path) + "/src_Course.facts";
-    vflog::multi_hisa src_Course(1, src_Course_file.c_str(), global_buffer);
+    vflog::multi_hisa src_Course("src_Course", 1, src_Course_file.c_str(),
+                                 global_buffer);
     std::string src_Department_file =
         std::string(data_path) + "/src_Department.facts";
-    vflog::multi_hisa src_Department(1, src_Department_file.c_str(),
-                                     global_buffer);
+    vflog::multi_hisa src_Department(
+        "src_Department", 1, src_Department_file.c_str(), global_buffer);
     std::string src_doctoralDegreeFrom_file =
         std::string(data_path) + "/src_doctoralDegreeFrom.facts";
     vflog::multi_hisa src_doctoralDegreeFrom(
-        2, src_doctoralDegreeFrom_file.c_str(), global_buffer);
+        "src_doctoralDegreeFrom", 2, src_doctoralDegreeFrom_file.c_str(),
+        global_buffer);
     std::string src_emailAddress_file =
         std::string(data_path) + "/src_emailAddress.facts";
-    vflog::multi_hisa src_emailAddress(2, src_emailAddress_file.c_str(),
-                                       global_buffer);
+    vflog::multi_hisa src_emailAddress(
+        "src_emailAddress", 2, src_emailAddress_file.c_str(), global_buffer);
     std::string src_FullProfessor_file =
         std::string(data_path) + "/src_FullProfessor.facts";
-    vflog::multi_hisa src_FullProfessor(1, src_FullProfessor_file.c_str(),
-                                        global_buffer);
+    vflog::multi_hisa src_FullProfessor(
+        "src_FullProfessor", 1, src_FullProfessor_file.c_str(), global_buffer);
     std::string src_GraduateCourse_file =
         std::string(data_path) + "/src_GraduateCourse.facts";
-    vflog::multi_hisa src_GraduateCourse(1, src_GraduateCourse_file.c_str(),
+    vflog::multi_hisa src_GraduateCourse("src_GraduateCourse", 1,
+                                         src_GraduateCourse_file.c_str(),
                                          global_buffer);
     std::string src_GraduateStudent_file =
         std::string(data_path) + "/src_GraduateStudent.facts";
-    vflog::multi_hisa src_GraduateStudent(1, src_GraduateStudent_file.c_str(),
+    vflog::multi_hisa src_GraduateStudent("src_GraduateStudent", 1,
+                                          src_GraduateStudent_file.c_str(),
                                           global_buffer);
     std::string src_headOf_file = std::string(data_path) + "/src_headOf.facts";
-    vflog::multi_hisa src_headOf(2, src_headOf_file.c_str(), global_buffer);
+    vflog::multi_hisa src_headOf("src_headOf", 2, src_headOf_file.c_str(),
+                                 global_buffer);
     std::string src_Lecturer_file =
         std::string(data_path) + "/src_Lecturer.facts";
-    vflog::multi_hisa src_Lecturer(1, src_Lecturer_file.c_str(), global_buffer);
+    vflog::multi_hisa src_Lecturer("src_Lecturer", 1, src_Lecturer_file.c_str(),
+                                   global_buffer);
     std::string src_mastersDegreeFrom_file =
         std::string(data_path) + "/src_mastersDegreeFrom.facts";
-    vflog::multi_hisa src_mastersDegreeFrom(
-        2, src_mastersDegreeFrom_file.c_str(), global_buffer);
+    vflog::multi_hisa src_mastersDegreeFrom("src_mastersDegreeFrom", 2,
+                                            src_mastersDegreeFrom_file.c_str(),
+                                            global_buffer);
     std::string src_memberOf_file =
         std::string(data_path) + "/src_memberOf.facts";
-    vflog::multi_hisa src_memberOf(2, src_memberOf_file.c_str(), global_buffer);
+    vflog::multi_hisa src_memberOf("src_memberOf", 2, src_memberOf_file.c_str(),
+                                   global_buffer);
     std::string src_name_file = std::string(data_path) + "/src_name.facts";
-    vflog::multi_hisa src_name(2, src_name_file.c_str(), global_buffer);
+    vflog::multi_hisa src_name("src_name", 2, src_name_file.c_str(),
+                               global_buffer);
     std::string src_Publication_file =
         std::string(data_path) + "/src_Publication.facts";
-    vflog::multi_hisa src_Publication(1, src_Publication_file.c_str(),
-                                      global_buffer);
+    vflog::multi_hisa src_Publication(
+        "src_Publication", 1, src_Publication_file.c_str(), global_buffer);
     std::string src_publicationAuthor_file =
         std::string(data_path) + "/src_publicationAuthor.facts";
-    vflog::multi_hisa src_publicationAuthor(
-        2, src_publicationAuthor_file.c_str(), global_buffer);
+    vflog::multi_hisa src_publicationAuthor("src_publicationAuthor", 2,
+                                            src_publicationAuthor_file.c_str(),
+                                            global_buffer);
     std::string src_ResearchAssistant_file =
         std::string(data_path) + "/src_ResearchAssistant.facts";
-    vflog::multi_hisa src_ResearchAssistant(
-        1, src_ResearchAssistant_file.c_str(), global_buffer);
+    vflog::multi_hisa src_ResearchAssistant("src_ResearchAssistant", 1,
+                                            src_ResearchAssistant_file.c_str(),
+                                            global_buffer);
     std::string src_ResearchGroup_file =
         std::string(data_path) + "/src_ResearchGroup.facts";
-    vflog::multi_hisa src_ResearchGroup(1, src_ResearchGroup_file.c_str(),
-                                        global_buffer);
+    vflog::multi_hisa src_ResearchGroup(
+        "src_ResearchGroup", 1, src_ResearchGroup_file.c_str(), global_buffer);
     std::string src_researchInterest_file =
         std::string(data_path) + "/src_researchInterest.facts";
-    vflog::multi_hisa src_researchInterest(2, src_researchInterest_file.c_str(),
+    vflog::multi_hisa src_researchInterest("src_researchInterest", 2,
+                                           src_researchInterest_file.c_str(),
                                            global_buffer);
     std::string src_subOrganizationOf_file =
         std::string(data_path) + "/src_subOrganizationOf.facts";
-    vflog::multi_hisa src_subOrganizationOf(
-        2, src_subOrganizationOf_file.c_str(), global_buffer, 1);
+    vflog::multi_hisa src_subOrganizationOf("src_subOrganizationOf", 2,
+                                            src_subOrganizationOf_file.c_str(),
+                                            global_buffer, 1);
     std::string src_takesCourse_file =
         std::string(data_path) + "/src_takesCourse.facts";
-    vflog::multi_hisa src_takesCourse(2, src_takesCourse_file.c_str(),
-                                      global_buffer);
+    vflog::multi_hisa src_takesCourse(
+        "src_takesCourse", 2, src_takesCourse_file.c_str(), global_buffer);
     std::string src_teacherOf_file =
         std::string(data_path) + "/src_teacherOf.facts";
-    vflog::multi_hisa src_teacherOf(2, src_teacherOf_file.c_str(),
-                                    global_buffer);
+    vflog::multi_hisa src_teacherOf("src_teacherOf", 2,
+                                    src_teacherOf_file.c_str(), global_buffer);
     std::string src_TeachingAssistant_file =
         std::string(data_path) + "/src_TeachingAssistant.facts";
-    vflog::multi_hisa src_TeachingAssistant(
-        1, src_TeachingAssistant_file.c_str(), global_buffer);
+    vflog::multi_hisa src_TeachingAssistant("src_TeachingAssistant", 1,
+                                            src_TeachingAssistant_file.c_str(),
+                                            global_buffer);
     std::string src_teachingAssistantOf_file =
         std::string(data_path) + "/src_teachingAssistantOf.facts";
     vflog::multi_hisa src_teachingAssistantOf(
-        2, src_teachingAssistantOf_file.c_str(), global_buffer);
+        "src_teachingAssistantOf", 2, src_teachingAssistantOf_file.c_str(),
+        global_buffer);
     std::string src_telephone_file =
         std::string(data_path) + "/src_telephone.facts";
-    vflog::multi_hisa src_telephone(2, src_telephone_file.c_str(),
-                                    global_buffer);
+    vflog::multi_hisa src_telephone("src_telephone", 2,
+                                    src_telephone_file.c_str(), global_buffer);
     std::string src_undergraduateDegreeFrom_file =
         std::string(data_path) + "/src_undergraduateDegreeFrom.facts";
     vflog::multi_hisa src_undergraduateDegreeFrom(
-        2, src_undergraduateDegreeFrom_file.c_str(), global_buffer);
+        "src_undergraduateDegreeFrom", 2,
+        src_undergraduateDegreeFrom_file.c_str(), global_buffer);
     std::string src_UndergraduateStudent_file =
         std::string(data_path) + "/src_UndergraduateStudent.facts";
     vflog::multi_hisa src_UndergraduateStudent(
-        1, src_UndergraduateStudent_file.c_str(), global_buffer);
+        "src_UndergraduateStudent", 1, src_UndergraduateStudent_file.c_str(),
+        global_buffer);
     std::string src_University_file =
         std::string(data_path) + "/src_University.facts";
-    vflog::multi_hisa src_University(1, src_University_file.c_str(),
-                                     global_buffer);
+    vflog::multi_hisa src_University(
+        "src_University", 1, src_University_file.c_str(), global_buffer);
     std::string src_worksFor_file =
         std::string(data_path) + "/src_worksFor.facts";
-    vflog::multi_hisa src_worksFor(2, src_worksFor_file.c_str(), global_buffer);
+    vflog::multi_hisa src_worksFor("src_worksFor", 2, src_worksFor_file.c_str(),
+                                   global_buffer);
     timer.stop_timer();
     std::cout << "CPU Read time: " << timer.get_spent_time() << std::endl;
 
@@ -132,7 +153,7 @@ void lubm(char *data_path) {
     // copy each relation to a relation without src_ prefix
     // create relation first
     timer.start_timer();
-    vflog::multi_hisa advisor(2, global_buffer);
+    vflog::multi_hisa advisor("advisor", 2, global_buffer);
     advisor.allocate_newt(src_advisor.get_versioned_size(FULL));
     vflog::column_copy_all(src_advisor, FULL, 0, advisor, NEWT, 0);
     vflog::column_copy_all(src_advisor, FULL, 1, advisor, NEWT, 1);
@@ -140,7 +161,8 @@ void lubm(char *data_path) {
     advisor.total_tuples += src_advisor.get_versioned_size(FULL);
     advisor.newt_self_deduplicate();
     advisor.persist_newt();
-    vflog::multi_hisa AssistantProfessor(1, global_buffer);
+    vflog::multi_hisa AssistantProfessor("AssistantProfessor", 1,
+                                         global_buffer);
     AssistantProfessor.allocate_newt(
         src_AssistantProfessor.get_versioned_size(FULL));
     vflog::column_copy_all(src_AssistantProfessor, FULL, 0, AssistantProfessor,
@@ -151,7 +173,8 @@ void lubm(char *data_path) {
         src_AssistantProfessor.get_versioned_size(FULL);
     AssistantProfessor.newt_self_deduplicate();
     AssistantProfessor.persist_newt();
-    vflog::multi_hisa AssociateProfessor(1, global_buffer);
+    vflog::multi_hisa AssociateProfessor("AssociateProfessor", 1,
+                                         global_buffer);
     AssociateProfessor.allocate_newt(
         src_AssociateProfessor.get_versioned_size(FULL));
     vflog::column_copy_all(src_AssociateProfessor, FULL, 0, AssociateProfessor,
@@ -162,21 +185,22 @@ void lubm(char *data_path) {
         src_AssociateProfessor.get_versioned_size(FULL);
     AssociateProfessor.newt_self_deduplicate();
     AssociateProfessor.persist_newt();
-    vflog::multi_hisa Course(1, global_buffer);
+    vflog::multi_hisa Course("Course", 1, global_buffer);
     Course.allocate_newt(src_Course.get_versioned_size(FULL));
     vflog::column_copy_all(src_Course, FULL, 0, Course, NEWT, 0);
     Course.newt_size = src_Course.get_versioned_size(FULL);
     Course.total_tuples += src_Course.get_versioned_size(FULL);
     Course.newt_self_deduplicate();
     Course.persist_newt();
-    vflog::multi_hisa Department(1, global_buffer);
+    vflog::multi_hisa Department("Department", 1, global_buffer);
     Department.allocate_newt(src_Department.get_versioned_size(FULL));
     vflog::column_copy_all(src_Department, FULL, 0, Department, NEWT, 0);
     Department.newt_size = src_Department.get_versioned_size(FULL);
     Department.total_tuples += src_Department.get_versioned_size(FULL);
     Department.newt_self_deduplicate();
     Department.persist_newt();
-    vflog::multi_hisa doctoralDegreeFrom(2, global_buffer);
+    vflog::multi_hisa doctoralDegreeFrom("doctoralDegreeFrom", 2,
+                                         global_buffer);
     doctoralDegreeFrom.allocate_newt(
         src_doctoralDegreeFrom.get_versioned_size(FULL));
     vflog::column_copy_all(src_doctoralDegreeFrom, FULL, 0, doctoralDegreeFrom,
@@ -189,7 +213,7 @@ void lubm(char *data_path) {
         src_doctoralDegreeFrom.get_versioned_size(FULL);
     doctoralDegreeFrom.newt_self_deduplicate();
     doctoralDegreeFrom.persist_newt();
-    vflog::multi_hisa emailAddress(2, global_buffer);
+    vflog::multi_hisa emailAddress("emailAddress", 2, global_buffer);
     emailAddress.allocate_newt(src_emailAddress.get_versioned_size(FULL));
     vflog::column_copy_all(src_emailAddress, FULL, 0, emailAddress, NEWT, 0);
     vflog::column_copy_all(src_emailAddress, FULL, 1, emailAddress, NEWT, 1);
@@ -197,14 +221,14 @@ void lubm(char *data_path) {
     emailAddress.total_tuples += src_emailAddress.get_versioned_size(FULL);
     emailAddress.newt_self_deduplicate();
     emailAddress.persist_newt();
-    vflog::multi_hisa FullProfessor(1, global_buffer);
+    vflog::multi_hisa FullProfessor("FullProfessor", 1, global_buffer);
     FullProfessor.allocate_newt(src_FullProfessor.get_versioned_size(FULL));
     vflog::column_copy_all(src_FullProfessor, FULL, 0, FullProfessor, NEWT, 0);
     FullProfessor.newt_size = src_FullProfessor.get_versioned_size(FULL);
     FullProfessor.total_tuples += src_FullProfessor.get_versioned_size(FULL);
     FullProfessor.newt_self_deduplicate();
     FullProfessor.persist_newt();
-    vflog::multi_hisa GraduateCourse(1, global_buffer);
+    vflog::multi_hisa GraduateCourse("GraduateCourse", 1, global_buffer);
     GraduateCourse.allocate_newt(src_GraduateCourse.get_versioned_size(FULL));
     vflog::column_copy_all(src_GraduateCourse, FULL, 0, GraduateCourse, NEWT,
                            0);
@@ -212,7 +236,7 @@ void lubm(char *data_path) {
     GraduateCourse.total_tuples += src_GraduateCourse.get_versioned_size(FULL);
     GraduateCourse.newt_self_deduplicate();
     GraduateCourse.persist_newt();
-    vflog::multi_hisa GraduateStudent(1, global_buffer);
+    vflog::multi_hisa GraduateStudent("GraduateStudent", 1, global_buffer);
     GraduateStudent.allocate_newt(src_GraduateStudent.get_versioned_size(FULL));
     vflog::column_copy_all(src_GraduateStudent, FULL, 0, GraduateStudent, NEWT,
                            0);
@@ -221,7 +245,7 @@ void lubm(char *data_path) {
         src_GraduateStudent.get_versioned_size(FULL);
     GraduateStudent.newt_self_deduplicate();
     GraduateStudent.persist_newt();
-    vflog::multi_hisa headOf(2, global_buffer);
+    vflog::multi_hisa headOf("headOf", 2, global_buffer);
     headOf.set_index_startegy(1, FULL, vflog::IndexStrategy::EAGER);
     headOf.allocate_newt(src_headOf.get_versioned_size(FULL));
     vflog::column_copy_all(src_headOf, FULL, 0, headOf, NEWT, 0);
@@ -230,14 +254,14 @@ void lubm(char *data_path) {
     headOf.total_tuples += src_headOf.get_versioned_size(FULL);
     headOf.newt_self_deduplicate();
     headOf.persist_newt();
-    vflog::multi_hisa Lecturer(1, global_buffer);
+    vflog::multi_hisa Lecturer("Lecturer", 1, global_buffer);
     Lecturer.allocate_newt(src_Lecturer.get_versioned_size(FULL));
     vflog::column_copy_all(src_Lecturer, FULL, 0, Lecturer, NEWT, 0);
     Lecturer.newt_size = src_Lecturer.get_versioned_size(FULL);
     Lecturer.total_tuples += src_Lecturer.get_versioned_size(FULL);
     Lecturer.newt_self_deduplicate();
     Lecturer.persist_newt();
-    vflog::multi_hisa mastersDegreeFrom(2, global_buffer);
+    vflog::multi_hisa mastersDegreeFrom("mastersDegreeFrom", 2, global_buffer);
     mastersDegreeFrom.allocate_newt(
         src_mastersDegreeFrom.get_versioned_size(FULL));
     vflog::column_copy_all(src_mastersDegreeFrom, FULL, 0, mastersDegreeFrom,
@@ -250,7 +274,7 @@ void lubm(char *data_path) {
         src_mastersDegreeFrom.get_versioned_size(FULL);
     mastersDegreeFrom.newt_self_deduplicate();
     mastersDegreeFrom.persist_newt();
-    vflog::multi_hisa memberOf(2, global_buffer);
+    vflog::multi_hisa memberOf("memberOf", 2, global_buffer);
     memberOf.allocate_newt(src_memberOf.get_versioned_size(FULL));
     vflog::column_copy_all(src_memberOf, FULL, 0, memberOf, NEWT, 0);
     vflog::column_copy_all(src_memberOf, FULL, 1, memberOf, NEWT, 1);
@@ -258,7 +282,7 @@ void lubm(char *data_path) {
     memberOf.total_tuples += src_memberOf.get_versioned_size(NEWT);
     memberOf.newt_self_deduplicate();
     memberOf.persist_newt();
-    vflog::multi_hisa name(2, global_buffer);
+    vflog::multi_hisa name("name", 2, global_buffer);
     name.allocate_newt(src_name.get_versioned_size(FULL));
     vflog::column_copy_all(src_name, FULL, 0, name, NEWT, 0);
     vflog::column_copy_all(src_name, FULL, 1, name, NEWT, 1);
@@ -266,14 +290,14 @@ void lubm(char *data_path) {
     name.total_tuples += src_name.get_versioned_size(FULL);
     name.newt_self_deduplicate();
     name.persist_newt();
-    vflog::multi_hisa Publication(1, global_buffer);
+    vflog::multi_hisa Publication("Publication", 1, global_buffer);
     Publication.allocate_newt(src_Publication.get_versioned_size(FULL));
     vflog::column_copy_all(src_Publication, FULL, 0, Publication, NEWT, 0);
     Publication.newt_size = src_Publication.get_versioned_size(FULL);
     Publication.total_tuples += src_Publication.get_versioned_size(FULL);
     Publication.newt_self_deduplicate();
     Publication.persist_newt();
-    vflog::multi_hisa publicationAuthor(2, global_buffer);
+    vflog::multi_hisa publicationAuthor("publicationAuthor", 2, global_buffer);
     publicationAuthor.allocate_newt(
         src_publicationAuthor.get_versioned_size(FULL));
     vflog::column_copy_all(src_publicationAuthor, FULL, 0, publicationAuthor,
@@ -286,7 +310,7 @@ void lubm(char *data_path) {
         src_publicationAuthor.get_versioned_size(FULL);
     publicationAuthor.newt_self_deduplicate();
     publicationAuthor.persist_newt();
-    vflog::multi_hisa ResearchAssistant(1, global_buffer);
+    vflog::multi_hisa ResearchAssistant("ResearchAssistant", 1, global_buffer);
     ResearchAssistant.allocate_newt(
         src_ResearchAssistant.get_versioned_size(FULL));
     vflog::column_copy_all(src_ResearchAssistant, FULL, 0, ResearchAssistant,
@@ -297,14 +321,14 @@ void lubm(char *data_path) {
         src_ResearchAssistant.get_versioned_size(FULL);
     ResearchAssistant.newt_self_deduplicate();
     ResearchAssistant.persist_newt();
-    vflog::multi_hisa ResearchGroup(1, global_buffer);
+    vflog::multi_hisa ResearchGroup("ResearchGroup", 1, global_buffer);
     ResearchGroup.allocate_newt(src_ResearchGroup.get_versioned_size(FULL));
     vflog::column_copy_all(src_ResearchGroup, FULL, 0, ResearchGroup, NEWT, 0);
     ResearchGroup.newt_size = src_ResearchGroup.get_versioned_size(FULL);
     ResearchGroup.total_tuples += src_ResearchGroup.get_versioned_size(FULL);
     ResearchGroup.newt_self_deduplicate();
     ResearchGroup.persist_newt();
-    vflog::multi_hisa researchInterest(2, global_buffer);
+    vflog::multi_hisa researchInterest("researchInterest", 2, global_buffer);
     researchInterest.allocate_newt(
         src_researchInterest.get_versioned_size(FULL));
     vflog::column_copy_all(src_researchInterest, FULL, 0, researchInterest,
@@ -316,7 +340,7 @@ void lubm(char *data_path) {
         src_researchInterest.get_versioned_size(FULL);
     researchInterest.newt_self_deduplicate();
     researchInterest.persist_newt();
-    vflog::multi_hisa subOrganizationOf(2, global_buffer);
+    vflog::multi_hisa subOrganizationOf("subOrganizationOf", 2, global_buffer);
     subOrganizationOf.allocate_newt(
         src_subOrganizationOf.get_versioned_size(FULL));
     vflog::column_copy_all(src_subOrganizationOf, FULL, 0, subOrganizationOf,
@@ -330,7 +354,7 @@ void lubm(char *data_path) {
     subOrganizationOf.newt_self_deduplicate();
     subOrganizationOf.persist_newt();
     src_subOrganizationOf.persist_newt();
-    vflog::multi_hisa takesCourse(2, global_buffer);
+    vflog::multi_hisa takesCourse("takesCourse", 2, global_buffer);
     takesCourse.set_index_startegy(1, FULL, vflog::IndexStrategy::EAGER);
     takesCourse.allocate_newt(src_takesCourse.get_versioned_size(FULL));
     vflog::column_copy_all(src_takesCourse, FULL, 0, takesCourse, NEWT, 0);
@@ -339,7 +363,7 @@ void lubm(char *data_path) {
     takesCourse.total_tuples += src_takesCourse.get_versioned_size(FULL);
     takesCourse.newt_self_deduplicate();
     takesCourse.persist_newt();
-    vflog::multi_hisa teacherOf(2, global_buffer);
+    vflog::multi_hisa teacherOf("teacherOf", 2, global_buffer);
     teacherOf.allocate_newt(src_teacherOf.get_versioned_size(FULL));
     vflog::column_copy_all(src_teacherOf, FULL, 0, teacherOf, NEWT, 0);
     vflog::column_copy_all(src_teacherOf, FULL, 1, teacherOf, NEWT, 1);
@@ -347,7 +371,7 @@ void lubm(char *data_path) {
     teacherOf.total_tuples += src_teacherOf.get_versioned_size(FULL);
     teacherOf.newt_self_deduplicate();
     teacherOf.persist_newt();
-    vflog::multi_hisa TeachingAssistant(1, global_buffer);
+    vflog::multi_hisa TeachingAssistant("TeachingAssistant", 1, global_buffer);
     TeachingAssistant.allocate_newt(
         src_TeachingAssistant.get_versioned_size(FULL));
     vflog::column_copy_all(src_TeachingAssistant, FULL, 0, TeachingAssistant,
@@ -358,7 +382,8 @@ void lubm(char *data_path) {
         src_TeachingAssistant.get_versioned_size(FULL);
     TeachingAssistant.newt_self_deduplicate();
     TeachingAssistant.persist_newt();
-    vflog::multi_hisa teachingAssistantOf(2, global_buffer);
+    vflog::multi_hisa teachingAssistantOf("teachingAssistantOf", 2,
+                                          global_buffer);
     teachingAssistantOf.set_index_startegy(1, FULL,
                                            vflog::IndexStrategy::EAGER);
     teachingAssistantOf.allocate_newt(
@@ -373,7 +398,7 @@ void lubm(char *data_path) {
         src_teachingAssistantOf.get_versioned_size(FULL);
     teachingAssistantOf.newt_self_deduplicate();
     teachingAssistantOf.persist_newt();
-    vflog::multi_hisa telephone(2, global_buffer);
+    vflog::multi_hisa telephone("telephone", 2, global_buffer);
     telephone.allocate_newt(src_telephone.get_versioned_size(FULL));
     vflog::column_copy_all(src_telephone, FULL, 0, telephone, NEWT, 0);
     vflog::column_copy_all(src_telephone, FULL, 1, telephone, NEWT, 1);
@@ -381,7 +406,8 @@ void lubm(char *data_path) {
     telephone.total_tuples += src_telephone.get_versioned_size(FULL);
     telephone.newt_self_deduplicate();
     telephone.persist_newt();
-    vflog::multi_hisa undergraduateDegreeFrom(2, global_buffer);
+    vflog::multi_hisa undergraduateDegreeFrom("undergraduateDegreeFrom", 2,
+                                              global_buffer);
     undergraduateDegreeFrom.allocate_newt(
         src_undergraduateDegreeFrom.get_versioned_size(FULL));
     vflog::column_copy_all(src_undergraduateDegreeFrom, FULL, 0,
@@ -394,7 +420,8 @@ void lubm(char *data_path) {
         src_undergraduateDegreeFrom.get_versioned_size(FULL);
     undergraduateDegreeFrom.newt_self_deduplicate();
     undergraduateDegreeFrom.persist_newt();
-    vflog::multi_hisa UndergraduateStudent(1, global_buffer);
+    vflog::multi_hisa UndergraduateStudent("UndergraduateStudent", 1,
+                                           global_buffer);
     UndergraduateStudent.allocate_newt(
         src_UndergraduateStudent.get_versioned_size(FULL));
     vflog::column_copy_all(src_UndergraduateStudent, FULL, 0,
@@ -405,14 +432,14 @@ void lubm(char *data_path) {
         src_UndergraduateStudent.get_versioned_size(FULL);
     UndergraduateStudent.newt_self_deduplicate();
     UndergraduateStudent.persist_newt();
-    vflog::multi_hisa University(1, global_buffer);
+    vflog::multi_hisa University("University", 1, global_buffer);
     University.allocate_newt(src_University.get_versioned_size(FULL));
     vflog::column_copy_all(src_University, FULL, 0, University, NEWT, 0);
     University.newt_size = src_University.get_versioned_size(FULL);
     University.total_tuples += src_University.get_versioned_size(FULL);
     University.newt_self_deduplicate();
     University.persist_newt();
-    vflog::multi_hisa worksFor(2, global_buffer);
+    vflog::multi_hisa worksFor("worksFor", 2, global_buffer);
     worksFor.set_index_startegy(1, FULL, vflog::IndexStrategy::EAGER);
     // worksFor.set_index_startegy(1, DELTA, vflog::IndexStrategy::EAGER);
     worksFor.allocate_newt(src_worksFor.get_versioned_size(FULL));
@@ -429,7 +456,7 @@ void lubm(char *data_path) {
 
     timer.start_timer();
     // t-tgds
-    vflog::multi_hisa Person(1, global_buffer);
+    vflog::multi_hisa Person("Person", 1, global_buffer);
     Person.set_index_startegy(0, DELTA, vflog::IndexStrategy::EAGER);
     // Person(?X) :- advisor(?X, ?X1) .
     Person.allocate_newt(advisor.get_versioned_size(FULL));
@@ -437,7 +464,7 @@ void lubm(char *data_path) {
     Person.newt_size += advisor.get_versioned_size(FULL);
     Person.total_tuples += advisor.get_versioned_size(FULL);
     // Professor(?X1) :- advisor(?X, ?X1) .
-    vflog::multi_hisa Professor(1, global_buffer);
+    vflog::multi_hisa Professor("Professor", 1, global_buffer);
     Professor.allocate_newt(advisor.get_versioned_size(FULL));
     vflog::column_copy_all(advisor, FULL, 1, Professor, NEWT, 0);
     Professor.newt_size += advisor.get_versioned_size(FULL);
@@ -455,7 +482,7 @@ void lubm(char *data_path) {
     Person.total_tuples += AssociateProfessor.get_versioned_size(FULL);
     Person.newt_self_deduplicate();
     // Organization(?X) :- Department(?X) .
-    vflog::multi_hisa Organization(1, global_buffer);
+    vflog::multi_hisa Organization("Organization", 1, global_buffer);
     Organization.allocate_newt(Department.get_versioned_size(FULL));
     vflog::column_copy_all(Department, FULL, 0, Organization, NEWT, 0);
     Organization.newt_size += Department.get_versioned_size(FULL);
@@ -471,7 +498,7 @@ void lubm(char *data_path) {
     University.newt_size += doctoralDegreeFrom.get_versioned_size(FULL);
     University.total_tuples += doctoralDegreeFrom.get_versioned_size(FULL);
     // degreeFrom(?X, ?Y) :- doctoralDegreeFrom(?X, ?Y) .
-    vflog::multi_hisa degreeFrom(2, global_buffer);
+    vflog::multi_hisa degreeFrom("degreeForm", 2, global_buffer);
     degreeFrom.allocate_newt(doctoralDegreeFrom.get_versioned_size(FULL));
     vflog::column_copy_all(doctoralDegreeFrom, FULL, 0, degreeFrom, NEWT, 0);
     vflog::column_copy_all(doctoralDegreeFrom, FULL, 1, degreeFrom, NEWT, 1);
@@ -502,7 +529,7 @@ void lubm(char *data_path) {
     // takesCourse(?X, !Y), GraduateCourse(!Y) :- GraduateStudent(?X) .
 
     // Faculty(?X) :- Lecturer(?X) .
-    vflog::multi_hisa Faculty(1, global_buffer);
+    vflog::multi_hisa Faculty("Faculty", 1, global_buffer);
     Faculty.allocate_newt(Lecturer.get_versioned_size(FULL));
     vflog::column_copy_all(Lecturer, FULL, 0, Faculty, NEWT, 0);
     Faculty.newt_size += Lecturer.get_versioned_size(FULL);
@@ -525,7 +552,7 @@ void lubm(char *data_path) {
     degreeFrom.newt_size += mastersDegreeFrom.get_versioned_size(FULL);
     degreeFrom.total_tuples += mastersDegreeFrom.get_versioned_size(FULL);
     // member(?X, ?Y) :- memberOf(?Y, ?X) .
-    vflog::multi_hisa member(2, global_buffer);
+    vflog::multi_hisa member("member", 2, global_buffer);
     member.allocate_newt(memberOf.get_versioned_size(FULL));
     vflog::column_copy_all(memberOf, FULL, 1, member, NEWT, 0);
     vflog::column_copy_all(memberOf, FULL, 0, member, NEWT, 1);
@@ -587,7 +614,7 @@ void lubm(char *data_path) {
     degreeFrom.newt_size += undergraduateDegreeFrom.get_versioned_size(FULL);
     degreeFrom.total_tuples += undergraduateDegreeFrom.get_versioned_size(FULL);
     // Student(?X) :- UndergraduateStudent(?X) .
-    vflog::multi_hisa Student(1, global_buffer);
+    vflog::multi_hisa Student("Student", 1, global_buffer);
     Student.allocate_newt(UndergraduateStudent.get_versioned_size(FULL));
     vflog::column_copy_all(UndergraduateStudent, FULL, 0, Student, NEWT, 0);
     Student.newt_size += UndergraduateStudent.get_versioned_size(FULL);
@@ -620,9 +647,9 @@ void lubm(char *data_path) {
     Faculty.persist_newt();
     Student.persist_newt();
 
-    vflog::multi_hisa Chair(1, global_buffer);
-    vflog::multi_hisa hasAlumnus(2, global_buffer);
-    vflog::multi_hisa Employee(1, global_buffer);
+    vflog::multi_hisa Chair("Chair", 1, global_buffer);
+    vflog::multi_hisa hasAlumnus("hasAlumnus", 2, global_buffer);
+    vflog::multi_hisa Employee("Employee", 1, global_buffer);
     Chair.uid = 0;
     Employee.uid = 1;
     Student.uid = 2;
@@ -1060,7 +1087,7 @@ void lubm(char *data_path) {
               << std::endl;
 
     // Work(?X) :- Course(?X) .
-    vflog::multi_hisa Work(1, global_buffer);
+    vflog::multi_hisa Work("Work", 1, global_buffer);
     Work.allocate_newt(Course.get_versioned_size(FULL));
     vflog::column_copy_all(Course, FULL, 0, Work, NEWT, 0);
     Work.newt_size += Course.get_versioned_size(FULL);

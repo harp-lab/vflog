@@ -24,13 +24,13 @@ void sg_ram(char *data_path) {
         // sg(x, y) :- edge(a, x), edge(a, y), x != y.
         cache_update("c_edge1", "r_x"),
         cache_init("c_edge1", rel_t("edge"), FULL),
-        join_op(column_t("edge", 0, FULL), column_t("edge", 0, FULL), "c_edge1",
+        join_op(vflog::column_t("edge", 0, FULL), vflog::column_t("edge", 0, FULL), "c_edge1",
                 "r_y"),
         cache_update("c_edge2", "r_y"),
         // filter match x y
         custom_op([](RelationalAlgebraMachine &ram) {
-            vflog::device_bitmap_t filter_bitmap(ram.get_register("r_x")->size(),
-                                          false);
+            vflog::device_bitmap_t filter_bitmap(
+                ram.get_register("r_x")->size(), false);
             auto edge = ram.rels["edge"];
             thrust::transform(EXE_POLICY, ram.get_register("r_x")->begin(),
                               ram.get_register("r_x")->end(),
@@ -56,8 +56,10 @@ void sg_ram(char *data_path) {
         }),
         // materialize sg
         prepare_materialization(rel_t("sg"), "c_edge2"),
-        project_op(column_t("edge", 1, FULL), column_t("sg", 0, NEWT), "c_edge1"),
-        project_op(column_t("edge", 1, FULL), column_t("sg", 1, NEWT), "c_edge2"),
+        project_op(vflog::column_t("edge", 1, FULL), vflog::column_t("sg", 0, NEWT),
+                   "c_edge1"),
+        project_op(vflog::column_t("edge", 1, FULL), vflog::column_t("sg", 1, NEWT),
+                   "c_edge2"),
         end_materialization(rel_t("sg"), "c_edge2"),
         persistent(rel_t("sg")),
         print_size(rel_t("sg")),
@@ -67,16 +69,16 @@ void sg_ram(char *data_path) {
                 // sg(x, y) :-  sg(a, b), edge(a, x), edge(b, y).
                 cache_update("c_sg", "r_a"),
                 cache_init("c_sg", rel_t("sg"), DELTA),
-                join_op(column_t("edge", 0, FULL), column_t("sg", 0, DELTA), "c_sg",
-                        "r_x"),
+                join_op(vflog::column_t("edge", 0, FULL), vflog::column_t("sg", 0, DELTA),
+                        "c_sg", "r_x"),
                 cache_update("c_edge1", "r_x"),
-                join_op(column_t("edge", 0, FULL), column_t("sg", 1, DELTA), "c_sg",
-                        "r_y"),
+                join_op(vflog::column_t("edge", 0, FULL), vflog::column_t("sg", 1, DELTA),
+                        "c_sg", "r_y"),
                 cache_update("c_edge2", "r_y"),
                 prepare_materialization(rel_t("sg"), "c_edge2"),
-                project_op(column_t("edge", 1, FULL), column_t("sg", 0, NEWT),
+                project_op(vflog::column_t("edge", 1, FULL), vflog::column_t("sg", 0, NEWT),
                            "c_edge1"),
-                project_op(column_t("edge", 1, FULL), column_t("sg", 1, NEWT),
+                project_op(vflog::column_t("edge", 1, FULL), vflog::column_t("sg", 1, NEWT),
                            "c_edge2"),
                 end_materialization(rel_t("sg"), "c_edge2"),
                 persistent(rel_t("sg")),
@@ -101,6 +103,7 @@ int main(int argc, char **argv) {
                   << std::endl;
         return 1;
     }
+    // 116931333
     // enable_rmm_allocator();
     rmm::mr::cuda_memory_resource cuda_mr{};
     // rmm::mr::set_current_device_resource(&cuda_mr);

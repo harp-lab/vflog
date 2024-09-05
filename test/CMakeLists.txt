@@ -38,3 +38,15 @@ target_compile_options(LUBM_TEST PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:
     --expt-extended-lambda>)
 add_test(NAME LUBM_TEST COMMAND LUBM_TEST)
 
+# owl_el
+add_executable(OWL_EL_TEST src/owl_el.cu)
+target_include_directories(OWL_EL_TEST PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(OWL_EL_TEST PRIVATE gpu_ra)
+target_compile_features(OWL_EL_TEST PRIVATE cxx_std_17)
+set_target_properties(OWL_EL_TEST PROPERTIES CUDA_SEPARABLE_COMPILATION ON CUDA_ARCHITECTURES "80")
+target_compile_options(OWL_EL_TEST PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:
+    -lineinfo
+    --expt-relaxed-constexpr
+    --default-stream per-thread
+    --expt-extended-lambda>)
+add_test(NAME OWL_EL_TEST COMMAND OWL_EL_TEST)

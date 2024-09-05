@@ -23,7 +23,7 @@
 
 namespace vflog {
 
-multi_hisa::multi_hisa(int arity, d_buffer_ptr buffer, size_t default_idx) {
+multi_hisa::multi_hisa(std::string name, int arity, d_buffer_ptr buffer, size_t default_idx) {
     this->arity = arity;
     newt_size = 0;
     full_size = 0;
@@ -42,12 +42,16 @@ multi_hisa::multi_hisa(int arity, d_buffer_ptr buffer, size_t default_idx) {
         full_columns[i].column_idx = i;
         delta_columns[i].column_idx = i;
         newt_columns[i].column_idx = i;
+        full_columns[i].raw_data = data[i].RAW_PTR;
+        delta_columns[i].raw_data = data[i].RAW_PTR;
+        newt_columns[i].raw_data = data[i].RAW_PTR;
     }
     set_default_index_column(default_idx);
 }
 
-multi_hisa::multi_hisa(int arity, const char *filename,
+multi_hisa::multi_hisa(std::string name, int arity, const char *filename,
                        d_buffer_ptr buffer, size_t default_idx) {
+    name = name;
     this->arity = arity;
     newt_size = 0;
     full_size = 0;
@@ -56,6 +60,7 @@ multi_hisa::multi_hisa(int arity, const char *filename,
     delta_columns.resize(arity);
     newt_columns.resize(arity);
     data.resize(arity);
+    name = name;
     if (buffer) {
         this->buffer = buffer;
     } else {
@@ -66,6 +71,9 @@ multi_hisa::multi_hisa(int arity, const char *filename,
         full_columns[i].column_idx = i;
         delta_columns[i].column_idx = i;
         newt_columns[i].column_idx = i;
+        full_columns[i].raw_data = data[i].RAW_PTR;
+        delta_columns[i].raw_data = data[i].RAW_PTR;
+        newt_columns[i].raw_data = data[i].RAW_PTR;
     }
     set_default_index_column(default_idx);
 
@@ -108,7 +116,6 @@ void multi_hisa::allocate_newt(size_t size) {
         size = 0;
     }
     // compute offset of each version
-    auto new_capacity = old_size + size;
 
     for (int i = 0; i < arity; i++) {
         data[i].resize(old_size + size);
@@ -138,8 +145,11 @@ void multi_hisa::load_column_cpu(VetricalColumnCpu &columns_cpu,
     }
     // set ptr
     full_columns[column_idx].raw_offset = 0;
+    full_columns[column_idx].raw_data = data[column_idx].RAW_PTR;
     delta_columns[column_idx].raw_offset = columns_cpu.delta_head_offset;
+    delta_columns[column_idx].raw_data = data[column_idx].RAW_PTR;
     newt_columns[column_idx].raw_offset = columns_cpu.newt_head_offset;
+    newt_columns[column_idx].raw_data = data[column_idx].RAW_PTR;
     // copy sorted indices
     if (columns_cpu.full_size != 0) {
         full_columns[column_idx].sorted_indices.resize(columns_cpu.full_size);

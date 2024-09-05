@@ -1,7 +1,6 @@
 
 #include "ram.cuh"
 #include <memory>
-#include <vector>
 
 namespace vflog::ram {
 
@@ -22,7 +21,7 @@ void FixpointOperator::execute(RelationalAlgebraMachine &ram) {
         }
 
         for (auto &op : operators) {
-            // std::cout << "Executing operator " << i << std::endl;
+            std::cout << "Executing operator " << i << " " << op->to_string() <<  std::endl;
             timer.start_timer();
             op->execute(ram);
             timer.stop_timer();

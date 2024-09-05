@@ -57,7 +57,7 @@ struct VerticalColumn {
 
     device_data_t sorted_indices;
     // thrust::device_vector<internal_data_type> raw_data;
-    // device_internal_data_ptr raw_data = nullptr;
+    internal_data_type *raw_data = nullptr;
     size_t raw_offset = 0;
 
     VerticalColumn() = default;

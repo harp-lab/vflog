@@ -20,10 +20,10 @@ std::shared_ptr<multi_hisa>
 RelationalAlgebraMachine::create_rel(std::string name, size_t arity,
                                      char *data_path) {
     if (data_path == nullptr) {
-        rels[name] = std::make_shared<multi_hisa>(arity, global_buffer);
+        rels[name] = std::make_shared<multi_hisa>(name, arity, global_buffer);
     } else {
         rels[name] =
-            std::make_shared<multi_hisa>(arity, data_path, global_buffer);
+            std::make_shared<multi_hisa>(name, arity, data_path, global_buffer);
     }
     rel_arities[name] = arity;
     return rels[name];
@@ -56,7 +56,7 @@ void RelationalAlgebraMachine::split_relation(std::string rel_name) {
               << std::endl;
 
     overflow_rel =
-        std::make_shared<multi_hisa>(rel_arities[rel_name], global_buffer);
+        std::make_shared<multi_hisa>(rel_name, rel_arities[rel_name], global_buffer);
     overflow_rel->copy_meta(*rel);
     overflow_rel_name = rel_name;
     rels[frozen_rel_name] = rel;

@@ -4,6 +4,7 @@
 #pragma once
 
 #include "ram.cuh"
+#include "utils.cuh"
 #include <cstdint>
 #include <memory>
 #include <vector>
@@ -17,6 +18,7 @@ enum MIRNodeType {
     HEAD_CLAUSE,
     BODY_CLAUSE,
     RULE,
+    FACT,
     METAVAR,
     STRING,
     NUMBER,
@@ -75,11 +77,11 @@ struct MIRDecl : public MIRNode {
     int arity;
     int max_split = 0;
     uint32_t split_size = UINT32_MAX;
-    char *data_path = nullptr;
+    const char *data_path = nullptr;
 
     MIRDecl(std::string rel_name, std::vector<std::string> arg_names,
             int max_split = 0, uint32_t split_size = UINT32_MAX,
-            char *data_path = nullptr) {
+            const char *data_path = nullptr) {
         this->type = DECL;
         this->rel_name = rel_name;
         this->arg_names = arg_names;
@@ -107,7 +109,7 @@ struct MIRBodyClause : public MIRNode {
         }
     }
 };
-
+    
 struct MIRRule : public MIRNode {
     std::shared_ptr<MIRNode> head;
     std::vector<std::shared_ptr<MIRNode>> body;
@@ -127,7 +129,17 @@ struct MIRRule : public MIRNode {
     std::vector<std::shared_ptr<MIRNode>> get_body() { return body; }
 };
 
+struct MIRFact : public MIRNode {
+    std::string rel_name;
+    std::vector<std::vector<internal_data_type>> data;
 
+    MIRFact(std::string rel_name,
+            std::vector<std::vector<internal_data_type>> data) {
+        this->type = FACT;
+        this->rel_name = rel_name;
+        this->data = data;
+    }
+};
 
 struct MIRHeadClause : public MIRNode {
     std::string rel_name;
@@ -196,7 +208,7 @@ inline std::shared_ptr<MIRScc> scc(std::vector<std::shared_ptr<MIRNode>> nodes,
 
 inline std::shared_ptr<MIRDecl> declare(std::string rel_name,
                                         std::vector<std::string> arg_names,
-                                        char *data_path = nullptr,
+                                        const char *data_path = nullptr,
                                         int max_split = 0,
                                         uint32_t split_size = UINT32_MAX) {
     return std::make_shared<MIRDecl>(rel_name, arg_names, max_split, split_size,
@@ -270,6 +282,9 @@ struct RAMGenPass {
     std::vector<std::shared_ptr<ram::RAMInstruction>>
     compile_rule(std::shared_ptr<MIRRule> rule,
                  std::vector<std::string> updated_rel_names, bool is_recursive);
+
+    std::shared_ptr<ram::RAMInstruction>
+    compile_fact(std::shared_ptr<MIRFact> fact);
 
     std::vector<std::shared_ptr<ram::RAMInstruction>>
     compile_copy_rules(std::shared_ptr<MIRRule> rule, bool is_recursive);

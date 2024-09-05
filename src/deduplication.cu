@@ -1,5 +1,6 @@
 
 #include "hisa.cuh"
+#include "utils.cuh"
 
 #include <iostream>
 #include <thrust/count.h>
@@ -54,12 +55,20 @@ void multi_hisa::newt_self_deduplicate() {
     for (int i = 0; i < arity; i++) {
         all_col_ptrs[i] = data[i].RAW_PTR + columns[i].raw_offset;
     }
+    DEVICE_VECTOR<internal_data_type *> all_idx_ptrs(arity);
+    for (int i = 0; i < arity; i++) {
+        if (columns[i].sorted_indices.size() != 0) {
+            all_idx_ptrs[i] = columns[i].sorted_indices.RAW_PTR;
+        } else {
+            all_idx_ptrs[i] = nullptr;
+        }
+    }
     thrust::transform(
         thrust::make_counting_iterator<uint32_t>(0),
         thrust::make_counting_iterator<uint32_t>(dup_flags.size()),
         dup_flags.begin(),
-        [all_col_ptrs = all_col_ptrs.data(), total = dup_flags.size(),
-         sorted_indices = sorted_indices.RAW_PTR,
+        [all_col_ptrs = all_col_ptrs.data(),
+         total = dup_flags.size(), sorted_indices = sorted_indices.RAW_PTR,
          arity = arity] LAMBDA_TAG(uint32_t i) -> bool {
             if (i == 0) {
                 return false;
@@ -292,7 +301,6 @@ void multi_hisa::diff(multi_hisa &other, RelationVersion version,
 
     auto dup_size = thrust::count(EXE_POLICY, dup_other_flags.begin(),
                                   dup_other_flags.end(), true);
-    std::cout << "dup size: " << dup_size << std::endl;
     auto after_dedup = std::chrono::high_resolution_clock::now();
     dedup_time += std::chrono::duration_cast<std::chrono::microseconds>(
                       after_dedup - before_dedup)

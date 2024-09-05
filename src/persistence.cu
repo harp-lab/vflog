@@ -5,14 +5,14 @@
 
 #include "hisa.cuh"
 
+#include <thrust/count.h>
+#include <thrust/iterator/discard_iterator.h>
 #include <thrust/merge.h>
+#include <thrust/remove.h>
 #include <thrust/sequence.h>
 #include <thrust/sort.h>
-#include <thrust/transform.h> 
+#include <thrust/transform.h>
 #include <thrust/unique.h>
-#include <thrust/count.h>
-#include <thrust/remove.h>
-#include <thrust/iterator/discard_iterator.h>
 
 namespace vflog {
 
@@ -33,7 +33,7 @@ void merge_column0_index(multi_hisa &h) {
         merged_idx.begin(),
         [arity = h.arity, default_index_column = h.default_index_column,
          raw_data = all_col_ptrs.RAW_PTR] LAMBDA_TAG(auto full_idx,
-                                                          auto new_idx) {
+                                                     auto new_idx) {
             // compare the default index column then the other in lexical order
             if (raw_data[default_index_column][full_idx] !=
                 raw_data[default_index_column][new_idx]) {
@@ -86,7 +86,7 @@ void multi_hisa::persist_newt(bool dedup) {
             newt_columns[i].raw_offset = full_size;
         }
         build_index_all(RelationVersion::FULL);
-        build_index_all(RelationVersion::DELTA);
+        // build_index_all(RelationVersion::DELTA);
         newt_size = 0;
         return;
     }
@@ -111,7 +111,7 @@ void multi_hisa::persist_newt(bool dedup) {
 
     auto merge_start = std::chrono::high_resolution_clock::now();
     // sort and merge newt
-    device_data_t tmp_newt_v(newt_size);
+    // device_data_t tmp_newt_v(newt_size);
     // device_data_t tmp_full_v(full_size+newt_size);
     // merge column 0, this is different then the other columns
     merge_column0_index(*this);
@@ -128,10 +128,7 @@ void multi_hisa::persist_newt(bool dedup) {
 
         newt_column.sorted_indices.resize(newt_size);
         auto newt_head = data[i].begin() + newt_column.raw_offset;
-        thrust::copy(EXE_POLICY, newt_head, newt_head + newt_size,
-                     tmp_newt_v.begin());
-        thrust::sequence(EXE_POLICY,
-                         newt_column.sorted_indices.begin(),
+        thrust::sequence(EXE_POLICY, newt_column.sorted_indices.begin(),
                          newt_column.sorted_indices.end(), full_size);
         thrust::stable_sort_by_key(
             EXE_POLICY,
@@ -149,24 +146,18 @@ void multi_hisa::persist_newt(bool dedup) {
         auto &merged_column = data_buffer;
         // std::cout << "data size: " << data[i].size() << std::endl;
 
-        thrust::merge_by_key(
-            EXE_POLICY,
-            thrust::make_permutation_iterator(
-                data[i].begin(), newt_column.sorted_indices.begin()),
-            thrust::make_permutation_iterator(data[i].begin(),
-                                              newt_column.sorted_indices.end()),
-            thrust::make_permutation_iterator(
-                data[i].begin(), full_column.sorted_indices.begin()),
-            thrust::make_permutation_iterator(data[i].begin(),
-                                              full_column.sorted_indices.end()),
-            newt_column.sorted_indices.begin(),
-            full_column.sorted_indices.begin(), thrust::make_discard_iterator(),
-            merged_column.begin());
+        thrust::merge(EXE_POLICY, full_column.sorted_indices.begin(),
+                      full_column.sorted_indices.end(),
+                      newt_column.sorted_indices.begin(),
+                      newt_column.sorted_indices.end(), merged_column.begin(),
+                      [raw_data = data[i].RAW_PTR] LAMBDA_TAG(auto full_idx,
+                                                              auto new_idx) {
+                          return raw_data[full_idx] < raw_data[new_idx];
+                      });
         full_column.sorted_indices.swap(merged_column);
         // buffer->swap(full_column.sorted_indices);
         // minus size of full on all newt indices
-        thrust::transform(EXE_POLICY,
-                          newt_column.sorted_indices.begin(),
+        thrust::transform(EXE_POLICY, newt_column.sorted_indices.begin(),
                           newt_column.sorted_indices.end(),
                           thrust::make_constant_iterator(full_size),
                           newt_column.sorted_indices.begin(),
@@ -174,8 +165,6 @@ void multi_hisa::persist_newt(bool dedup) {
         full_column.raw_size = full_size + newt_size;
     }
     full_size += newt_size;
-    tmp_newt_v.resize(0);
-    tmp_newt_v.shrink_to_fit();
     auto merge_end = std::chrono::high_resolution_clock::now();
     merge_time += std::chrono::duration_cast<std::chrono::microseconds>(
                       merge_end - merge_start)
@@ -199,7 +188,7 @@ void multi_hisa::persist_newt(bool dedup) {
     // build indices on full
     build_index_all(RelationVersion::FULL);
 
-    build_index_all(RelationVersion::DELTA);
+    // build_index_all(RelationVersion::DELTA);
 }
 
 } // namespace vflog

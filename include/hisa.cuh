@@ -12,6 +12,7 @@
 // #include <functional>
 
 #include <cuda/std/chrono>
+#include <string>
 #include <sys/types.h>
 #include <thrust/device_ptr.h>
 #include <thrust/device_vector.h>
@@ -21,8 +22,17 @@ namespace vflog {
 
 enum split_mode_type { SPLIT_ITER, SPLIT_SIZE, SPLIT_NONE };
 
+struct ClusteredIndex {
+    std::vector<int> column_indices;
+
+    device_data_t sorted_indices;
+
+    int get_prime_column() const { return column_indices[0]; }
+};
+
 struct multi_hisa {
     size_t uid = 0;
+    std::string name;
 
     // uint32_t max_tuples = 327'680'000;
     uint32_t max_tuples = UINT32_MAX;
@@ -38,15 +48,19 @@ struct multi_hisa {
     VersionedColumns delta_columns;
     VersionedColumns newt_columns;
 
+    std::vector<ClusteredIndex> clustered_indices_full;
+    std::vector<ClusteredIndex> clustered_indices_newt;
+
     offset_type total_tuples = 0;
 
     offset_type capacity = 0;
 
-    multi_hisa(int arity, d_buffer_ptr buf = nullptr, size_t default_idx = 0);
+    multi_hisa(std::string name, int arity, d_buffer_ptr buf = nullptr,
+               size_t default_idx = 0);
 
     // contstruct with init data
-    multi_hisa(int arity, const char *filename, d_buffer_ptr buf = nullptr,
-               size_t default_idx = 0);
+    multi_hisa(std::string name, int arity, const char *filename,
+               d_buffer_ptr buf = nullptr, size_t default_idx = 0);
 
     // HOST_VECTOR<int> indexed_columns;
     uint64_t hash_time = 0;
@@ -101,6 +115,9 @@ struct multi_hisa {
 
     // deduplicate the newt data in the full
     void newt_full_deduplicate();
+
+    void sort_newt_clustered_index();
+    void persist_newt_clustered_index();
 
     // this will
     // 1. clear the index of delta
@@ -224,11 +241,20 @@ struct multi_hisa {
         for (int i = 0; i < arity; i++) {
             full_columns[i].index_strategy =
                 other.full_columns[i].index_strategy;
+            full_columns[i].raw_data = other.full_columns[i].raw_data;
             delta_columns[i].index_strategy =
                 other.delta_columns[i].index_strategy;
+            delta_columns[i].raw_data = other.delta_columns[i].raw_data;
             newt_columns[i].index_strategy =
                 other.newt_columns[i].index_strategy;
+            newt_columns[i].raw_data = other.newt_columns[i].raw_data;
         }
+    }
+
+    void add_clustered_index(std::vector<int> column_indices) {
+        ClusteredIndex ci;
+        ci.column_indices = column_indices;
+        clustered_indices_full.push_back(ci);
     }
 
     void print_stats();
