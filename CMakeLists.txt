@@ -153,6 +153,9 @@ set(gpu_ra_include "${PROJECT_SOURCE_DIR}/include")
 file(GLOB source_file_gpu_ra
     "${gpu_ra_src}/*.cu"
     "${gpu_ra_src}/ram/*.cu"
+    "${gpu_ra_src}/ram/*.cpp"
+    "${gpu_ra_src}/mir/*.cu"
+    "${gpu_ra_src}/mir/*.cpp"
     "${gpu_ra_src}/*.cpp"
     "${gpu_ra_include}/*.h"
     "${gpu_ra_include}/*.cuh"

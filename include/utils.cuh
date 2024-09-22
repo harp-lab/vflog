@@ -174,7 +174,6 @@ struct column_t {
     }
 };
 
-
 inline __device__ __host__ bool
 tuple_compare(uint32_t **full, uint32_t full_idx, uint32_t **newt,
               uint32_t newt_idx, int arity, int default_index_column) {
@@ -216,9 +215,8 @@ inline __device__ __host__ bool tuple_eq(uint32_t **full, uint32_t full_idx,
 
 #include <rmm/mr/device/pool_memory_resource.hpp>
 
-inline void enable_rmm_allocator() {
-    rmm::mr::cuda_memory_resource cuda_mr{};
-    rmm::mr::pool_memory_resource<rmm::mr::cuda_memory_resource> mr{
-        &cuda_mr, 4 * 256 * 1024};
+#define ENABLE_RMM_POOL_MEMORY_RESOURCE                                        \
+    rmm::mr::cuda_memory_resource cuda_mr{};                                   \
+    rmm::mr::pool_memory_resource<rmm::mr::cuda_memory_resource> mr{           \
+        &cuda_mr, 4 * 256 * 1024};                                             \
     rmm::mr::set_current_device_resource(&mr);
-}

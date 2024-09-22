@@ -22,6 +22,7 @@ enum MIRNodeType {
     FACT,
     METAVAR,
     STRING,
+    ID,
     NUMBER,
     CUSTOM,
     SCC,
@@ -203,6 +204,15 @@ struct MIRNumber : public MIRNode {
     }
 };
 
+struct MIRId : public MIRNode {
+    std::string rel_name;
+
+    MIRId(std::string rel_name) {
+        this->type = ID;
+        this->rel_name = rel_name;
+    }
+};
+
 struct MIRCustomNode : public MIRNode {
 
     std::string related_rel_name;
@@ -280,6 +290,10 @@ inline std::shared_ptr<MIRFact>
 fact(std::string rel_name,
      std::vector<std::vector<internal_data_type>> data) {
     return std::make_shared<MIRFact>(rel_name, data);
+}
+
+inline std::shared_ptr<MIRId> id(std::string rel_name) {
+    return std::make_shared<MIRId>(rel_name);
 }
 
 // compile MIR to RAM
