@@ -89,7 +89,7 @@ struct VerticalColumn {
         if (unique_v_map) {
             unique_v_map->find(from_start, from_end, to);
         } else {
-            throw std::runtime_error("not implemented");
+            throw std::runtime_error("non-map search  not implemented");
         }
     }
 
@@ -99,7 +99,7 @@ struct VerticalColumn {
         if (unique_v_map) {
             unique_v_map->contains(from_start, from_end, to);
         } else {
-            throw std::runtime_error("not implemented");
+            throw std::runtime_error("non-map search not implemented");
         }
     }
 
@@ -111,7 +111,7 @@ struct VerticalColumn {
             unique_v_map->contains_if(from_start, from_end, stencil_start,
                                       thrust::identity<bool>(), to);
         } else {
-            throw std::runtime_error("not implemented");
+            throw std::runtime_error("non-map search not implemented");
         }
     }
 
@@ -154,7 +154,7 @@ struct VerticalColumn {
         if (unique_v_map) {
             unique_v_map->clear();
         } else {
-            throw std::runtime_error("not implemented");
+            throw std::runtime_error("non-map clear not implemented");
         }
     }
 };

@@ -174,13 +174,51 @@ struct column_t {
     }
 };
 
+
+inline __device__ __host__ bool
+tuple_compare(uint32_t **full, uint32_t full_idx, uint32_t **newt,
+              uint32_t newt_idx, int arity, int default_index_column) {
+    if (full[default_index_column][full_idx] !=
+        newt[default_index_column][newt_idx]) {
+        return full[default_index_column][full_idx] <
+               newt[default_index_column][newt_idx];
+    }
+    for (int i = 0; i < arity; i++) {
+        if (i == default_index_column) {
+            continue;
+        }
+        if (full[i][full_idx] != newt[i][newt_idx]) {
+            return full[i][full_idx] < newt[i][newt_idx];
+        }
+    }
+    return false;
+}
+
+inline __device__ __host__ bool tuple_eq(uint32_t **full, uint32_t full_idx,
+                                         uint32_t **newt, uint32_t newt_idx,
+                                         int arity, int default_index_column) {
+    if (full[default_index_column][full_idx] !=
+        newt[default_index_column][newt_idx]) {
+        return false;
+    }
+    for (int i = 0; i < arity; i++) {
+        if (i == default_index_column) {
+            continue;
+        }
+        if (full[i][full_idx] != newt[i][newt_idx]) {
+            return false;
+        }
+    }
+    return true;
+}
+
 } // namespace vflog
 
 #include <rmm/mr/device/pool_memory_resource.hpp>
 
 inline void enable_rmm_allocator() {
     rmm::mr::cuda_memory_resource cuda_mr{};
-    // rmm::mr::pool_memory_resource<rmm::mr::cuda_memory_resource> mr{
-    //     &cuda_mr, 4 * 256 * 1024};
-    // rmm::mr::set_current_device_resource(&mr);
+    rmm::mr::pool_memory_resource<rmm::mr::cuda_memory_resource> mr{
+        &cuda_mr, 4 * 256 * 1024};
+    rmm::mr::set_current_device_resource(&mr);
 }

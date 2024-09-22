@@ -34,6 +34,7 @@ void RelationalAlgebraMachine::execute() {
     auto iter = 0;
     for (auto &op : operators) {
         // std::cout << "Executing operator " << iter << std::endl;
+        // std::cout << op->to_string() << std::endl;
         op->execute(*this);
         iter += 1;
     }

@@ -15,7 +15,8 @@ namespace mir {
 
 enum MIRNodeType {
     DECL,
-    HEAD_CLAUSE,
+    SINGLE_HEAD,
+    CONJ_HEAD,
     BODY_CLAUSE,
     RULE,
     FACT,
@@ -141,19 +142,38 @@ struct MIRFact : public MIRNode {
     }
 };
 
-struct MIRHeadClause : public MIRNode {
+
+struct MIRSingleHeadClause : public MIRNode {
     std::string rel_name;
     std::vector<std::shared_ptr<MIRNode>> args;
 
-    MIRHeadClause(std::string rel_name,
-                  std::vector<std::shared_ptr<MIRNode>> args) {
-        this->type = HEAD_CLAUSE;
+    MIRSingleHeadClause(std::string rel_name,
+                        std::vector<std::shared_ptr<MIRNode>> args) {
+        this->type = SINGLE_HEAD;
         this->rel_name = rel_name;
         this->args = args;
         for (auto &node : args) {
             this->children.push_back(node);
         }
     }
+
+    std::vector<std::string> get_all_meta_vars();
+    std::vector<std::string> get_all_rel_names();
+};
+
+struct MIRConjHeadClause : public MIRNode {
+    std::vector<std::shared_ptr<MIRNode>> heads;
+
+    MIRConjHeadClause(std::vector<std::shared_ptr<MIRNode>> heads) {
+        this->type = CONJ_HEAD;
+        this->heads = heads;
+        for (auto &node : heads) {
+            this->children.push_back(node);
+        }
+    }
+
+    std::vector<std::string> get_all_meta_vars();
+    std::vector<std::string> get_all_rel_names();
 };
 
 struct MIRMetavar : public MIRNode {
@@ -196,6 +216,7 @@ struct MIRCustomNode : public MIRNode {
     }
 };
 
+//  >>>>>>>>>>>>>>>>>>>>>>>>>>> API <<<<<<<<<<<<<<<<<<<<<<<<<<<<
 inline std::shared_ptr<MIRProgram>
 program(std::vector<std::shared_ptr<MIRNode>> nodes) {
     return std::make_shared<MIRProgram>(nodes);
@@ -227,9 +248,14 @@ body(std::string rel_name, std::vector<std::shared_ptr<MIRNode>> args,
     return std::make_shared<MIRBodyClause>(rel_name, args, negated);
 }
 
-inline std::shared_ptr<MIRHeadClause>
-head(std::string rel_name, std::vector<std::shared_ptr<MIRNode>> args) {
-    return std::make_shared<MIRHeadClause>(rel_name, args);
+inline std::shared_ptr<MIRSingleHeadClause>
+single_head(std::string rel_name, std::vector<std::shared_ptr<MIRNode>> args) {
+    return std::make_shared<MIRSingleHeadClause>(rel_name, args);
+}
+
+inline std::shared_ptr<MIRConjHeadClause>
+conj_head(std::vector<std::shared_ptr<MIRNode>> heads) {
+    return std::make_shared<MIRConjHeadClause>(heads);
 }
 
 inline std::shared_ptr<MIRMetavar> var(std::string name) {
@@ -248,6 +274,12 @@ inline std::shared_ptr<MIRCustomNode>
 custom(std::function<void(ram::RelationalAlgebraMachine &)> func,
        std::string related_rel_name = "") {
     return std::make_shared<MIRCustomNode>(func, related_rel_name);
+}
+
+inline std::shared_ptr<MIRFact>
+fact(std::string rel_name,
+     std::vector<std::vector<internal_data_type>> data) {
+    return std::make_shared<MIRFact>(rel_name, data);
 }
 
 // compile MIR to RAM

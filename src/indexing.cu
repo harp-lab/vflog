@@ -72,7 +72,7 @@ void multi_hisa::build_index(VerticalColumn &column,
     if (column.use_real_map) {
         column.map_insert(raw_data, uniq_size, buffer);
     } else {
-        throw std::runtime_error("not implemented");
+        throw std::runtime_error("unreal map not implemented");
     }
     auto end = std::chrono::high_resolution_clock::now();
     this->hash_time +=

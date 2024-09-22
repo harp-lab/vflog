@@ -29,14 +29,14 @@ void owl_el(char *data_path) {
         declare("subClassOf", {"C", "D"}),
         declare("ex", {"E", "R", "C"}),
         scc({
-            rule(head("init", {var("C")}), {body("isMainClass", {var("C")})}),
+            rule(single_head("init", {var("C")}), {body("isMainClass", {var("C")})}),
         }, false),
         custom([](vflog::ram::RelationalAlgebraMachine &ram){
             print_size(vflog::ram::rel_t("init"));
         }),
         scc({
-            rule(head("init", {var("C")}), {body("ex", {var("E"), var("R"), var("C")})}),
-            rule(head("subClassOf",{var("C"), number(51430)}), {body("init", {var("C")})}),
+            rule(single_head("init", {var("C")}), {body("ex", {var("E"), var("R"), var("C")})}),
+            rule(single_head("subClassOf",{var("C"), number(51430)}), {body("init", {var("C")})}),
         }, true),
         custom([](vflog::ram::RelationalAlgebraMachine &ram){
             print_size(vflog::ram::rel_t("subClassOf"));

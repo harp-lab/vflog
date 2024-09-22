@@ -21,6 +21,7 @@ void Fact::execute(RelationalAlgebraMachine &ram) {
             raw_data[full_size + i] = data[i][j];
         }
     }
+    rel_ptr->newt_size += new_size;
 
     // persist the relation
     rel_ptr->newt_self_deduplicate();

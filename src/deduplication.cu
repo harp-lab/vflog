@@ -107,43 +107,6 @@ void multi_hisa::newt_self_deduplicate() {
     total_tuples = newt_size + full_size;
 }
 
-inline __device__ __host__ bool
-tuple_compare(uint32_t **full, uint32_t full_idx, uint32_t **newt,
-              uint32_t newt_idx, int arity, int default_index_column) {
-    if (full[default_index_column][full_idx] !=
-        newt[default_index_column][newt_idx]) {
-        return full[default_index_column][full_idx] <
-               newt[default_index_column][newt_idx];
-    }
-    for (int i = 0; i < arity; i++) {
-        if (i == default_index_column) {
-            continue;
-        }
-        if (full[i][full_idx] != newt[i][newt_idx]) {
-            return full[i][full_idx] < newt[i][newt_idx];
-        }
-    }
-    return false;
-}
-
-inline __device__ __host__ bool tuple_eq(uint32_t **full, uint32_t full_idx,
-                                         uint32_t **newt, uint32_t newt_idx,
-                                         int arity, int default_index_column) {
-    if (full[default_index_column][full_idx] !=
-        newt[default_index_column][newt_idx]) {
-        return false;
-    }
-    for (int i = 0; i < arity; i++) {
-        if (i == default_index_column) {
-            continue;
-        }
-        if (full[i][full_idx] != newt[i][newt_idx]) {
-            return false;
-        }
-    }
-    return true;
-}
-
 void multi_hisa::newt_full_deduplicate() {
     auto before_dedup = std::chrono::high_resolution_clock::now();
     // difference newt and full

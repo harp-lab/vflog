@@ -87,13 +87,13 @@ void tc_mir(char *data_path, int splits_mode) {
         declare("path", {"a", "b"}),
         scc(
             {
-                rule(head("path", {var("a"), var("b")}),
+                rule(single_head("path", {var("a"), var("b")}),
                      {body("edge", {var("a"), var("b")})}),
             },
             false),
         scc(
             {
-                rule(head("path", {var("a"), var("c")}),
+                rule(single_head("path", {var("a"), var("c")}),
                      {body("path", {var("a"), var("b")}),
                       body("edge", {var("b"), var("c")})}),
             },

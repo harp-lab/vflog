@@ -1,6 +1,8 @@
 
 #include "hisa.cuh"
 #include "io.cuh"
+#include "utils.cuh"
+#include <cstdint>
 #include <iostream>
 
 #include <thrust/adjacent_difference.h>
@@ -23,7 +25,8 @@
 
 namespace vflog {
 
-multi_hisa::multi_hisa(std::string name, int arity, d_buffer_ptr buffer, size_t default_idx) {
+multi_hisa::multi_hisa(std::string name, int arity, d_buffer_ptr buffer,
+                       size_t default_idx) {
     this->arity = arity;
     newt_size = 0;
     full_size = 0;
@@ -112,7 +115,7 @@ void multi_hisa::allocate_newt(size_t size) {
     auto old_size = capacity;
     if (total_tuples + size < capacity) {
         // std::cout << "no need to allocate newt" << std::endl;
-        // return;  
+        // return;
         size = 0;
     }
     // compute offset of each version
@@ -212,8 +215,7 @@ void multi_hisa::print_raw_data(RelationVersion ver) {
     for (int i = 0; i < arity; i++) {
         columns_host[i].resize(get_versioned_size(ver));
         cudaMemcpy(columns_host[i].data(),
-                   data[i].RAW_PTR +
-                       get_versioned_columns(ver)[i].raw_offset,
+                   data[i].RAW_PTR + get_versioned_columns(ver)[i].raw_offset,
                    get_versioned_size(ver) * sizeof(internal_data_type),
                    cudaMemcpyDeviceToHost);
     }
@@ -255,7 +257,6 @@ void multi_hisa::fit() {
     }
 }
 
-
 void multi_hisa::print_stats() {
     std::cout << "sort time: " << sort_time / 1000000.0 << std::endl;
     std::cout << "hash time: " << hash_time / 1000000.0 << std::endl;
@@ -287,6 +288,72 @@ void multi_hisa::clear() {
     full_size = 0;
     delta_size = 0;
     total_tuples = 0;
+}
+
+bool multi_hisa::tuple_exists(std::vector<internal_data_type> &tuple,
+                              RelationVersion version) {
+    // check if the tuple exists in the relation
+    device_data_t tuple_data(arity);
+
+    for (int i = 0; i < arity; i++) {
+        tuple_data[i] = tuple[i];
+    }
+
+    // create a scalar
+    device_data_t input_scalar(1);
+    input_scalar[0] = tuple_data[default_index_column];
+    device_ranges_t found_range_scalar(1);
+    auto &columns = get_versioned_columns(version);
+    auto &default_column = columns[default_index_column];
+    default_column.map_find(input_scalar.begin(), input_scalar.end(),
+                            found_range_scalar.begin());
+    device_bitmap_t found_flag(1);
+
+    DEVICE_VECTOR<internal_data_type *> all_col_ptrs(arity);
+    for (int i = 0; i < arity; i++) {
+        all_col_ptrs[i] = data[i].RAW_PTR + columns[i].raw_offset;
+    }
+    DEVICE_VECTOR<internal_data_type *> all_idx_ptrs(arity);
+    for (int i = 0; i < arity; i++) {
+        if (columns[i].sorted_indices.size() != 0) {
+            all_idx_ptrs[i] = columns[i].sorted_indices.RAW_PTR;
+        } else {
+            all_idx_ptrs[i] = nullptr;
+        }
+    }
+    thrust::transform(
+        found_range_scalar.begin(), found_range_scalar.end(),
+        found_flag.begin(),
+        [all_col_ptrs = all_col_ptrs.RAW_PTR,
+         all_idx_ptrs = all_idx_ptrs.RAW_PTR, arity = arity,
+         default_index_column = default_index_column,
+         tuple_data =
+             tuple_data.RAW_PTR] __device__(comp_range_t & range) -> bool {
+            if (range == UINT32_MAX) {
+                return false;
+            }
+            // get the higher 32 bit of the range, and cast as
+            // unsigned int
+            auto start = (unsigned int)(range >> 32);
+            auto size = (unsigned int)(range & 0xFFFFFFFF);
+            for (unsigned int i = 0; i < size; i++) {
+                unsigned int exists_tuple_idx =
+                    all_idx_ptrs[default_index_column][start + i];
+                bool found_flag = true;
+                for (int j = 0; j < arity; j++) {
+                    if (tuple_data[j] != all_col_ptrs[j][exists_tuple_idx]) {
+                        found_flag = false;
+                        break;
+                    }
+                }
+                if (found_flag) {
+                    return true;
+                }
+            }
+            return false;
+        });
+
+    return found_flag[0];
 }
 
 } // namespace vflog

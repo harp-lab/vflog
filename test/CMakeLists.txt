@@ -50,3 +50,16 @@ target_compile_options(OWL_EL_TEST PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:
     --default-stream per-thread
     --expt-extended-lambda>)
 add_test(NAME OWL_EL_TEST COMMAND OWL_EL_TEST)
+
+# mir test
+add_executable(MIR_TEST src/mir_test.cu)
+target_include_directories(MIR_TEST PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(MIR_TEST PRIVATE gpu_ra)
+target_compile_features(MIR_TEST PRIVATE cxx_std_17)
+set_target_properties(MIR_TEST PROPERTIES CUDA_SEPARABLE_COMPILATION ON CUDA_ARCHITECTURES "80")
+target_compile_options(MIR_TEST PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:
+    -lineinfo
+    --expt-relaxed-constexpr
+    --default-stream per-thread
+    --expt-extended-lambda>)
+add_test(NAME MIR_TEST COMMAND MIR_TEST)

@@ -126,6 +126,9 @@ struct multi_hisa {
     // 4. swap the newt and delta
     void persist_newt(bool dedup = true);
 
+    bool tuple_exists(std::vector<internal_data_type> &tuple,
+                      RelationVersion version);
+
     void diff(multi_hisa &other, RelationVersion version,
               device_indices_t &diff_indices);
 
