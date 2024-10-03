@@ -77,6 +77,16 @@ RAMGenPass::compile_copy_rules(std::shared_ptr<MIRRule> rule,
                 body_clause->rel_name));
         }
 
+        for (int i = 0; i < head_clause->args.size(); i++) {
+            auto head_arg = head_clause->args[i];
+            if (head_arg->type == MIRNodeType::ID) {
+                // auto id = std::dynamic_pointer_cast<MIRId>(head_arg);
+                compiled_instrs.push_back(ram::project_id_op(
+                    column_t(head_clause->rel_name, i, NEWT),
+                    body_clause->rel_name));
+            }
+        }
+
         // handle the rest of clauses
         for (int i = 1; i < rule->body.size(); i++) {
             auto other_body_node = rule->body[i];

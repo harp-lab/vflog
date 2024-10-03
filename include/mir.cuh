@@ -99,6 +99,9 @@ struct MIRBodyClause : public MIRNode {
     std::vector<std::shared_ptr<MIRNode>> args;
     bool negated;
 
+    bool with_id = false;
+    std::string id_var_name;
+
     MIRBodyClause(std::string rel_name,
                   std::vector<std::shared_ptr<MIRNode>> args,
                   bool negated = false) {
@@ -110,8 +113,22 @@ struct MIRBodyClause : public MIRNode {
             this->children.push_back(node);
         }
     }
+
+    MIRBodyClause(std::string rel_name,
+                  std::vector<std::shared_ptr<MIRNode>> args,
+                  std::string id_var_name, bool negated = false) {
+        this->type = BODY_CLAUSE;
+        this->rel_name = rel_name;
+        this->args = args;
+        this->negated = negated;
+        this->with_id = true;
+        this->id_var_name = id_var_name;
+        for (auto &node : args) {
+            this->children.push_back(node);
+        }
+    }
 };
-    
+
 struct MIRRule : public MIRNode {
     std::shared_ptr<MIRNode> head;
     std::vector<std::shared_ptr<MIRNode>> body;
@@ -142,7 +159,6 @@ struct MIRFact : public MIRNode {
         this->data = data;
     }
 };
-
 
 struct MIRSingleHeadClause : public MIRNode {
     std::string rel_name;
@@ -205,11 +221,11 @@ struct MIRNumber : public MIRNode {
 };
 
 struct MIRId : public MIRNode {
-    std::string rel_name;
+    std::string var_name;
 
-    MIRId(std::string rel_name) {
+    MIRId(std::string var_name) {
         this->type = ID;
-        this->rel_name = rel_name;
+        this->var_name = var_name;
     }
 };
 
@@ -287,13 +303,12 @@ custom(std::function<void(ram::RelationalAlgebraMachine &)> func,
 }
 
 inline std::shared_ptr<MIRFact>
-fact(std::string rel_name,
-     std::vector<std::vector<internal_data_type>> data) {
+fact(std::string rel_name, std::vector<std::vector<internal_data_type>> data) {
     return std::make_shared<MIRFact>(rel_name, data);
 }
 
-inline std::shared_ptr<MIRId> id(std::string rel_name) {
-    return std::make_shared<MIRId>(rel_name);
+inline std::shared_ptr<MIRId> id(std::string name) {
+    return std::make_shared<MIRId>(name);
 }
 
 // compile MIR to RAM
@@ -337,6 +352,9 @@ struct RAMGenPass {
 
     std::vector<std::shared_ptr<ram::RAMInstruction>>
     compile_join_rules(std::shared_ptr<MIRRule> rule, bool is_recursive);
+
+    std::vector<std::shared_ptr<ram::RAMInstruction>>
+    compile_materialization(std::shared_ptr<MIRRule> rule, bool is_recursive);
 
     void add_join_column(std::string rel_name, int column);
 };

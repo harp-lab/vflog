@@ -42,7 +42,11 @@ struct RelationalAlgebraMachine {
 
     void add_program(std::shared_ptr<RAMProgram> program);
 
-    void add_rel(std::string name, rel_ptr rel) { rels[name] = rel; }
+    void add_rel(std::string name, rel_ptr rel) { 
+        auto total_rel_size = rels.size();
+        rels[name] = rel;
+        rels[name]->uid = total_rel_size;
+    }
 
     rel_ptr get_rel(std::string name) {
         if (rels.find(name) == rels.end()) {

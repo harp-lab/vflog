@@ -79,10 +79,9 @@ void multi_arities_join(ram::RelationalAlgebraMachine &ram,
 
     if (outer_columns.size() == 1) {
         // materialize the matched ranges
-        materialize_matched_range(
-            inner_prime_column, outer_prime_column, matched_ranges,
-            ram.cached_indices, outer_meta_vars[0], inner_tuple_indices,
-            pop_outer);
+        materialize_matched_range(inner_prime_column, matched_ranges,
+                                  ram.cached_indices, outer_meta_vars[0],
+                                  inner_tuple_indices, pop_outer);
         return;
     }
     // check if all joined column match
@@ -152,9 +151,36 @@ void multi_arities_join(ram::RelationalAlgebraMachine &ram,
     matched_ranges.resize(new_end - matched_ranges.begin());
 
     // materialize the matched ranges
-    materialize_matched_range(
-        inner_prime_column, outer_prime_column, matched_ranges,
-        ram.cached_indices, outer_meta_vars[0], inner_tuple_indices, pop_outer);
+    materialize_matched_range(inner_prime_column, matched_ranges,
+                              ram.cached_indices, outer_meta_vars[0],
+                              inner_tuple_indices, pop_outer);
 }
+
+namespace ram {
+
+void MultiArityJoinOperator::execute(RelationalAlgebraMachine &ram) {
+    // TODO: support frozen relations
+    multi_arities_join(ram, inner_columns, outer_columns, inner_reg,
+                       outer_meta_vars, pop_outer);
+}
+
+std::string MultiArityJoinOperator::to_string() {
+    std::string res = "multi_arity_join(";
+    res += "{";
+    for (auto &col : inner_columns) {
+        res += col.to_string() + ", ";
+    }
+    res += "}, {";
+    for (auto &col : outer_columns) {
+        res += col.to_string() + ", ";
+    }
+    res += "}, \"" + inner_reg + "\", {";
+    for (auto &meta : outer_meta_vars) {
+        res += "\"" + meta + "\", ";
+    }
+    res += "}, " + std::to_string(pop_outer) + ")";
+    return res;
+}
+} // namespace ram
 
 } // namespace vflog

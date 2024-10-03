@@ -166,6 +166,7 @@ struct column_t {
         : rel(rel), idx(idx), version(version), frozen_idx(frozen_idx) {}
 
     bool is_frozen() { return frozen_idx != -1; }
+    bool is_id() { return idx == UINT32_MAX; }
 
     std::string to_string() {
         std::string str = "column_t(\"" + rel + "\", " + std::to_string(idx) +

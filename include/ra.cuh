@@ -57,10 +57,8 @@ void relational_copy(multi_hisa &src, RelationVersion src_version,
                      std::vector<std::string> output_meta_vars);
 
 void materialize_matched_range(
-    vflog::VerticalColumn &inner_column, vflog::VerticalColumn &outer_column,
-    device_ranges_t &matched_ranges, host_buf_ref_t &cached_indices,
-    std::string outer_meta_var,
-    std::shared_ptr<device_indices_t> matched_indices,
-    bool pop_outer = false);
+    vflog::VerticalColumn &inner_column, device_ranges_t &matched_ranges,
+    host_buf_ref_t &cached_indices, std::string outer_meta_var,
+    std::shared_ptr<device_indices_t> matched_indices, bool pop_outer = false);
 
 } // namespace vflog

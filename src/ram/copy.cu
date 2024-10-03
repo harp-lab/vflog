@@ -68,4 +68,52 @@ void column_copy_indices(multi_hisa &src, RelationVersion src_version,
     dst_column.raw_size += indices->size();
 }
 
+namespace ram {
+
+void ProjectOperator::execute(RelationalAlgebraMachine &ram) {
+    auto src_ptr = ram.rels[src.rel];
+    if (src.version == FULL && src.is_frozen()) {
+        src_ptr = ram.get_frozen(src.rel, src.frozen_idx);
+        if (src_ptr == nullptr) {
+            // frozen relation not generated yet
+            return;
+        }
+    }
+    if (src_ptr->get_versioned_size(src.version) == 0) {
+        return;
+    }
+    if (ram.overflow_rel_name == dst.rel) {
+        // std::cout << "<<<<< " << std::endl;
+        column_copy(*src_ptr, src.version, src.idx, *ram.overflow_rel,
+                    dst.version, dst.idx, ram.cached_indices[meta_var]);
+    } else {
+        column_copy(*src_ptr, src.version, src.idx, *ram.rels[dst.rel],
+                    dst.version, dst.idx, ram.cached_indices[meta_var]);
+    }
+}
+
+std::string ProjectOperator::to_string() {
+    return "project_op(" + src.to_string() + ", " + dst.to_string() + ", \"" +
+           meta_var + "\")";
+}
+
+void ProjectIdOperator::execute(RelationalAlgebraMachine &ram) {
+    auto &src_idx_ptr = ram.cached_indices[meta_var];
+    if (src_idx_ptr->size() == 0) {
+        return;
+    }
+    auto &dst_column = ram.rels[dst.rel]->get_versioned_columns(dst.version)[dst.idx];
+    auto dst_raw_begin = ram.rels[dst.rel]->data[dst.idx].begin() +
+                         dst_column.raw_offset + dst_column.raw_size;
+    
+    thrust::copy(EXE_POLICY, src_idx_ptr->begin(), src_idx_ptr->end(), dst_raw_begin);
+    dst_column.raw_size += src_idx_ptr->size();
+}
+
+std::string ProjectIdOperator::to_string() {
+    return "project_id_op(" + dst.to_string() + ", \"" + meta_var + "\")";
+}
+
+} // namespace ram
+
 } // namespace vflog

@@ -19,9 +19,11 @@ struct RelationalAlgebraMachine;
 enum class RAMInstructionType {
     MULIT_ARITY_JOIN,
     JOIN,
+    ID_JOIN,
     FREE_JOIN,
     INDEX,
     PROJECT,
+    PROJECT_ID,
     FILTER,
     NEGATE,
     AGGREGATE,
@@ -262,6 +264,24 @@ struct JoinOperator : public RAMInstruction {
     std::string to_string() override;
 };
 
+struct IdJoinOperator : public RAMInstruction {
+    column_t inner;
+    column_t outer;
+    std::string outer_meta_var;
+    std::string inner_meta_var;
+    std::string result_register;
+
+    IdJoinOperator(column_t inner, column_t outer, std::string outer_meta_var,
+                   std::string result_register)
+        : inner(inner), outer(outer), outer_meta_var(outer_meta_var),
+          result_register(result_register) {
+        type = RAMInstructionType::ID_JOIN;
+    }
+
+    void execute(RelationalAlgebraMachine &ram) override;
+    std::string to_string() override;
+};
+
 struct MultiArityJoinOperator : public RAMInstruction {
     std::vector<column_t> inner_columns;
     std::vector<column_t> outer_columns;
@@ -325,6 +345,19 @@ struct ProjectOperator : public RAMInstruction {
                     bool id_flag = false)
         : src(src), dst(dst), meta_var(meta_var), id_flag(id_flag) {
         type = RAMInstructionType::PROJECT;
+    }
+
+    void execute(RelationalAlgebraMachine &ram) override;
+    std::string to_string() override;
+};
+
+struct ProjectIdOperator : public RAMInstruction {
+    column_t dst;
+    std::string meta_var;
+
+    ProjectIdOperator(column_t dst, std::string meta_var)
+        : dst(dst), meta_var(meta_var) {
+        type = RAMInstructionType::PROJECT_ID;
     }
 
     void execute(RelationalAlgebraMachine &ram) override;
@@ -499,6 +532,14 @@ inline std::shared_ptr<JoinOperator> join_op2(column_t inner, column_t outer,
                                           pop_outer);
 }
 
+inline std::shared_ptr<IdJoinOperator> join_id_op(column_t inner,
+                                                  column_t outer,
+                                                  std::string outer_meta_var,
+                                                  std::string result_register) {
+    // return std::make_shared<IdJoinOperator>(inner, outer, outer_meta_var,
+                                            // result_register);
+}
+
 inline std::shared_ptr<MultiArityJoinOperator>
 multi_arity_join_op(std::vector<column_t> inner_columns,
                     std::vector<column_t> outer_columns, std::string inner_reg,
@@ -519,6 +560,12 @@ inline std::shared_ptr<ProjectOperator> project_op(column_t src, column_t dst,
                                                    std::string meta_var,
                                                    bool id_flag = false) {
     return std::make_shared<ProjectOperator>(src, dst, meta_var, id_flag);
+}
+
+// project the id of src to dst, based on the indices cached in meta_var
+inline std::shared_ptr<ProjectIdOperator> project_id_op(column_t dst,
+                                                        std::string meta_var) {
+    return std::make_shared<ProjectIdOperator>(dst, meta_var);
 }
 
 // remove dst tuple which is in src

@@ -25,6 +25,8 @@ RelationalAlgebraMachine::create_rel(std::string name, size_t arity,
         rels[name] =
             std::make_shared<multi_hisa>(name, arity, data_path, global_buffer);
     }
+    auto total_rel_size = rels.size();
+    rels[name]->uid = total_rel_size;
     rel_arities[name] = arity;
     return rels[name];
 }
