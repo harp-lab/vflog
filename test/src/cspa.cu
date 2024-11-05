@@ -260,13 +260,7 @@ void cspa_ram(char *data_path) {
         print_size(rel_t("value_flow")),
     });
 
-    std::cout << "Start executing" << std::endl;
-    KernelTimer timer;
-    timer.start_timer();
     ram.execute();
-    timer.stop_timer();
-    auto elapsed = timer.get_spent_time();
-    std::cout << "Elapsed time: " << elapsed << "s" << std::endl;
 }
 
 int main(int argc, char **argv) {
