@@ -101,7 +101,7 @@ void EndMaterialization::execute(RelationalAlgebraMachine &ram) {
     }
     auto rel_p = ram.rels[rel.name];
     auto &cached_indices = ram.cached_indices;
-    rel_p->newt_size = cached_indices[meta_var]->size();
+    rel_p->newt_size += cached_indices[meta_var]->size();
     rel_p->total_tuples += rel_p->newt_size;
 }
 

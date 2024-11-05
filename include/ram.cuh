@@ -60,7 +60,7 @@ struct RelationalAlgebraMachine {
     }
 
     std::shared_ptr<multi_hisa> create_rel(std::string name, size_t arity,
-                                           char *data_path = nullptr);
+                                           const char *data_path = nullptr);
 
     void execute();
 

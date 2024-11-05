@@ -9,6 +9,9 @@ namespace vflog {
 
 void read_kary_relation(const std::string &filename, vflog::multi_hisa &h,
                         int k);
+void read_kary_relation(const std::string &filename, std::shared_ptr<multi_hisa> h,
+                        int k);
+
 void read_kary_relation(const std::string &filename, vflog::multi_hisa &h,
                         int k, std::unordered_map<std::string, int> &dict);
 

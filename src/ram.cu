@@ -18,7 +18,7 @@ void RelationalAlgebraMachine::add_operator(
 
 std::shared_ptr<multi_hisa>
 RelationalAlgebraMachine::create_rel(std::string name, size_t arity,
-                                     char *data_path) {
+                                     const char *data_path) {
     if (data_path == nullptr) {
         rels[name] = std::make_shared<multi_hisa>(name, arity, global_buffer);
     } else {
