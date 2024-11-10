@@ -1,0 +1,148 @@
+.decl ancestor_path(x:number, y:number) 
+.decl cfg_edge(x:number, y:number) 
+.decl cfg_node(x:number) 
+.decl child_path(x:number, y:number) 
+.decl errors(x:number, y:number) 
+.decl known_placeholder_subset(x:number, y:number) 
+.decl loan_invalidated_at(x:number, y:number) 
+.decl loan_live_at(x:number, y:number) 
+.decl move_error(x:number, y:number) 
+.decl origin_contains_loan_on_entry(x:number, y:number, z:number) 
+.decl origin_live_on_entry(x:number, y:number) 
+.decl path_accessed_at(x:number, y:number) 
+.decl path_accessed_at_base(x:number, y:number) 
+.decl path_assigned_at(x:number, y:number) 
+.decl path_assigned_at_base(x:number, y:number) 
+.decl path_begins_with_var(x:number, y:number) 
+.decl path_is_var(x:number, y:number) 
+.decl path_maybe_initialized_on_exit(x:number, y:number) 
+.decl path_maybe_uninitialized_on_exit(x:number, y:number) 
+.decl path_moved_at(x:number, y:number) 
+.decl path_moved_at_base(x:number, y:number) 
+.decl placeholder_origin(x:number) 
+.decl subset_base(x:number, y:number, z:number) 
+.decl subset_error(x:number, y:number, z:number) 
+.decl var_drop_live_on_entry(x:number, y:number) 
+.decl var_live_on_entry(x:number, y:number) 
+.decl var_maybe_partly_initialized_on_entry(x:number, y:number) 
+.decl var_maybe_partly_initialized_on_exit(x:number, y:number) 
+ancestor_path(x,y) :- 
+   child_path(x,y).
+
+ancestor_path(Grandparent,Child) :- 
+   ancestor_path(Parent,Child),
+   child_path(Parent,Grandparent).
+
+move_error(Path,TargetNode) :- 
+   path_maybe_uninitialized_on_exit(Path,SourceNode),
+   cfg_edge(SourceNode,TargetNode).
+
+path_accessed_at(x,y) :- 
+   path_accessed_at_base(x,y).
+
+path_accessed_at(Child,point) :- 
+   path_accessed_at(Parent,point),
+   ancestor_path(Parent,Child).
+
+path_assigned_at(x,y) :- 
+   path_assigned_at_base(x,y).
+
+path_assigned_at(Child,point) :- 
+   path_assigned_at(Parent,point),
+   ancestor_path(Parent,Child).
+
+path_begins_with_var(x,var) :- 
+   path_is_var(x,var).
+
+path_begins_with_var(Child,Var) :- 
+   path_begins_with_var(Parent,Var),
+   ancestor_path(Parent,Child).
+
+path_maybe_initialized_on_exit(path,point) :- 
+   path_assigned_at(path,point).
+
+path_maybe_initialized_on_exit(path,point2) :- 
+   path_maybe_initialized_on_exit(path,point1),
+   cfg_edge(point1,point2),
+   !path_moved_at(path,point2).
+
+path_maybe_uninitialized_on_exit(path,point) :- 
+   path_moved_at(path,point).
+
+path_maybe_uninitialized_on_exit(path,point2) :- 
+   path_maybe_uninitialized_on_exit(path,point1),
+   cfg_edge(point1,point2),
+   !path_assigned_at(path,point2).
+
+path_moved_at(x,y) :- 
+   path_moved_at_base(x,y).
+
+path_moved_at(Child,Point) :- 
+   path_moved_at(Parent,Point),
+   ancestor_path(Parent,Child).
+
+var_maybe_partly_initialized_on_exit(var,point) :- 
+   path_maybe_initialized_on_exit(path,point),
+   path_begins_with_var(path,var).
+.printsize ancestor_path(IO="stdoutprintsize",attributeNames="x	y",name="ancestor_path",operation="printsize",params="{"records": {}, "relation": {"arity": 2, "params": ["x", "y"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 2, "types": ["i:number", "i:number"]}}")
+
+.input cfg_edge(IO="file",attributeNames="x	y",fact-dir=".",name="cfg_edge",operation="input",params="{"records": {}, "relation": {"arity": 2, "params": ["x", "y"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 2, "types": ["i:number", "i:number"]}}")
+
+.printsize cfg_node(IO="stdoutprintsize",attributeNames="x",name="cfg_node",operation="printsize",params="{"records": {}, "relation": {"arity": 1, "params": ["x"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 1, "types": ["i:number"]}}")
+
+.input child_path(IO="file",attributeNames="x	y",fact-dir=".",name="child_path",operation="input",params="{"records": {}, "relation": {"arity": 2, "params": ["x", "y"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 2, "types": ["i:number", "i:number"]}}")
+
+.printsize errors(IO="stdoutprintsize",attributeNames="x	y",name="errors",operation="printsize",params="{"records": {}, "relation": {"arity": 2, "params": ["x", "y"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 2, "types": ["i:number", "i:number"]}}")
+
+.input known_placeholder_subset(IO="file",attributeNames="x	y",fact-dir=".",name="known_placeholder_subset",operation="input",params="{"records": {}, "relation": {"arity": 2, "params": ["x", "y"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 2, "types": ["i:number", "i:number"]}}")
+
+.printsize known_placeholder_subset(IO="stdoutprintsize",attributeNames="x	y",name="known_placeholder_subset",operation="printsize",params="{"records": {}, "relation": {"arity": 2, "params": ["x", "y"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 2, "types": ["i:number", "i:number"]}}")
+
+.input loan_invalidated_at(IO="file",attributeNames="x	y",fact-dir=".",name="loan_invalidated_at",operation="input",params="{"records": {}, "relation": {"arity": 2, "params": ["x", "y"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 2, "types": ["i:number", "i:number"]}}")
+
+.printsize loan_invalidated_at(IO="stdoutprintsize",attributeNames="x	y",name="loan_invalidated_at",operation="printsize",params="{"records": {}, "relation": {"arity": 2, "params": ["x", "y"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 2, "types": ["i:number", "i:number"]}}")
+
+.printsize loan_live_at(IO="stdoutprintsize",attributeNames="x	y",name="loan_live_at",operation="printsize",params="{"records": {}, "relation": {"arity": 2, "params": ["x", "y"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 2, "types": ["i:number", "i:number"]}}")
+
+.printsize move_error(IO="stdoutprintsize",attributeNames="x	y",name="move_error",operation="printsize",params="{"records": {}, "relation": {"arity": 2, "params": ["x", "y"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 2, "types": ["i:number", "i:number"]}}")
+
+.printsize origin_contains_loan_on_entry(IO="stdoutprintsize",attributeNames="x	y	z",name="origin_contains_loan_on_entry",operation="printsize",params="{"records": {}, "relation": {"arity": 3, "params": ["x", "y", "z"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 3, "types": ["i:number", "i:number", "i:number"]}}")
+
+.printsize origin_live_on_entry(IO="stdoutprintsize",attributeNames="x	y",name="origin_live_on_entry",operation="printsize",params="{"records": {}, "relation": {"arity": 2, "params": ["x", "y"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 2, "types": ["i:number", "i:number"]}}")
+
+.printsize path_accessed_at(IO="stdoutprintsize",attributeNames="x	y",name="path_accessed_at",operation="printsize",params="{"records": {}, "relation": {"arity": 2, "params": ["x", "y"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 2, "types": ["i:number", "i:number"]}}")
+
+.input path_accessed_at_base(IO="file",attributeNames="x	y",fact-dir=".",name="path_accessed_at_base",operation="input",params="{"records": {}, "relation": {"arity": 2, "params": ["x", "y"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 2, "types": ["i:number", "i:number"]}}")
+
+.printsize path_assigned_at(IO="stdoutprintsize",attributeNames="x	y",name="path_assigned_at",operation="printsize",params="{"records": {}, "relation": {"arity": 2, "params": ["x", "y"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 2, "types": ["i:number", "i:number"]}}")
+
+.input path_assigned_at_base(IO="file",attributeNames="x	y",fact-dir=".",name="path_assigned_at_base",operation="input",params="{"records": {}, "relation": {"arity": 2, "params": ["x", "y"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 2, "types": ["i:number", "i:number"]}}")
+
+.printsize path_begins_with_var(IO="stdoutprintsize",attributeNames="x	y",name="path_begins_with_var",operation="printsize",params="{"records": {}, "relation": {"arity": 2, "params": ["x", "y"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 2, "types": ["i:number", "i:number"]}}")
+
+.input path_is_var(IO="file",attributeNames="x	y",fact-dir=".",name="path_is_var",operation="input",params="{"records": {}, "relation": {"arity": 2, "params": ["x", "y"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 2, "types": ["i:number", "i:number"]}}")
+
+.printsize path_maybe_initialized_on_exit(IO="stdoutprintsize",attributeNames="x	y",name="path_maybe_initialized_on_exit",operation="printsize",params="{"records": {}, "relation": {"arity": 2, "params": ["x", "y"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 2, "types": ["i:number", "i:number"]}}")
+
+.printsize path_maybe_uninitialized_on_exit(IO="stdoutprintsize",attributeNames="x	y",name="path_maybe_uninitialized_on_exit",operation="printsize",params="{"records": {}, "relation": {"arity": 2, "params": ["x", "y"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 2, "types": ["i:number", "i:number"]}}")
+
+.printsize path_moved_at(IO="stdoutprintsize",attributeNames="x	y",name="path_moved_at",operation="printsize",params="{"records": {}, "relation": {"arity": 2, "params": ["x", "y"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 2, "types": ["i:number", "i:number"]}}")
+
+.input path_moved_at_base(IO="file",attributeNames="x	y",fact-dir=".",name="path_moved_at_base",operation="input",params="{"records": {}, "relation": {"arity": 2, "params": ["x", "y"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 2, "types": ["i:number", "i:number"]}}")
+
+.printsize placeholder_origin(IO="stdoutprintsize",attributeNames="x",name="placeholder_origin",operation="printsize",params="{"records": {}, "relation": {"arity": 1, "params": ["x"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 1, "types": ["i:number"]}}")
+
+.input subset_base(IO="file",attributeNames="x	y	z",fact-dir=".",name="subset_base",operation="input",params="{"records": {}, "relation": {"arity": 3, "params": ["x", "y", "z"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 3, "types": ["i:number", "i:number", "i:number"]}}")
+
+.printsize subset_base(IO="stdoutprintsize",attributeNames="x	y	z",name="subset_base",operation="printsize",params="{"records": {}, "relation": {"arity": 3, "params": ["x", "y", "z"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 3, "types": ["i:number", "i:number", "i:number"]}}")
+
+.printsize subset_error(IO="stdoutprintsize",attributeNames="x	y	z",name="subset_error",operation="printsize",params="{"records": {}, "relation": {"arity": 3, "params": ["x", "y", "z"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 3, "types": ["i:number", "i:number", "i:number"]}}")
+
+.printsize var_drop_live_on_entry(IO="stdoutprintsize",attributeNames="x	y",name="var_drop_live_on_entry",operation="printsize",params="{"records": {}, "relation": {"arity": 2, "params": ["x", "y"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 2, "types": ["i:number", "i:number"]}}")
+
+.printsize var_live_on_entry(IO="stdoutprintsize",attributeNames="x	y",name="var_live_on_entry",operation="printsize",params="{"records": {}, "relation": {"arity": 2, "params": ["x", "y"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 2, "types": ["i:number", "i:number"]}}")
+
+.printsize var_maybe_partly_initialized_on_entry(IO="stdoutprintsize",attributeNames="x	y",name="var_maybe_partly_initialized_on_entry",operation="printsize",params="{"records": {}, "relation": {"arity": 2, "params": ["x", "y"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 2, "types": ["i:number", "i:number"]}}")
+
+.printsize var_maybe_partly_initialized_on_exit(IO="stdoutprintsize",attributeNames="x	y",name="var_maybe_partly_initialized_on_exit",operation="printsize",params="{"records": {}, "relation": {"arity": 2, "params": ["x", "y"]}}",types="{"ADTs": {}, "records": {}, "relation": {"arity": 2, "types": ["i:number", "i:number"]}}")
+

@@ -39,7 +39,7 @@ void read_kary_relation(const std::string &filename, vflog::multi_hisa &h,
         }
 
         if (tokens.size() != k) {
-            std::cerr << "Error: invalid arity" << std::endl;
+            std::cerr << filename << "  Error: invalid arity" << std::endl;
             return;
         }
 

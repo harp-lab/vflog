@@ -9,8 +9,6 @@
 #include <thrust/host_vector.h>
 
 #include <assert.h>
-// #include <cuda_runtime.h>
-#include <iostream>
 
 // use librmm
 #include <rmm/device_vector.hpp>
@@ -64,6 +62,32 @@ struct KernelTimer {
         return elapsed;
     }
 };
+
+// a murmur hash function for device
+__device__ __host__ inline
+uint32_t murmur3_32(const uint32_t key) {
+    uint32_t h = 0;
+    uint32_t k = key;
+    k *= 0xcc9e2d51;
+    k = (k << 15) | (k >> 17);
+    k *= 0x1b873593;
+    h ^= k;
+    h = (h << 13) | (h >> 19);
+    h = h * 5 + 0xe6546b64;
+    h ^= 4;
+    h ^= h >> 16;
+    h *= 0x85ebca6b;
+    h ^= h >> 13;
+    h *= 0xc2b2ae35;
+    h ^= h >> 16;
+    return h;
+}
+
+// combine two uint32_t hash value to one uint32_t
+__device__ __host__ inline
+uint32_t combine_hash(uint32_t a, uint32_t b) {
+    return a ^ (b + 0x9e3779b9 + (a << 6) + (a >> 2));
+}
 
 enum RelationVersion { DELTA, FULL, NEWT };
 

@@ -17,6 +17,7 @@
 #include <thrust/device_ptr.h>
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
+#include <vector>
 
 namespace vflog {
 
@@ -24,8 +25,10 @@ enum split_mode_type { SPLIT_ITER, SPLIT_SIZE, SPLIT_NONE };
 
 struct ClusteredIndex {
     std::vector<int> column_indices;
-
     device_data_t sorted_indices;
+    std::shared_ptr<GpuMap> unique_v_map = nullptr;
+    // can this index be joined?
+    bool joinable = false;
 
     int get_prime_column() const { return column_indices[0]; }
 };
@@ -109,6 +112,11 @@ struct multi_hisa {
      */
     void force_column_index(RelationVersion version, int column_idx,
                             bool rebuild = true, bool sorted = false);
+
+    void build_cluster_index();
+
+    ClusteredIndex &get_clustered_index(RelationVersion version,
+                                        std::vector<int> column_indices);
 
     // deduplicate the data in the newt
     void newt_self_deduplicate();

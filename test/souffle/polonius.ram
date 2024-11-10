@@ -1,0 +1,819 @@
+PROGRAM
+ DECLARATION
+  child_path(x:i:number,y:i:number) 
+  ancestor_path(x:i:number,y:i:number) 
+  @delta_ancestor_path(x:i:number,y:i:number) 
+  @new_ancestor_path(x:i:number,y:i:number) 
+  cfg_edge(x:i:number,y:i:number) 
+  cfg_node(x:i:number) 
+  drop_of_var_derefs_origin(x:i:number,y:i:number) 
+  loan_invalidated_at(x:i:number,y:i:number) 
+  loan_issued_at(x:i:number,y:i:number,z:i:number) 
+  loan_killed_at(x:i:number,y:i:number) 
+  universal_region(x:i:number) 
+  placeholder_origin(x:i:number) 
+  use_of_var_derefs_origin(x:i:number,y:i:number) 
+  var_defined_at(x:i:number,y:i:number) 
+  var_dropped_at(x:i:number,y:i:number) 
+  path_is_var(x:i:number,y:i:number) 
+  path_begins_with_var(x:i:number,y:i:number) 
+  @delta_path_begins_with_var(x:i:number,y:i:number) 
+  @new_path_begins_with_var(x:i:number,y:i:number) 
+  path_assigned_at_base(x:i:number,y:i:number) 
+  path_assigned_at(x:i:number,y:i:number) 
+  @delta_path_assigned_at(x:i:number,y:i:number) 
+  @new_path_assigned_at(x:i:number,y:i:number) 
+  path_moved_at_base(x:i:number,y:i:number) 
+  path_moved_at(x:i:number,y:i:number) 
+  @delta_path_moved_at(x:i:number,y:i:number) 
+  @new_path_moved_at(x:i:number,y:i:number) 
+  path_maybe_initialized_on_exit(x:i:number,y:i:number) 
+  @delta_path_maybe_initialized_on_exit(x:i:number,y:i:number) 
+  @new_path_maybe_initialized_on_exit(x:i:number,y:i:number) 
+  var_maybe_partly_initialized_on_exit(x:i:number,y:i:number) 
+  var_maybe_partly_initialized_on_entry(x:i:number,y:i:number) 
+  var_drop_live_on_entry(x:i:number,y:i:number) 
+  @delta_var_drop_live_on_entry(x:i:number,y:i:number) 
+  @new_var_drop_live_on_entry(x:i:number,y:i:number) 
+  path_maybe_uninitialized_on_exit(x:i:number,y:i:number) 
+  @delta_path_maybe_uninitialized_on_exit(x:i:number,y:i:number) 
+  @new_path_maybe_uninitialized_on_exit(x:i:number,y:i:number) 
+  move_error(x:i:number,y:i:number) 
+  var_used_at(x:i:number,y:i:number) 
+  var_live_on_entry(x:i:number,y:i:number) 
+  @delta_var_live_on_entry(x:i:number,y:i:number) 
+  @new_var_live_on_entry(x:i:number,y:i:number) 
+  origin_live_on_entry(x:i:number,y:i:number) 
+  subset_base(x:i:number,y:i:number,z:i:number) 
+  subset(x:i:number,y:i:number,z:i:number) 
+  @delta_subset(x:i:number,y:i:number,z:i:number) 
+  @new_subset(x:i:number,y:i:number,z:i:number) 
+  origin_contains_loan_on_entry(x:i:number,y:i:number,z:i:number) 
+  @delta_origin_contains_loan_on_entry(x:i:number,y:i:number,z:i:number) 
+  @new_origin_contains_loan_on_entry(x:i:number,y:i:number,z:i:number) 
+  loan_live_at(x:i:number,y:i:number) 
+  errors(x:i:number,y:i:number) 
+  known_placeholder_subset(x:i:number,y:i:number) 
+  @delta_known_placeholder_subset(x:i:number,y:i:number) 
+  @new_known_placeholder_subset(x:i:number,y:i:number) 
+  subset_error(x:i:number,y:i:number,z:i:number) 
+  path_accessed_at_base(x:i:number,y:i:number) 
+  path_accessed_at(x:i:number,y:i:number) 
+  @delta_path_accessed_at(x:i:number,y:i:number) 
+  @new_path_accessed_at(x:i:number,y:i:number) 
+ END DECLARATION
+ SUBROUTINE ancestor_path
+  DEBUG "ancestor_path(x,y) :- \n   child_path(x,y).\nin file polonius.dl [162:1-162:41]"
+   QUERY
+    FOR t0 IN child_path
+     IF (NOT ISEMPTY(child_path))
+      INSERT (t0.0, t0.1) INTO ancestor_path
+   END QUERY
+  END DEBUG
+  QUERY
+   FOR t0 IN ancestor_path
+    INSERT (t0.0, t0.1) INTO @delta_ancestor_path
+  END QUERY
+  LOOP
+   DEBUG "ancestor_path(Grandparent,Child) :- \n   ancestor_path(Parent,Child),\n   child_path(Parent,Grandparent).\nin file polonius.dl [167:1-169:37]"
+    QUERY
+     FOR t0 IN @delta_ancestor_path
+      IF (NOT ISEMPTY(@delta_ancestor_path))
+       FOR t1 IN child_path
+        IF (NOT ISEMPTY(child_path))
+         IF (t0.0 = t1.0)
+          IF (NOT (t1.1,t0.1) IN ancestor_path)
+           INSERT (t1.1, t0.1) INTO @new_ancestor_path
+    END QUERY
+   END DEBUG
+   EXIT ISEMPTY(@new_ancestor_path)
+   QUERY
+    FOR t0 IN @new_ancestor_path
+     INSERT (t0.0, t0.1) INTO ancestor_path
+   END QUERY
+   SWAP (@delta_ancestor_path, @new_ancestor_path)
+   CLEAR @new_ancestor_path
+  END LOOP
+  CLEAR @delta_ancestor_path
+  CLEAR @new_ancestor_path
+  IO ancestor_path (IO="stdoutprintsize",attributeNames="x\ty",auxArity="0",name="ancestor_path",operation="printsize",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+  CLEAR child_path
+ END SUBROUTINE
+ SUBROUTINE cfg_edge
+  IO cfg_edge (IO="file",attributeNames="x\ty",auxArity="0",fact-dir=".",name="cfg_edge",operation="input",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+ END SUBROUTINE
+ SUBROUTINE cfg_node
+  DEBUG "cfg_node(point1) :- \n   cfg_edge(point1,_).\nin file polonius.dl [133:1-134:30]"
+   QUERY
+    FOR t0 IN cfg_edge
+     IF (NOT ISEMPTY(cfg_edge))
+      INSERT (t0.0) INTO cfg_node
+   END QUERY
+  END DEBUG
+  DEBUG "cfg_node(point2) :- \n   cfg_edge(_,point2).\nin file polonius.dl [133:1-134:30]"
+   QUERY
+    FOR t0 IN cfg_edge
+     IF (NOT ISEMPTY(cfg_edge))
+      INSERT (t0.1) INTO cfg_node
+   END QUERY
+  END DEBUG
+  IO cfg_node (IO="stdoutprintsize",attributeNames="x",auxArity="0",name="cfg_node",operation="printsize",params="{\"records\": {}, \"relation\": {\"arity\": 1, \"params\": [\"x\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 1, \"types\": [\"i:number\"]}}")
+ END SUBROUTINE
+ SUBROUTINE child_path
+  IO child_path (IO="file",attributeNames="x\ty",auxArity="0",fact-dir=".",name="child_path",operation="input",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+ END SUBROUTINE
+ SUBROUTINE drop_of_var_derefs_origin
+  IO drop_of_var_derefs_origin (IO="file",attributeNames="x\ty",auxArity="0",fact-dir=".",name="drop_of_var_derefs_origin",operation="input",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+ END SUBROUTINE
+ SUBROUTINE errors
+  DEBUG "errors(loan,point) :- \n   loan_invalidated_at(loan,point),\n   loan_live_at(loan,point).\nin file polonius.dl [117:1-119:31]"
+   QUERY
+    FOR t0 IN loan_invalidated_at
+     IF (NOT ISEMPTY(loan_invalidated_at))
+      FOR t1 IN loan_live_at
+       IF (NOT ISEMPTY(loan_live_at))
+        IF (t0.1 = t1.1)
+         IF (t0.0 = t1.0)
+          INSERT (t0.0, t0.1) INTO errors
+   END QUERY
+  END DEBUG
+  IO errors (IO="stdoutprintsize",attributeNames="x\ty",auxArity="0",name="errors",operation="printsize",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+  CLEAR loan_invalidated_at
+  CLEAR loan_live_at
+ END SUBROUTINE
+ SUBROUTINE known_placeholder_subset
+  IO known_placeholder_subset (IO="file",attributeNames="x\ty",auxArity="0",fact-dir=".",name="known_placeholder_subset",operation="input",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+  QUERY
+   FOR t0 IN known_placeholder_subset
+    INSERT (t0.0, t0.1) INTO @delta_known_placeholder_subset
+  END QUERY
+  LOOP
+   DEBUG "known_placeholder_subset(x,z) :- \n   known_placeholder_subset(x,y),\n   known_placeholder_subset(y,z).\nin file polonius.dl [94:1-96:36]"
+    QUERY
+     FOR t0 IN @delta_known_placeholder_subset
+      IF (NOT ISEMPTY(@delta_known_placeholder_subset))
+       FOR t1 IN known_placeholder_subset
+        IF (NOT ISEMPTY(known_placeholder_subset))
+         IF (t0.1 = t1.0)
+          IF (NOT (t0.1,t1.1) IN @delta_known_placeholder_subset)
+           IF (NOT (t0.0,t1.1) IN known_placeholder_subset)
+            INSERT (t0.0, t1.1) INTO @new_known_placeholder_subset
+    END QUERY
+   END DEBUG
+   DEBUG "known_placeholder_subset(x,z) :- \n   known_placeholder_subset(x,y),\n   known_placeholder_subset(y,z).\nin file polonius.dl [94:1-96:36]"
+    QUERY
+     FOR t0 IN known_placeholder_subset
+      IF (NOT ISEMPTY(known_placeholder_subset))
+       FOR t1 IN @delta_known_placeholder_subset
+        IF (NOT ISEMPTY(@delta_known_placeholder_subset))
+         IF (t0.1 = t1.0)
+          IF (NOT (t0.0,t1.1) IN known_placeholder_subset)
+           INSERT (t0.0, t1.1) INTO @new_known_placeholder_subset
+    END QUERY
+   END DEBUG
+   EXIT ISEMPTY(@new_known_placeholder_subset)
+   QUERY
+    FOR t0 IN @new_known_placeholder_subset
+     INSERT (t0.0, t0.1) INTO known_placeholder_subset
+   END QUERY
+   SWAP (@delta_known_placeholder_subset, @new_known_placeholder_subset)
+   CLEAR @new_known_placeholder_subset
+  END LOOP
+  CLEAR @delta_known_placeholder_subset
+  CLEAR @new_known_placeholder_subset
+  IO known_placeholder_subset (IO="stdoutprintsize",attributeNames="x\ty",auxArity="0",name="known_placeholder_subset",operation="printsize",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+ END SUBROUTINE
+ SUBROUTINE loan_invalidated_at
+  IO loan_invalidated_at (IO="file",attributeNames="x\ty",auxArity="0",fact-dir=".",name="loan_invalidated_at",operation="input",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+  IO loan_invalidated_at (IO="stdoutprintsize",attributeNames="x\ty",auxArity="0",name="loan_invalidated_at",operation="printsize",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+ END SUBROUTINE
+ SUBROUTINE loan_issued_at
+  IO loan_issued_at (IO="file",attributeNames="x\ty\tz",auxArity="0",fact-dir=".",name="loan_issued_at",operation="input",params="{\"records\": {}, \"relation\": {\"arity\": 3, \"params\": [\"x\", \"y\", \"z\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 3, \"types\": [\"i:number\", \"i:number\", \"i:number\"]}}")
+ END SUBROUTINE
+ SUBROUTINE loan_killed_at
+  IO loan_killed_at (IO="file",attributeNames="x\ty",auxArity="0",fact-dir=".",name="loan_killed_at",operation="input",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+ END SUBROUTINE
+ SUBROUTINE loan_live_at
+  DEBUG "loan_live_at(loan,point) :- \n   origin_contains_loan_on_entry(origin,loan,point),\n   origin_live_on_entry(origin,point).\nin file polonius.dl [114:1-116:41]"
+   QUERY
+    FOR t0 IN origin_contains_loan_on_entry
+     IF (NOT ISEMPTY(origin_contains_loan_on_entry))
+      FOR t1 IN origin_live_on_entry
+       IF (NOT ISEMPTY(origin_live_on_entry))
+        IF (t0.2 = t1.1)
+         IF (t0.0 = t1.0)
+          INSERT (t0.1, t0.2) INTO loan_live_at
+   END QUERY
+  END DEBUG
+  IO loan_live_at (IO="stdoutprintsize",attributeNames="x\ty",auxArity="0",name="loan_live_at",operation="printsize",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+  CLEAR origin_contains_loan_on_entry
+  CLEAR origin_live_on_entry
+ END SUBROUTINE
+ SUBROUTINE move_error
+  DEBUG "move_error(Path,TargetNode) :- \n   path_maybe_uninitialized_on_exit(Path,SourceNode),\n   cfg_edge(SourceNode,TargetNode).\nin file polonius.dl [198:1-200:38]"
+   QUERY
+    FOR t0 IN path_maybe_uninitialized_on_exit
+     IF (NOT ISEMPTY(path_maybe_uninitialized_on_exit))
+      FOR t1 IN cfg_edge
+       IF (NOT ISEMPTY(cfg_edge))
+        IF (t0.1 = t1.0)
+         INSERT (t0.0, t1.1) INTO move_error
+   END QUERY
+  END DEBUG
+  IO move_error (IO="stdoutprintsize",attributeNames="x\ty",auxArity="0",name="move_error",operation="printsize",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+  CLEAR path_maybe_uninitialized_on_exit
+ END SUBROUTINE
+ SUBROUTINE origin_contains_loan_on_entry
+  DEBUG "origin_contains_loan_on_entry(origin,loan,point) :- \n   loan_issued_at(loan,origin,point).\nin file polonius.dl [90:1-91:41]"
+   QUERY
+    FOR t0 IN loan_issued_at
+     IF (NOT ISEMPTY(loan_issued_at))
+      INSERT (t0.1, t0.0, t0.2) INTO origin_contains_loan_on_entry
+   END QUERY
+  END DEBUG
+  QUERY
+   FOR t0 IN origin_contains_loan_on_entry
+    INSERT (t0.0, t0.1, t0.2) INTO @delta_origin_contains_loan_on_entry
+  END QUERY
+  LOOP
+   DEBUG "origin_contains_loan_on_entry(origin2,loan,point) :- \n   origin_contains_loan_on_entry(origin1,loan,point),\n   subset(origin1,origin2,point).\nin file polonius.dl [106:1-108:37]"
+    QUERY
+     FOR t0 IN @delta_origin_contains_loan_on_entry
+      IF (NOT ISEMPTY(@delta_origin_contains_loan_on_entry))
+       FOR t1 IN subset
+        IF (NOT ISEMPTY(subset))
+         IF (t0.2 = t1.2)
+          IF (t0.0 = t1.0)
+           IF (NOT (t1.1,t0.1,t0.2) IN origin_contains_loan_on_entry)
+            INSERT (t1.1, t0.1, t0.2) INTO @new_origin_contains_loan_on_entry
+    END QUERY
+   END DEBUG
+   DEBUG "origin_contains_loan_on_entry(origin,loan,point2) :- \n   origin_contains_loan_on_entry(origin,loan,point1),\n   cfg_edge(point1,point2),\n   !loan_killed_at(loan,point1),\n   origin_live_on_entry(origin,point2).\nin file polonius.dl [109:1-113:42]"
+    QUERY
+     FOR t0 IN @delta_origin_contains_loan_on_entry
+      IF (NOT ISEMPTY(@delta_origin_contains_loan_on_entry))
+       FOR t1 IN cfg_edge
+        IF (NOT ISEMPTY(cfg_edge))
+         FOR t2 IN origin_live_on_entry
+          IF (NOT ISEMPTY(origin_live_on_entry))
+           IF (t1.1 = t2.1)
+            IF (t0.2 = t1.0)
+             IF (t0.0 = t2.0)
+              IF (NOT (t0.0,t0.1,t1.1) IN origin_contains_loan_on_entry)
+               IF (NOT (t0.1,t0.2) IN loan_killed_at)
+                INSERT (t0.0, t0.1, t1.1) INTO @new_origin_contains_loan_on_entry
+    END QUERY
+   END DEBUG
+   EXIT ISEMPTY(@new_origin_contains_loan_on_entry)
+   QUERY
+    FOR t0 IN @new_origin_contains_loan_on_entry
+     INSERT (t0.0, t0.1, t0.2) INTO origin_contains_loan_on_entry
+   END QUERY
+   SWAP (@delta_origin_contains_loan_on_entry, @new_origin_contains_loan_on_entry)
+   CLEAR @new_origin_contains_loan_on_entry
+  END LOOP
+  CLEAR @delta_origin_contains_loan_on_entry
+  CLEAR @new_origin_contains_loan_on_entry
+  IO origin_contains_loan_on_entry (IO="stdoutprintsize",attributeNames="x\ty\tz",auxArity="0",name="origin_contains_loan_on_entry",operation="printsize",params="{\"records\": {}, \"relation\": {\"arity\": 3, \"params\": [\"x\", \"y\", \"z\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 3, \"types\": [\"i:number\", \"i:number\", \"i:number\"]}}")
+  CLEAR cfg_edge
+  CLEAR loan_issued_at
+  CLEAR loan_killed_at
+ END SUBROUTINE
+ SUBROUTINE origin_live_on_entry
+  DEBUG "origin_live_on_entry(origin,point) :- \n   cfg_node(point),\n   universal_region(origin).\nin file polonius.dl [128:1-130:30]"
+   QUERY
+    FOR t0 IN cfg_node
+     IF (NOT ISEMPTY(cfg_node))
+      FOR t1 IN universal_region
+       IF (NOT ISEMPTY(universal_region))
+        INSERT (t1.0, t0.0) INTO origin_live_on_entry
+   END QUERY
+  END DEBUG
+  DEBUG "origin_live_on_entry(origin,point) :- \n   var_drop_live_on_entry(var,point),\n   drop_of_var_derefs_origin(var,origin).\nin file polonius.dl [144:1-146:44]"
+   QUERY
+    FOR t0 IN var_drop_live_on_entry
+     IF (NOT ISEMPTY(var_drop_live_on_entry))
+      FOR t1 IN drop_of_var_derefs_origin
+       IF (NOT ISEMPTY(drop_of_var_derefs_origin))
+        IF (t0.0 = t1.0)
+         INSERT (t1.1, t0.1) INTO origin_live_on_entry
+   END QUERY
+  END DEBUG
+  DEBUG "origin_live_on_entry(origin,point) :- \n   var_live_on_entry(var,point),\n   use_of_var_derefs_origin(var,origin).\nin file polonius.dl [147:1-149:43]"
+   QUERY
+    FOR t0 IN var_live_on_entry
+     IF (NOT ISEMPTY(var_live_on_entry))
+      FOR t1 IN use_of_var_derefs_origin
+       IF (NOT ISEMPTY(use_of_var_derefs_origin))
+        IF (t0.0 = t1.0)
+         INSERT (t1.1, t0.1) INTO origin_live_on_entry
+   END QUERY
+  END DEBUG
+  IO origin_live_on_entry (IO="stdoutprintsize",attributeNames="x\ty",auxArity="0",name="origin_live_on_entry",operation="printsize",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+  CLEAR cfg_node
+  CLEAR drop_of_var_derefs_origin
+  CLEAR universal_region
+  CLEAR use_of_var_derefs_origin
+  CLEAR var_drop_live_on_entry
+  CLEAR var_live_on_entry
+ END SUBROUTINE
+ SUBROUTINE path_accessed_at
+  DEBUG "path_accessed_at(x,y) :- \n   path_accessed_at_base(x,y).\nin file polonius.dl [165:1-165:55]"
+   QUERY
+    FOR t0 IN path_accessed_at_base
+     IF (NOT ISEMPTY(path_accessed_at_base))
+      INSERT (t0.0, t0.1) INTO path_accessed_at
+   END QUERY
+  END DEBUG
+  QUERY
+   FOR t0 IN path_accessed_at
+    INSERT (t0.0, t0.1) INTO @delta_path_accessed_at
+  END QUERY
+  LOOP
+   DEBUG "path_accessed_at(Child,point) :- \n   path_accessed_at(Parent,point),\n   ancestor_path(Parent,Child).\nin file polonius.dl [176:1-178:34]"
+    QUERY
+     FOR t0 IN @delta_path_accessed_at
+      IF (NOT ISEMPTY(@delta_path_accessed_at))
+       FOR t1 IN ancestor_path
+        IF (NOT ISEMPTY(ancestor_path))
+         IF (t0.0 = t1.0)
+          IF (NOT (t1.1,t0.1) IN path_accessed_at)
+           INSERT (t1.1, t0.1) INTO @new_path_accessed_at
+    END QUERY
+   END DEBUG
+   EXIT ISEMPTY(@new_path_accessed_at)
+   QUERY
+    FOR t0 IN @new_path_accessed_at
+     INSERT (t0.0, t0.1) INTO path_accessed_at
+   END QUERY
+   SWAP (@delta_path_accessed_at, @new_path_accessed_at)
+   CLEAR @new_path_accessed_at
+  END LOOP
+  CLEAR @delta_path_accessed_at
+  CLEAR @new_path_accessed_at
+  IO path_accessed_at (IO="stdoutprintsize",attributeNames="x\ty",auxArity="0",name="path_accessed_at",operation="printsize",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+  CLEAR ancestor_path
+  CLEAR path_accessed_at
+  CLEAR path_accessed_at_base
+ END SUBROUTINE
+ SUBROUTINE path_accessed_at_base
+  IO path_accessed_at_base (IO="file",attributeNames="x\ty",auxArity="0",fact-dir=".",name="path_accessed_at_base",operation="input",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+ END SUBROUTINE
+ SUBROUTINE path_assigned_at
+  DEBUG "path_assigned_at(x,y) :- \n   path_assigned_at_base(x,y).\nin file polonius.dl [164:1-164:55]"
+   QUERY
+    FOR t0 IN path_assigned_at_base
+     IF (NOT ISEMPTY(path_assigned_at_base))
+      INSERT (t0.0, t0.1) INTO path_assigned_at
+   END QUERY
+  END DEBUG
+  QUERY
+   FOR t0 IN path_assigned_at
+    INSERT (t0.0, t0.1) INTO @delta_path_assigned_at
+  END QUERY
+  LOOP
+   DEBUG "path_assigned_at(Child,point) :- \n   path_assigned_at(Parent,point),\n   ancestor_path(Parent,Child).\nin file polonius.dl [173:1-175:34]"
+    QUERY
+     FOR t0 IN @delta_path_assigned_at
+      IF (NOT ISEMPTY(@delta_path_assigned_at))
+       FOR t1 IN ancestor_path
+        IF (NOT ISEMPTY(ancestor_path))
+         IF (t0.0 = t1.0)
+          IF (NOT (t1.1,t0.1) IN path_assigned_at)
+           INSERT (t1.1, t0.1) INTO @new_path_assigned_at
+    END QUERY
+   END DEBUG
+   EXIT ISEMPTY(@new_path_assigned_at)
+   QUERY
+    FOR t0 IN @new_path_assigned_at
+     INSERT (t0.0, t0.1) INTO path_assigned_at
+   END QUERY
+   SWAP (@delta_path_assigned_at, @new_path_assigned_at)
+   CLEAR @new_path_assigned_at
+  END LOOP
+  CLEAR @delta_path_assigned_at
+  CLEAR @new_path_assigned_at
+  IO path_assigned_at (IO="stdoutprintsize",attributeNames="x\ty",auxArity="0",name="path_assigned_at",operation="printsize",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+  CLEAR path_assigned_at_base
+ END SUBROUTINE
+ SUBROUTINE path_assigned_at_base
+  IO path_assigned_at_base (IO="file",attributeNames="x\ty",auxArity="0",fact-dir=".",name="path_assigned_at_base",operation="input",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+ END SUBROUTINE
+ SUBROUTINE path_begins_with_var
+  DEBUG "path_begins_with_var(x,var) :- \n   path_is_var(x,var).\nin file polonius.dl [166:1-166:53]"
+   QUERY
+    FOR t0 IN path_is_var
+     IF (NOT ISEMPTY(path_is_var))
+      INSERT (t0.0, t0.1) INTO path_begins_with_var
+   END QUERY
+  END DEBUG
+  QUERY
+   FOR t0 IN path_begins_with_var
+    INSERT (t0.0, t0.1) INTO @delta_path_begins_with_var
+  END QUERY
+  LOOP
+   DEBUG "path_begins_with_var(Child,Var) :- \n   path_begins_with_var(Parent,Var),\n   ancestor_path(Parent,Child).\nin file polonius.dl [179:1-181:34]"
+    QUERY
+     FOR t0 IN @delta_path_begins_with_var
+      IF (NOT ISEMPTY(@delta_path_begins_with_var))
+       FOR t1 IN ancestor_path
+        IF (NOT ISEMPTY(ancestor_path))
+         IF (t0.0 = t1.0)
+          IF (NOT (t1.1,t0.1) IN path_begins_with_var)
+           INSERT (t1.1, t0.1) INTO @new_path_begins_with_var
+    END QUERY
+   END DEBUG
+   EXIT ISEMPTY(@new_path_begins_with_var)
+   QUERY
+    FOR t0 IN @new_path_begins_with_var
+     INSERT (t0.0, t0.1) INTO path_begins_with_var
+   END QUERY
+   SWAP (@delta_path_begins_with_var, @new_path_begins_with_var)
+   CLEAR @new_path_begins_with_var
+  END LOOP
+  CLEAR @delta_path_begins_with_var
+  CLEAR @new_path_begins_with_var
+  IO path_begins_with_var (IO="stdoutprintsize",attributeNames="x\ty",auxArity="0",name="path_begins_with_var",operation="printsize",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+  CLEAR path_is_var
+ END SUBROUTINE
+ SUBROUTINE path_is_var
+  IO path_is_var (IO="file",attributeNames="x\ty",auxArity="0",fact-dir=".",name="path_is_var",operation="input",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+ END SUBROUTINE
+ SUBROUTINE path_maybe_initialized_on_exit
+  DEBUG "path_maybe_initialized_on_exit(path,point) :- \n   path_assigned_at(path,point).\nin file polonius.dl [183:1-184:35]"
+   QUERY
+    FOR t0 IN path_assigned_at
+     IF (NOT ISEMPTY(path_assigned_at))
+      INSERT (t0.0, t0.1) INTO path_maybe_initialized_on_exit
+   END QUERY
+  END DEBUG
+  QUERY
+   FOR t0 IN path_maybe_initialized_on_exit
+    INSERT (t0.0, t0.1) INTO @delta_path_maybe_initialized_on_exit
+  END QUERY
+  LOOP
+   DEBUG "path_maybe_initialized_on_exit(path,point2) :- \n   path_maybe_initialized_on_exit(path,point1),\n   cfg_edge(point1,point2),\n   !path_moved_at(path,point2).\nin file polonius.dl [187:1-190:34]"
+    QUERY
+     FOR t0 IN @delta_path_maybe_initialized_on_exit
+      IF (NOT ISEMPTY(@delta_path_maybe_initialized_on_exit))
+       FOR t1 IN cfg_edge
+        IF (NOT ISEMPTY(cfg_edge))
+         IF (t0.1 = t1.0)
+          IF (NOT (t0.0,t1.1) IN path_maybe_initialized_on_exit)
+           IF (NOT (t0.0,t1.1) IN path_moved_at)
+            INSERT (t0.0, t1.1) INTO @new_path_maybe_initialized_on_exit
+    END QUERY
+   END DEBUG
+   EXIT ISEMPTY(@new_path_maybe_initialized_on_exit)
+   QUERY
+    FOR t0 IN @new_path_maybe_initialized_on_exit
+     INSERT (t0.0, t0.1) INTO path_maybe_initialized_on_exit
+   END QUERY
+   SWAP (@delta_path_maybe_initialized_on_exit, @new_path_maybe_initialized_on_exit)
+   CLEAR @new_path_maybe_initialized_on_exit
+  END LOOP
+  CLEAR @delta_path_maybe_initialized_on_exit
+  CLEAR @new_path_maybe_initialized_on_exit
+  IO path_maybe_initialized_on_exit (IO="stdoutprintsize",attributeNames="x\ty",auxArity="0",name="path_maybe_initialized_on_exit",operation="printsize",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+ END SUBROUTINE
+ SUBROUTINE path_maybe_uninitialized_on_exit
+  DEBUG "path_maybe_uninitialized_on_exit(path,point) :- \n   path_moved_at(path,point).\nin file polonius.dl [185:1-186:32]"
+   QUERY
+    FOR t0 IN path_moved_at
+     IF (NOT ISEMPTY(path_moved_at))
+      INSERT (t0.0, t0.1) INTO path_maybe_uninitialized_on_exit
+   END QUERY
+  END DEBUG
+  QUERY
+   FOR t0 IN path_maybe_uninitialized_on_exit
+    INSERT (t0.0, t0.1) INTO @delta_path_maybe_uninitialized_on_exit
+  END QUERY
+  LOOP
+   DEBUG "path_maybe_uninitialized_on_exit(path,point2) :- \n   path_maybe_uninitialized_on_exit(path,point1),\n   cfg_edge(point1,point2),\n   !path_assigned_at(path,point2).\nin file polonius.dl [191:1-194:37]"
+    QUERY
+     FOR t0 IN @delta_path_maybe_uninitialized_on_exit
+      IF (NOT ISEMPTY(@delta_path_maybe_uninitialized_on_exit))
+       FOR t1 IN cfg_edge
+        IF (NOT ISEMPTY(cfg_edge))
+         IF (t0.1 = t1.0)
+          IF (NOT (t0.0,t1.1) IN path_maybe_uninitialized_on_exit)
+           IF (NOT (t0.0,t1.1) IN path_assigned_at)
+            INSERT (t0.0, t1.1) INTO @new_path_maybe_uninitialized_on_exit
+    END QUERY
+   END DEBUG
+   EXIT ISEMPTY(@new_path_maybe_uninitialized_on_exit)
+   QUERY
+    FOR t0 IN @new_path_maybe_uninitialized_on_exit
+     INSERT (t0.0, t0.1) INTO path_maybe_uninitialized_on_exit
+   END QUERY
+   SWAP (@delta_path_maybe_uninitialized_on_exit, @new_path_maybe_uninitialized_on_exit)
+   CLEAR @new_path_maybe_uninitialized_on_exit
+  END LOOP
+  CLEAR @delta_path_maybe_uninitialized_on_exit
+  CLEAR @new_path_maybe_uninitialized_on_exit
+  IO path_maybe_uninitialized_on_exit (IO="stdoutprintsize",attributeNames="x\ty",auxArity="0",name="path_maybe_uninitialized_on_exit",operation="printsize",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+  CLEAR path_assigned_at
+  CLEAR path_moved_at
+ END SUBROUTINE
+ SUBROUTINE path_moved_at
+  DEBUG "path_moved_at(x,y) :- \n   path_moved_at_base(x,y).\nin file polonius.dl [163:1-163:49]"
+   QUERY
+    FOR t0 IN path_moved_at_base
+     IF (NOT ISEMPTY(path_moved_at_base))
+      INSERT (t0.0, t0.1) INTO path_moved_at
+   END QUERY
+  END DEBUG
+  QUERY
+   FOR t0 IN path_moved_at
+    INSERT (t0.0, t0.1) INTO @delta_path_moved_at
+  END QUERY
+  LOOP
+   DEBUG "path_moved_at(Child,Point) :- \n   path_moved_at(Parent,Point),\n   ancestor_path(Parent,Child).\nin file polonius.dl [170:1-172:34]"
+    QUERY
+     FOR t0 IN @delta_path_moved_at
+      IF (NOT ISEMPTY(@delta_path_moved_at))
+       FOR t1 IN ancestor_path
+        IF (NOT ISEMPTY(ancestor_path))
+         IF (t0.0 = t1.0)
+          IF (NOT (t1.1,t0.1) IN path_moved_at)
+           INSERT (t1.1, t0.1) INTO @new_path_moved_at
+    END QUERY
+   END DEBUG
+   EXIT ISEMPTY(@new_path_moved_at)
+   QUERY
+    FOR t0 IN @new_path_moved_at
+     INSERT (t0.0, t0.1) INTO path_moved_at
+   END QUERY
+   SWAP (@delta_path_moved_at, @new_path_moved_at)
+   CLEAR @new_path_moved_at
+  END LOOP
+  CLEAR @delta_path_moved_at
+  CLEAR @new_path_moved_at
+  IO path_moved_at (IO="stdoutprintsize",attributeNames="x\ty",auxArity="0",name="path_moved_at",operation="printsize",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+  CLEAR path_moved_at_base
+ END SUBROUTINE
+ SUBROUTINE path_moved_at_base
+  IO path_moved_at_base (IO="file",attributeNames="x\ty",auxArity="0",fact-dir=".",name="path_moved_at_base",operation="input",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+ END SUBROUTINE
+ SUBROUTINE placeholder_origin
+  DEBUG "placeholder_origin(origin) :- \n   universal_region(origin).\nin file polonius.dl [92:1-93:30]"
+   QUERY
+    FOR t0 IN universal_region
+     IF (NOT ISEMPTY(universal_region))
+      INSERT (t0.0) INTO placeholder_origin
+   END QUERY
+  END DEBUG
+  IO placeholder_origin (IO="stdoutprintsize",attributeNames="x",auxArity="0",name="placeholder_origin",operation="printsize",params="{\"records\": {}, \"relation\": {\"arity\": 1, \"params\": [\"x\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 1, \"types\": [\"i:number\"]}}")
+ END SUBROUTINE
+ SUBROUTINE subset
+  DEBUG "subset(origin1,origin2,point) :- \n   subset_base(origin1,origin2,point).\nin file polonius.dl [88:1-89:42]"
+   QUERY
+    FOR t0 IN subset_base
+     IF (NOT ISEMPTY(subset_base))
+      INSERT (t0.0, t0.1, t0.2) INTO subset
+   END QUERY
+  END DEBUG
+  QUERY
+   FOR t0 IN subset
+    INSERT (t0.0, t0.1, t0.2) INTO @delta_subset
+  END QUERY
+  LOOP
+   DEBUG "subset(origin1,origin3,point) :- \n   subset(origin1,origin2,point),\n   subset_base(origin2,origin3,point),\n   origin1 != origin3.\nin file polonius.dl [97:1-100:24]"
+    QUERY
+     FOR t0 IN @delta_subset
+      IF (NOT ISEMPTY(@delta_subset))
+       FOR t1 IN subset_base
+        IF (NOT ISEMPTY(subset_base))
+         IF (t0.2 = t1.2)
+          IF (t0.1 = t1.0)
+           IF (NOT (t0.0,t1.1,t0.2) IN subset)
+            IF (t0.0 != t1.1)
+             INSERT (t0.0, t1.1, t0.2) INTO @new_subset
+    END QUERY
+   END DEBUG
+   DEBUG "subset(origin1,origin2,point2) :- \n   subset(origin1,origin2,point1),\n   cfg_edge(point1,point2),\n   origin_live_on_entry(origin1,point2),\n   origin_live_on_entry(origin2,point2).\nin file polonius.dl [101:1-105:43]"
+    QUERY
+     FOR t0 IN @delta_subset
+      IF (NOT ISEMPTY(@delta_subset))
+       FOR t1 IN cfg_edge
+        IF (NOT ISEMPTY(cfg_edge))
+         FOR t2 IN origin_live_on_entry
+          IF (NOT ISEMPTY(origin_live_on_entry))
+           FOR t3 IN origin_live_on_entry
+            IF (NOT ISEMPTY(origin_live_on_entry))
+             IF (t1.1 = t3.1)
+              IF (t1.1 = t2.1)
+               IF (t0.2 = t1.0)
+                IF (t0.1 = t3.0)
+                 IF (t0.0 = t2.0)
+                  IF (NOT (t0.0,t0.1,t1.1) IN subset)
+                   INSERT (t0.0, t0.1, t1.1) INTO @new_subset
+    END QUERY
+   END DEBUG
+   EXIT ISEMPTY(@new_subset)
+   QUERY
+    FOR t0 IN @new_subset
+     INSERT (t0.0, t0.1, t0.2) INTO subset
+   END QUERY
+   SWAP (@delta_subset, @new_subset)
+   CLEAR @new_subset
+  END LOOP
+  CLEAR @delta_subset
+  CLEAR @new_subset
+  CLEAR subset_base
+ END SUBROUTINE
+ SUBROUTINE subset_base
+  IO subset_base (IO="file",attributeNames="x\ty\tz",auxArity="0",fact-dir=".",name="subset_base",operation="input",params="{\"records\": {}, \"relation\": {\"arity\": 3, \"params\": [\"x\", \"y\", \"z\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 3, \"types\": [\"i:number\", \"i:number\", \"i:number\"]}}")
+  IO subset_base (IO="stdoutprintsize",attributeNames="x\ty\tz",auxArity="0",name="subset_base",operation="printsize",params="{\"records\": {}, \"relation\": {\"arity\": 3, \"params\": [\"x\", \"y\", \"z\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 3, \"types\": [\"i:number\", \"i:number\", \"i:number\"]}}")
+ END SUBROUTINE
+ SUBROUTINE subset_error
+  DEBUG "subset_error(origin1,origin2,point) :- \n   subset(origin1,origin2,point),\n   placeholder_origin(origin1),\n   placeholder_origin(origin2),\n   !known_placeholder_subset(origin1,origin2),\n   origin1 != origin2.\nin file polonius.dl [120:1-125:24]"
+   QUERY
+    FOR t0 IN subset
+     IF (NOT ISEMPTY(subset))
+      FOR t1 IN placeholder_origin
+       IF (NOT ISEMPTY(placeholder_origin))
+        FOR t2 IN placeholder_origin
+         IF (NOT ISEMPTY(placeholder_origin))
+          IF (t0.1 = t2.0)
+           IF (t0.0 = t1.0)
+            IF (t0.0 != t0.1)
+             IF (NOT (t0.0,t0.1) IN known_placeholder_subset)
+              INSERT (t0.0, t0.1, t0.2) INTO subset_error
+   END QUERY
+  END DEBUG
+  IO subset_error (IO="stdoutprintsize",attributeNames="x\ty\tz",auxArity="0",name="subset_error",operation="printsize",params="{\"records\": {}, \"relation\": {\"arity\": 3, \"params\": [\"x\", \"y\", \"z\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 3, \"types\": [\"i:number\", \"i:number\", \"i:number\"]}}")
+  CLEAR known_placeholder_subset
+  CLEAR placeholder_origin
+  CLEAR subset
+ END SUBROUTINE
+ SUBROUTINE universal_region
+  IO universal_region (IO="file",attributeNames="x",auxArity="0",fact-dir=".",name="universal_region",operation="input",params="{\"records\": {}, \"relation\": {\"arity\": 1, \"params\": [\"x\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 1, \"types\": [\"i:number\"]}}")
+ END SUBROUTINE
+ SUBROUTINE use_of_var_derefs_origin
+  IO use_of_var_derefs_origin (IO="file",attributeNames="x\ty",auxArity="0",fact-dir=".",name="use_of_var_derefs_origin",operation="input",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+ END SUBROUTINE
+ SUBROUTINE var_defined_at
+  IO var_defined_at (IO="file",attributeNames="x\ty",auxArity="0",fact-dir=".",name="var_defined_at",operation="input",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+ END SUBROUTINE
+ SUBROUTINE var_drop_live_on_entry
+  DEBUG "var_drop_live_on_entry(var,point) :- \n   var_dropped_at(var,point),\n   var_maybe_partly_initialized_on_entry(var,point).\nin file polonius.dl [141:1-143:55]"
+   QUERY
+    FOR t0 IN var_dropped_at
+     IF (NOT ISEMPTY(var_dropped_at))
+      FOR t1 IN var_maybe_partly_initialized_on_entry
+       IF (NOT ISEMPTY(var_maybe_partly_initialized_on_entry))
+        IF (t0.0 = t1.0)
+         IF (t0.1 = t1.1)
+          INSERT (t0.0, t0.1) INTO var_drop_live_on_entry
+   END QUERY
+  END DEBUG
+  QUERY
+   FOR t0 IN var_drop_live_on_entry
+    INSERT (t0.0, t0.1) INTO @delta_var_drop_live_on_entry
+  END QUERY
+  LOOP
+   DEBUG "var_drop_live_on_entry(Var,SourceNode) :- \n   var_drop_live_on_entry(Var,TargetNode),\n   cfg_edge(SourceNode,TargetNode),\n   !var_defined_at(Var,SourceNode),\n   var_maybe_partly_initialized_on_exit(Var,SourceNode).\nin file polonius.dl [154:1-158:59]"
+    QUERY
+     FOR t0 IN @delta_var_drop_live_on_entry
+      IF (NOT ISEMPTY(@delta_var_drop_live_on_entry))
+       FOR t1 IN cfg_edge
+        IF (NOT ISEMPTY(cfg_edge))
+         FOR t2 IN var_maybe_partly_initialized_on_exit
+          IF (NOT ISEMPTY(var_maybe_partly_initialized_on_exit))
+           IF (t0.0 = t2.0)
+            IF (t0.1 = t1.1)
+             IF (t1.0 = t2.1)
+              IF (NOT (t0.0,t1.0) IN var_drop_live_on_entry)
+               IF (NOT (t0.0,t1.0) IN var_defined_at)
+                INSERT (t0.0, t1.0) INTO @new_var_drop_live_on_entry
+    END QUERY
+   END DEBUG
+   EXIT ISEMPTY(@new_var_drop_live_on_entry)
+   QUERY
+    FOR t0 IN @new_var_drop_live_on_entry
+     INSERT (t0.0, t0.1) INTO var_drop_live_on_entry
+   END QUERY
+   SWAP (@delta_var_drop_live_on_entry, @new_var_drop_live_on_entry)
+   CLEAR @new_var_drop_live_on_entry
+  END LOOP
+  CLEAR @delta_var_drop_live_on_entry
+  CLEAR @new_var_drop_live_on_entry
+  IO var_drop_live_on_entry (IO="stdoutprintsize",attributeNames="x\ty",auxArity="0",name="var_drop_live_on_entry",operation="printsize",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+  CLEAR var_dropped_at
+  CLEAR var_maybe_partly_initialized_on_entry
+  CLEAR var_maybe_partly_initialized_on_exit
+ END SUBROUTINE
+ SUBROUTINE var_dropped_at
+  IO var_dropped_at (IO="file",attributeNames="x\ty",auxArity="0",fact-dir=".",name="var_dropped_at",operation="input",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+ END SUBROUTINE
+ SUBROUTINE var_live_on_entry
+  DEBUG "var_live_on_entry(var,point) :- \n   var_used_at(var,point).\nin file polonius.dl [137:1-137:58]"
+   QUERY
+    FOR t0 IN var_used_at
+     IF (NOT ISEMPTY(var_used_at))
+      INSERT (t0.0, t0.1) INTO var_live_on_entry
+   END QUERY
+  END DEBUG
+  QUERY
+   FOR t0 IN var_live_on_entry
+    INSERT (t0.0, t0.1) INTO @delta_var_live_on_entry
+  END QUERY
+  LOOP
+   DEBUG "var_live_on_entry(var,point1) :- \n   var_live_on_entry(var,point2),\n   cfg_edge(point1,point2),\n   !var_defined_at(var,point1).\nin file polonius.dl [150:1-153:34]"
+    QUERY
+     FOR t0 IN @delta_var_live_on_entry
+      IF (NOT ISEMPTY(@delta_var_live_on_entry))
+       FOR t1 IN cfg_edge
+        IF (NOT ISEMPTY(cfg_edge))
+         IF (t0.1 = t1.1)
+          IF (NOT (t0.0,t1.0) IN var_live_on_entry)
+           IF (NOT (t0.0,t1.0) IN var_defined_at)
+            INSERT (t0.0, t1.0) INTO @new_var_live_on_entry
+    END QUERY
+   END DEBUG
+   EXIT ISEMPTY(@new_var_live_on_entry)
+   QUERY
+    FOR t0 IN @new_var_live_on_entry
+     INSERT (t0.0, t0.1) INTO var_live_on_entry
+   END QUERY
+   SWAP (@delta_var_live_on_entry, @new_var_live_on_entry)
+   CLEAR @new_var_live_on_entry
+  END LOOP
+  CLEAR @delta_var_live_on_entry
+  CLEAR @new_var_live_on_entry
+  IO var_live_on_entry (IO="stdoutprintsize",attributeNames="x\ty",auxArity="0",name="var_live_on_entry",operation="printsize",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+  CLEAR var_defined_at
+  CLEAR var_used_at
+ END SUBROUTINE
+ SUBROUTINE var_maybe_partly_initialized_on_entry
+  DEBUG "var_maybe_partly_initialized_on_entry(var,point2) :- \n   var_maybe_partly_initialized_on_exit(var,point1),\n   cfg_edge(point1,point2).\nin file polonius.dl [138:1-140:30]"
+   QUERY
+    FOR t0 IN var_maybe_partly_initialized_on_exit
+     IF (NOT ISEMPTY(var_maybe_partly_initialized_on_exit))
+      FOR t1 IN cfg_edge
+       IF (NOT ISEMPTY(cfg_edge))
+        IF (t0.1 = t1.0)
+         INSERT (t0.0, t1.1) INTO var_maybe_partly_initialized_on_entry
+   END QUERY
+  END DEBUG
+  IO var_maybe_partly_initialized_on_entry (IO="stdoutprintsize",attributeNames="x\ty",auxArity="0",name="var_maybe_partly_initialized_on_entry",operation="printsize",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+ END SUBROUTINE
+ SUBROUTINE var_maybe_partly_initialized_on_exit
+  DEBUG "var_maybe_partly_initialized_on_exit(var,point) :- \n   path_maybe_initialized_on_exit(path,point),\n   path_begins_with_var(path,var).\nin file polonius.dl [195:1-197:37]"
+   QUERY
+    FOR t0 IN path_maybe_initialized_on_exit
+     IF (NOT ISEMPTY(path_maybe_initialized_on_exit))
+      FOR t1 IN path_begins_with_var
+       IF (NOT ISEMPTY(path_begins_with_var))
+        IF (t0.0 = t1.0)
+         INSERT (t1.1, t0.1) INTO var_maybe_partly_initialized_on_exit
+   END QUERY
+  END DEBUG
+  IO var_maybe_partly_initialized_on_exit (IO="stdoutprintsize",attributeNames="x\ty",auxArity="0",name="var_maybe_partly_initialized_on_exit",operation="printsize",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+  CLEAR path_begins_with_var
+  CLEAR path_maybe_initialized_on_exit
+ END SUBROUTINE
+ SUBROUTINE var_used_at
+  IO var_used_at (IO="file",attributeNames="x\ty",auxArity="0",fact-dir=".",name="var_used_at",operation="input",params="{\"records\": {}, \"relation\": {\"arity\": 2, \"params\": [\"x\", \"y\"]}}",types="{\"ADTs\": {}, \"records\": {}, \"relation\": {\"arity\": 2, \"types\": [\"i:number\", \"i:number\"]}}")
+ END SUBROUTINE
+ BEGIN MAIN
+  CALL stratum_child_path
+  CALL stratum_ancestor_path
+  CALL stratum_cfg_edge
+  CALL stratum_cfg_node
+  CALL stratum_drop_of_var_derefs_origin
+  CALL stratum_loan_invalidated_at
+  CALL stratum_loan_issued_at
+  CALL stratum_loan_killed_at
+  CALL stratum_universal_region
+  CALL stratum_placeholder_origin
+  CALL stratum_use_of_var_derefs_origin
+  CALL stratum_var_defined_at
+  CALL stratum_var_dropped_at
+  CALL stratum_path_is_var
+  CALL stratum_path_begins_with_var
+  CALL stratum_path_assigned_at_base
+  CALL stratum_path_assigned_at
+  CALL stratum_path_moved_at_base
+  CALL stratum_path_moved_at
+  CALL stratum_path_maybe_initialized_on_exit
+  CALL stratum_var_maybe_partly_initialized_on_exit
+  CALL stratum_var_maybe_partly_initialized_on_entry
+  CALL stratum_var_drop_live_on_entry
+  CALL stratum_path_maybe_uninitialized_on_exit
+  CALL stratum_move_error
+  CALL stratum_var_used_at
+  CALL stratum_var_live_on_entry
+  CALL stratum_origin_live_on_entry
+  CALL stratum_subset_base
+  CALL stratum_subset
+  CALL stratum_origin_contains_loan_on_entry
+  CALL stratum_loan_live_at
+  CALL stratum_errors
+  CALL stratum_known_placeholder_subset
+  CALL stratum_subset_error
+  CALL stratum_path_accessed_at_base
+  CALL stratum_path_accessed_at
+ END MAIN
+END PROGRAM

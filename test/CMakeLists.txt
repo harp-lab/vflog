@@ -76,3 +76,16 @@ target_compile_options(CSPA_TEST PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:
     --default-stream per-thread
     --expt-extended-lambda>)
 add_test(NAME CSPA_TEST COMMAND CSPA_TEST)
+
+# polonius test
+add_executable(POLONIUS_TEST src/polonius.cu)
+target_include_directories(POLONIUS_TEST PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(POLONIUS_TEST PRIVATE gpu_ra)
+target_compile_features(POLONIUS_TEST PRIVATE cxx_std_17)
+set_target_properties(POLONIUS_TEST PROPERTIES CUDA_SEPARABLE_COMPILATION ON CUDA_ARCHITECTURES "80")
+target_compile_options(POLONIUS_TEST PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:
+    -lineinfo
+    --expt-relaxed-constexpr
+    --default-stream per-thread
+    --expt-extended-lambda>)
+add_test(NAME POLONIUS_TEST COMMAND POLONIUS_TEST)

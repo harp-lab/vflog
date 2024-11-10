@@ -160,30 +160,6 @@ void DiffOperator::execute(RelationalAlgebraMachine &ram) {
     }
 }
 
-void NegateOperator::execute(RelationalAlgebraMachine &ram) {
-    auto inner_rel_p = ram.rels[inner.rel];
-    if (inner.is_frozen()) {
-        inner_rel_p = ram.get_frozen(inner.rel, inner.frozen_idx);
-        if (inner_rel_p == nullptr) {
-            return;
-        }
-    }
-    if (ram.overflow_rel_name == outer.rel && outer.version == NEWT) {
-        column_negate(*inner_rel_p, inner.version, inner.idx, *ram.overflow_rel,
-                      outer.version, outer.idx, ram.cached_indices, meta_var,
-                      pop_outer);
-    } else {
-        column_negate(*inner_rel_p, inner.version, inner.idx,
-                      *ram.rels[outer.rel], outer.version, outer.idx,
-                      ram.cached_indices, meta_var, pop_outer);
-    }
-}
-
-std::string NegateOperator::to_string() {
-    return "negate_op(" + inner.to_string() + ", " + outer.to_string() +
-           ", \"" + meta_var + "\")";
-}
-
 void Declaration::execute(RelationalAlgebraMachine &ram) {
     if (data_path == nullptr) {
         ram.create_rel(name, arity);
@@ -250,6 +226,9 @@ void Index::execute(RelationalAlgebraMachine &ram) {
     } else {
         rel_p->add_clustered_index(columns);
     }
+    if (build_immediately) {
+        rel_p->build_cluster_index();
+    }
 }
 
 std::string Index::to_string() {
@@ -292,6 +271,41 @@ std::string LoadFile::to_string() {
     }
     return "load_file(\"" + std::string(file_path) + "\", " + rel.to_string() +
            ")";
+}
+
+void HashDigest::execute(RelationalAlgebraMachine &ram) {
+    // size is the first element in the meta_vars
+    auto total_size = ram.cached_indices[meta_vars[0]]->size();
+    auto res_reg_ptr = ram.get_register(result_register);
+    res_reg_ptr->resize(total_size);
+    thrust::fill(EXE_POLICY, res_reg_ptr->begin(), res_reg_ptr->end(), 0);
+    for (int i = 0; i < meta_vars.size(); i++) {
+        auto idx_ptr = ram.cached_indices[meta_vars[i]];
+        auto col_info = columns[i];
+        auto raw_data_ptr = ram.get_rel(col_info.rel)->get_raw_data_ptrs(
+            col_info.version, col_info.idx);
+        thrust::transform(
+            EXE_POLICY,
+            thrust::make_permutation_iterator(
+                raw_data_ptr, idx_ptr->begin()),
+            thrust::make_permutation_iterator(
+                raw_data_ptr, idx_ptr->end()),
+            res_reg_ptr->begin(),
+            res_reg_ptr->begin(),
+            [] LAMBDA_TAG(auto &data, auto &hash) {
+                return combine_hash(hash, murmur3_32(data));
+            });
+    }
+}
+
+std::string HashDigest::to_string() {
+    // concat a vector of int to a string
+    std::string meta_vars_str = "{";
+    for (auto &meta_var : meta_vars) {
+        meta_vars_str += "\"" + meta_var + "\", ";
+    }
+    meta_vars_str += "},\"";
+    return "hash_digest(" + meta_vars_str + result_register + "\")";
 }
 
 } // namespace vflog::ram

@@ -2,6 +2,7 @@
 #pragma once
 
 #include "ra.cuh"
+#include "utils.cuh"
 #include <map>
 #include <memory>
 #include <string>
@@ -46,6 +47,8 @@ enum class RAMInstructionType {
     DEFAULT_COLUMN,
     LOAD_FILE,
     FACT,
+    HASH_DIGEST,
+    CARTEISAN,
 };
 
 struct RAMInstruction {
@@ -264,6 +267,26 @@ struct JoinOperator : public RAMInstruction {
     std::string to_string() override;
 };
 
+struct CartesianOperator : public RAMInstruction {
+    rel_t rel1;
+    RelationVersion version1;
+    rel_t rel2;
+    RelationVersion version2;
+    std::string result_register1;
+    std::string result_register2;
+
+    CartesianOperator(rel_t rel1, RelationVersion version1, rel_t rel2,
+                      RelationVersion version2, std::string result_register1,
+                      std::string result_register2)
+        : rel1(rel1), version1(version1), rel2(rel2), version2(version2),
+          result_register1(result_register1), result_register2(result_register2) {
+        type = RAMInstructionType::CARTEISAN;
+    }
+
+    void execute(RelationalAlgebraMachine &ram) override;
+    std::string to_string() override;
+};
+
 struct IdJoinOperator : public RAMInstruction {
     column_t inner;
     column_t outer;
@@ -328,6 +351,22 @@ struct NegateOperator : public RAMInstruction {
     NegateOperator(column_t inner, column_t outer, std::string meta_var,
                    bool pop_outer = false)
         : inner(inner), outer(outer), meta_var(meta_var), pop_outer(pop_outer) {
+        type = RAMInstructionType::NEGATE;
+    }
+
+    void execute(RelationalAlgebraMachine &ram) override;
+    std::string to_string() override;
+};
+
+struct NegateMulti : public RAMInstruction {
+    rel_t inner;
+    std::vector<column_t> outer_columns;
+    std::vector<std::string> meta_vars;
+    // bool pop_outer = false;
+
+    NegateMulti(rel_t inner, std::vector<column_t> outer_columns,
+                std::vector<std::string> meta_vars)
+        : inner(inner), outer_columns(outer_columns), meta_vars(meta_vars) {
         type = RAMInstructionType::NEGATE;
     }
 
@@ -451,8 +490,10 @@ struct SetColumnStrategy : RAMInstruction {
 struct Index : RAMInstruction {
     rel_t rel;
     std::vector<int> columns;
+    bool build_immediately = false;
 
-    Index(rel_t rel, std::vector<int> columns) : rel(rel), columns(columns) {
+    Index(rel_t rel, std::vector<int> columns, bool build_immediately)
+        : rel(rel), columns(columns), build_immediately(build_immediately) {
         type = RAMInstructionType::INDEX;
     }
 
@@ -500,6 +541,22 @@ struct Fact : RAMInstruction {
     std::string to_string() override;
 };
 
+struct HashDigest : RAMInstruction {
+    std::vector<std::string> meta_vars;
+    std::vector<column_t> columns;
+    std::string result_register;
+
+    HashDigest(std::vector<std::string> meta_vars,
+               std::vector<column_t> columns, std::string result_register)
+        : meta_vars(meta_vars), columns(columns),
+          result_register(result_register) {
+        type = RAMInstructionType::HASH_DIGEST;
+    }
+
+    void execute(RelationalAlgebraMachine &ram) override;
+    std::string to_string() override;
+};
+
 // >>>>>>>>>>>>>>>>>>>>> Exposed RAM instruction API >>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 // print the size of a relation
@@ -537,7 +594,9 @@ inline std::shared_ptr<IdJoinOperator> join_id_op(column_t inner,
                                                   std::string outer_meta_var,
                                                   std::string result_register) {
     // return std::make_shared<IdJoinOperator>(inner, outer, outer_meta_var,
-                                            // result_register);
+    // result_register);
+    // TODO: fix this
+    return nullptr;
 }
 
 inline std::shared_ptr<MultiArityJoinOperator>
@@ -708,6 +767,40 @@ inline std::shared_ptr<Fact> fact(rel_t rel,
                                   std::vector<std::vector<uint32_t>> data,
                                   bool debug_flag = false) {
     auto op = std::make_shared<Fact>(rel, data);
+    op->debug_flag = debug_flag;
+    return op;
+}
+
+inline std::shared_ptr<Index> index_op(rel_t rel, std::vector<int> columns,
+                                       bool build_immediately = false,
+                                       bool debug_flag = false) {
+    auto op = std::make_shared<Index>(rel, columns, build_immediately);
+    op->debug_flag = debug_flag;
+    return op;
+}
+
+inline std::shared_ptr<HashDigest>
+hash_digest(std::vector<std::string> meta_vars, std::vector<column_t> columns,
+            std::string result_register, bool debug_flag = false) {
+    auto op = std::make_shared<HashDigest>(meta_vars, columns, result_register);
+    op->debug_flag = debug_flag;
+    return op;
+}
+
+inline std::shared_ptr<NegateMulti>
+negate_multi(rel_t inner, std::vector<column_t> outer_columns,
+             std::vector<std::string> meta_vars, bool debug_flag = false) {
+    auto op = std::make_shared<NegateMulti>(inner, outer_columns, meta_vars);
+    op->debug_flag = debug_flag;
+    return op;
+}
+
+inline std::shared_ptr<CartesianOperator>
+cartesian_op(rel_t rel1, RelationVersion version1, rel_t rel2,
+             RelationVersion version2, std::string result_register1,
+             std::string result_register2, bool debug_flag = false) {
+    auto op = std::make_shared<CartesianOperator>(
+        rel1, version1, rel2, version2, result_register1, result_register2);
     op->debug_flag = debug_flag;
     return op;
 }

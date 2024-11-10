@@ -356,4 +356,23 @@ bool multi_hisa::tuple_exists(std::vector<internal_data_type> &tuple,
     return found_flag[0];
 }
 
+ClusteredIndex& multi_hisa::get_clustered_index(RelationVersion version,
+                             std::vector<int> column_indices) {
+    // get the clustered index of the columns
+    if (version == NEWT) {
+        for (auto &clustered_index : clustered_indices_newt) {
+            if (clustered_index.column_indices == column_indices) {
+                return clustered_index;
+            }
+        }
+    } else {
+        for (auto &clustered_index : clustered_indices_full) {
+            if (clustered_index.column_indices == column_indices) {
+                return clustered_index;
+            }
+        }
+    }
+    throw std::runtime_error("clustered index not found");
+}
+
 } // namespace vflog

@@ -119,6 +119,8 @@ RAMGenPass::compile_materialization(std::shared_ptr<MIRRule> rule,
             }
         };
     materialize_one_head(rule->head);
+
+    return rule_instrs;
 }
 
 std::vector<std::shared_ptr<ram::RAMInstruction>>

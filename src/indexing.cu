@@ -1,6 +1,7 @@
 
 #include "hisa.cuh"
 
+#include <cstdint>
 #include <thrust/count.h>
 #include <thrust/iterator/discard_iterator.h>
 #include <thrust/sequence.h>
@@ -174,6 +175,49 @@ void multi_hisa::persist_newt_clustered_index() {
     this->merge_time +=
         std::chrono::duration_cast<std::chrono::microseconds>(end - start)
             .count();
+}
+
+void multi_hisa::build_cluster_index() {
+    auto start = std::chrono::high_resolution_clock::now();
+    for (auto &clustered_index : clustered_indices_full) {
+        if (clustered_index.joinable) {
+            // TODO: implement joinable clustered index
+            throw std::runtime_error(
+                "joinable clustered index not implemented");
+        }
+        // create a buffer has full_size
+        buffer->reserve(full_size);
+        // fill the buffer to 0
+        thrust::fill(EXE_POLICY, buffer->data(), buffer->data() + full_size, 0);
+        for (int i : clustered_index.column_indices) {
+            auto &column = full_columns[i];
+            auto raw_head = get_raw_data_ptrs(FULL, i);
+            // hash digest use current buffer value add the
+            thrust::transform(EXE_POLICY, raw_head, raw_head + full_size,
+                              buffer->data(), buffer->data(),
+                              [] LAMBDA_TAG(auto &raw, auto &buf_h) {
+                                  return combine_hash(buf_h, murmur3_32(raw));
+                              });
+        }
+        // store the buffer to hash map of index
+        if (clustered_index.unique_v_map) {
+            clustered_index.unique_v_map->clear();
+        } else {
+            clustered_index.unique_v_map = nullptr;
+            clustered_index.unique_v_map = CREATE_V_MAP(full_size);
+        }
+        // TODO: solve hash collision
+        auto insertpair_begin = thrust::make_transform_iterator(
+            thrust::make_zip_iterator(thrust::make_tuple(
+                buffer->data(), thrust::make_counting_iterator<uint32_t>(0))),
+            cuda::proclaim_return_type<GpuMapPair>([] LAMBDA_TAG(auto &pair) {
+                return HASH_NAMESPACE::make_pair(
+                    thrust::get<0>(pair),
+                    (static_cast<uint64_t>(thrust::get<1>(pair)) << 32) + 1);
+            }));
+        clustered_index.unique_v_map->insert(insertpair_begin,
+                                             insertpair_begin + full_size);
+    }
 }
 
 } // namespace vflog
