@@ -92,6 +92,29 @@ void ProjectOperator::execute(RelationalAlgebraMachine &ram) {
     }
 }
 
+void ProjectHostOperator::execute(RelationalAlgebraMachine &ram) {
+    // get end of the column
+    auto rel = ram.rels[dst.name];
+    rel->allocate_newt(src_size);
+    for (int i = 0; i < rel->arity; i++) {
+        auto &dst_column = rel->get_versioned_columns(RelationVersion::NEWT)[i];
+        auto dst_raw_begin = rel->data[i].data().get() + dst_column.raw_offset +
+                             dst_column.raw_size;
+        // copy the data
+        cudaMemcpy(dst_raw_begin, host_src,
+                   src_size * sizeof(internal_data_type),
+                   cudaMemcpyHostToDevice);
+        dst_column.raw_size = dst_column.raw_size + src_size;
+    }
+    rel->newt_size += src_size;
+    rel->total_tuples += src_size;
+}
+
+std::string ProjectHostOperator::to_string() {
+    return "project_host_op(" + dst.to_string() + ", " +
+           std::to_string(src_size) + ")";
+}
+
 std::string ProjectOperator::to_string() {
     return "project_op(" + src.to_string() + ", " + dst.to_string() + ", \"" +
            meta_var + "\")";
@@ -102,11 +125,13 @@ void ProjectIdOperator::execute(RelationalAlgebraMachine &ram) {
     if (src_idx_ptr->size() == 0) {
         return;
     }
-    auto &dst_column = ram.rels[dst.rel]->get_versioned_columns(dst.version)[dst.idx];
+    auto &dst_column =
+        ram.rels[dst.rel]->get_versioned_columns(dst.version)[dst.idx];
     auto dst_raw_begin = ram.rels[dst.rel]->data[dst.idx].begin() +
                          dst_column.raw_offset + dst_column.raw_size;
-    
-    thrust::copy(EXE_POLICY, src_idx_ptr->begin(), src_idx_ptr->end(), dst_raw_begin);
+
+    thrust::copy(EXE_POLICY, src_idx_ptr->begin(), src_idx_ptr->end(),
+                 dst_raw_begin);
     dst_column.raw_size += src_idx_ptr->size();
 }
 

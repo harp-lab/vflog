@@ -279,7 +279,8 @@ struct CartesianOperator : public RAMInstruction {
                       RelationVersion version2, std::string result_register1,
                       std::string result_register2)
         : rel1(rel1), version1(version1), rel2(rel2), version2(version2),
-          result_register1(result_register1), result_register2(result_register2) {
+          result_register1(result_register1),
+          result_register2(result_register2) {
         type = RAMInstructionType::CARTEISAN;
     }
 
@@ -438,6 +439,7 @@ struct FixpointOperator : public RAMInstruction {
     device_indices_t _indices_default;
     int max_iter = -1;
     std::map<int, double> stats;
+    int iter = 0;
 
     FixpointOperator(std::vector<std::shared_ptr<RAMInstruction>> operators,
                      std::vector<rel_t> rels, int max_iter = -1)
@@ -447,6 +449,8 @@ struct FixpointOperator : public RAMInstruction {
 
     void execute(RelationalAlgebraMachine &ram) override;
     std::string to_string() override;
+
+    bool step(RelationalAlgebraMachine &ram);
 };
 
 struct StaticBatch : public RAMInstruction {
@@ -551,6 +555,20 @@ struct HashDigest : RAMInstruction {
         : meta_vars(meta_vars), columns(columns),
           result_register(result_register) {
         type = RAMInstructionType::HASH_DIGEST;
+    }
+
+    void execute(RelationalAlgebraMachine &ram) override;
+    std::string to_string() override;
+};
+
+struct ProjectHostOperator : RAMInstruction {
+    uint32_t **host_src;
+    size_t src_size;
+    rel_t dst;
+
+    ProjectHostOperator(uint32_t **host_src, size_t src_size, rel_t dst)
+        : host_src(host_src), src_size(src_size), dst(dst) {
+        type = RAMInstructionType::PROJECT;
     }
 
     void execute(RelationalAlgebraMachine &ram) override;
@@ -801,6 +819,14 @@ cartesian_op(rel_t rel1, RelationVersion version1, rel_t rel2,
              std::string result_register2, bool debug_flag = false) {
     auto op = std::make_shared<CartesianOperator>(
         rel1, version1, rel2, version2, result_register1, result_register2);
+    op->debug_flag = debug_flag;
+    return op;
+}
+
+inline std::shared_ptr<ProjectHostOperator>
+project_host_op(uint32_t **host_src, size_t src_size, rel_t dst,
+                bool debug_flag = false) {
+    auto op = std::make_shared<ProjectHostOperator>(host_src, src_size, dst);
     op->debug_flag = debug_flag;
     return op;
 }

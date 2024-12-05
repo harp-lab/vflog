@@ -12,7 +12,7 @@ If:
 CompileFlags:
   Compiler: /usr/bin/g++
   Add:
-    - "-I/home/stargazermiao/workspace/vflog/include"
+    - "-I/home/stargazermiao/workspace/ddisasm-ascent/vflog/include"
 
 ---
 
@@ -22,7 +22,7 @@ If:
 CompileFlags: 
   Compiler: /usr/local/cuda/bin/nvcc
   Add:
-    - "-I/home/stargazermiao/workspace/vflog/include"
+    - "-I/home/stargazermiao/workspace/ddisasm-ascent/vflog/include"
     - "-I/home/stargazermiao/workspace/vflog/build/_deps/cuco-src/include"
     - "-I/home/stargazermiao/workspace/vflog/build/_deps/rmm-src/include"
     - "-I/home/stargazermiao/workspace/vflog/build/_deps/fmt-src/include"

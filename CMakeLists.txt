@@ -161,6 +161,8 @@ file(GLOB source_file_gpu_ra
     "${gpu_ra_include}/*.cuh"
 )
 
+# use PIC for static library
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 add_library(gpu_ra "${source_file_gpu_ra}")
 target_compile_features(gpu_ra PUBLIC cxx_std_17)
 target_compile_definitions(gpu_ra PUBLIC)
