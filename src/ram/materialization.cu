@@ -74,6 +74,9 @@ void materialize_matched_range(
                         if (*found_outer_ptr != res_pos) {
                             found_outer_idx--;
                         }
+                        if (found_outer_idx >= outer_size) {
+                            found_outer_idx = outer_size - 1;
+                        }
                         // printf("%u : found_outer_idx: %d\n", res_pos,
                         // found_outer_idx);
                         unsigned int outer_val = outer_pos[found_outer_idx];

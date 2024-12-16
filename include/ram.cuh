@@ -42,7 +42,7 @@ struct RelationalAlgebraMachine {
 
     void add_program(std::shared_ptr<RAMProgram> program);
 
-    void add_rel(std::string name, rel_ptr rel) { 
+    void add_rel(std::string name, rel_ptr rel) {
         auto total_rel_size = rels.size();
         rels[name] = rel;
         rels[name]->uid = total_rel_size;
@@ -100,9 +100,7 @@ struct RelationalAlgebraMachine {
 
     bool has_overflow() { return overflow_rel != nullptr; }
 
-    void bitmap_clear() {
-        rel_bitmap.clear();
-    }
+    void bitmap_clear() { rel_bitmap.clear(); }
 
     device_bitmap_t &get_bitmap(std::string rel_name) {
         if (rel_bitmap.find(rel_name) == rel_bitmap.end()) {

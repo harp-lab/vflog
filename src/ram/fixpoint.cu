@@ -1,4 +1,5 @@
 
+#include "debug.cuh"
 #include "ram.cuh"
 #include <cstddef>
 #include <memory>
@@ -9,10 +10,10 @@ void FixpointOperator::execute(RelationalAlgebraMachine &ram) {
     int iter = 0;
     KernelTimer timer;
     ram.reset_iter_counter();
-    for (size_t i = 0; i < operators.size(); i++) {
-        std::cout << "SCC Operator " << i << " " << operators[i]->to_string()
-                  << std::endl;
-    }
+    // for (size_t i = 0; i < operators.size(); i++) {
+    //     std::cout << "SCC Operator " << i << " " << operators[i]->to_string()
+    //               << std::endl;
+    // }
     while (true) {
         // std::cout << "Iteration " << iter << std::endl;
         int i = 0;
@@ -26,8 +27,8 @@ void FixpointOperator::execute(RelationalAlgebraMachine &ram) {
         }
 
         for (auto &op : operators) {
-            std::cout << "Executing operator " << i << " " << op->to_string()
-            <<  std::endl;
+            // std::cout << "Executing operator " << i << " " << op->to_string()
+            //           << std::endl;
             timer.start_timer();
             op->execute(ram);
             timer.stop_timer();

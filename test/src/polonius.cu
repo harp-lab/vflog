@@ -40,7 +40,8 @@ void polonius_ram(char *data_path) {
     std::string cfg_edge_path = std::string(data_path) + "/cfg_edge.facts";
     ram.create_rel("cfg_edge", 2, cfg_edge_path.c_str());
     ram.create_rel("var_maybe_partly_initialized_on_exit", 2);
-    ram.get_rel("var_maybe_partly_initialized_on_exit")->set_index_startegy(1, FULL, vflog::IndexStrategy::EAGER);
+    ram.get_rel("var_maybe_partly_initialized_on_exit")
+        ->set_index_startegy(1, FULL, vflog::IndexStrategy::EAGER);
     ram.create_rel("cfg_node", 1);
     std::string universal_region_path =
         std::string(data_path) + "/universal_region.facts";
@@ -400,34 +401,39 @@ void polonius_ram(char *data_path) {
                          "    !path_moved_at(path, point2).\n"
                       << std::endl;
         }),
-        fixpoint_op({
-            cache_update("c_path_maybe_initialized_on_exit", "r_1"),
-            cache_init("c_path_maybe_initialized_on_exit",
-                       rel_t("path_maybe_initialized_on_exit"), DELTA),
-            join_op(vflog::column_t("cfg_edge", 0, FULL),
+        fixpoint_op(
+            {
+                cache_update("c_path_maybe_initialized_on_exit", "r_1"),
+                cache_init("c_path_maybe_initialized_on_exit",
+                           rel_t("path_maybe_initialized_on_exit"), DELTA),
+                join_op(
+                    vflog::column_t("cfg_edge", 0, FULL),
                     vflog::column_t("path_maybe_initialized_on_exit", 1, DELTA),
                     "c_path_maybe_initialized_on_exit", "r_2"),
-            cache_update("c_cfg_edge", "r_2"),
-            negate_multi(
-                rel_t("path_moved_at"),
-                {vflog::column_t("path_maybe_initialized_on_exit", 0, DELTA),
-                 vflog::column_t("cfg_edge", 1, FULL)},
-                {"c_path_maybe_initialized_on_exit", "c_cfg_edge"}),
-            prepare_materialization(rel_t("path_maybe_initialized_on_exit"),
+                cache_update("c_cfg_edge", "r_2"),
+                negate_multi(
+                    rel_t("path_moved_at"),
+                    {vflog::column_t("path_maybe_initialized_on_exit", 0,
+                                     DELTA),
+                     vflog::column_t("cfg_edge", 1, FULL)},
+                    {"c_path_maybe_initialized_on_exit", "c_cfg_edge"}),
+                prepare_materialization(rel_t("path_maybe_initialized_on_exit"),
+                                        "c_path_maybe_initialized_on_exit"),
+                project_op(
+                    vflog::column_t("path_maybe_initialized_on_exit", 0, DELTA),
+                    vflog::column_t("path_maybe_initialized_on_exit", 0, NEWT),
+                    "c_path_maybe_initialized_on_exit"),
+                project_op(
+                    vflog::column_t("cfg_edge", 1, FULL),
+                    vflog::column_t("path_maybe_initialized_on_exit", 1, NEWT),
+                    "c_cfg_edge"),
+                end_materialization(rel_t("path_maybe_initialized_on_exit"),
                                     "c_path_maybe_initialized_on_exit"),
-            project_op(vflog::column_t("path_maybe_initialized_on_exit", 0, DELTA),
-                       vflog::column_t("path_maybe_initialized_on_exit", 0, NEWT),
-                       "c_path_maybe_initialized_on_exit"),
-            project_op(vflog::column_t("cfg_edge", 1, FULL),
-                       vflog::column_t("path_maybe_initialized_on_exit", 1, NEWT),
-                       "c_cfg_edge"),
-            end_materialization(rel_t("path_maybe_initialized_on_exit"),
-                                "c_path_maybe_initialized_on_exit"),
-            cache_clear(),
-            persistent(rel_t("path_maybe_initialized_on_exit")),
-            print_size(rel_t("path_maybe_initialized_on_exit")),
-        }, {rel_t("path_maybe_initialized_on_exit")}),
-
+                cache_clear(),
+                persistent(rel_t("path_maybe_initialized_on_exit")),
+            },
+            {rel_t("path_maybe_initialized_on_exit")}),
+        print_size(rel_t("path_maybe_initialized_on_exit")),
         custom_op([](RelationalAlgebraMachine &ram_) {
             std::cout
                 << "var_maybe_partly_initialized_on_exit(var, point) :-\n "
