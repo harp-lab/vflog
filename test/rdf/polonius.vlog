@@ -1,0 +1,59 @@
+
+@source cfg_edge[2] : load-csv("/data/polonius-rdf/scallop-parse/cfg_edge.csv") .
+@source universal_region[1] : load-csv("/data/polonius-rdf/scallop-parse/universal_region.csv") .
+@source var_used_at[2] : load-csv("/data/polonius-rdf/scallop-parse/var_used_at.csv") .
+@source child_path[2] : load-csv("/data/polonius-rdf/scallop-parse/child_path.csv") .
+@source path_moved_at_base[2] : load-csv("/data/polonius-rdf/scallop-parse/path_moved_at_base.csv") .
+@source path_assigned_at_base[2] : load-csv("/data/polonius-rdf/scallop-parse/path_assigned_at_base.csv") .
+@source path_accessed_at_base[2] : load-csv("/data/polonius-rdf/scallop-parse/path_accessed_at_base.csv") .
+@source path_is_var[2] : load-csv("/data/polonius-rdf/scallop-parse/path_is_var.csv") .
+
+
+
+origin_live_on_entry(?origin, ?point) :-
+    cfg_node(?point),
+    universal_region(?origin).
+cfg_node(?point1), cfg_node(?point2) :-
+    cfg_edge(?point1, ?point2).
+var_live_on_entry(?var, ?point) :- var_used_at(?var, ?point).
+var_maybe_partly_initialized_on_entry(?var, ?point2) :-
+    var_maybe_partly_initialized_on_exit(?var, ?point1),
+    cfg_edge(?point1, ?point2).
+ancestor_path(?x, ?y) :- child_path(?x, ?y).
+path_moved_at(?x, ?y) :- path_moved_at_base(?x, ?y).
+path_assigned_at(?x, ?y) :- path_assigned_at_base(?x, ?y).
+path_accessed_at(?x, ?y) :- path_accessed_at_base(?x, ?y).
+path_begins_with_var(?x, ?var) :- path_is_var(?x, ?var).
+ancestor_path(?Grandparent, ?Child) :-
+    ancestor_path(?Parent, ?Child),
+    child_path(?Parent, ?Grandparent).
+path_moved_at(?Child, ?Point) :-
+    path_moved_at(?Parent, ?Point),
+    ancestor_path(?Parent, ?Child).
+path_assigned_at(?Child, ?point) :-
+    path_assigned_at(?Parent, ?point),
+    ancestor_path(?Parent, ?Child).
+path_accessed_at(?Child, ?point) :-
+    path_accessed_at(?Parent, ?point),
+    ancestor_path(?Parent, ?Child).
+path_begins_with_var(?Child, ?Var) :-
+    path_begins_with_var(?Parent, ?Var),
+    ancestor_path(?Parent, ?Child).
+path_maybe_initialized_on_exit(?path, ?point) :-
+    path_assigned_at(?path, ?point).
+path_maybe_uninitialized_on_exit(?path, ?point) :-
+    path_moved_at(?path, ?point).
+path_maybe_initialized_on_exit(?path, ?point2) :-
+    path_maybe_initialized_on_exit(?path, ?point1),
+    cfg_edge(?point1, ?point2),
+    ~ path_moved_at(?path, ?point2).
+path_maybe_uninitialized_on_exit(?path, ?point2) :-
+    path_maybe_uninitialized_on_exit(?path, ?point1),
+    cfg_edge(?point1, ?point2),
+    ~ path_assigned_at(?path, ?point2).
+var_maybe_partly_initialized_on_exit(?var, ?point) :-
+    path_maybe_initialized_on_exit(?path, ?point),
+    path_begins_with_var(?path, ?var).
+move_error(?Path, ?TargetNode) :-
+    path_maybe_uninitialized_on_exit(?Path, ?SourceNode),
+    cfg_edge(?SourceNode, ?TargetNode).

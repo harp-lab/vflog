@@ -1,0 +1,4 @@
+@prefix : <https://rdfox.com/getting-started/> .
+
+[?x, :sg ,?y] :- [?a, :edge, ?x], [?a, :edge, ?y], FILTER(?x != ?y).
+[?x, :sg ,?y] :- [?a, :edge, ?x], [?a, :sg, ?b], [?b, :edge, ?y].

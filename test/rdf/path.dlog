@@ -1,0 +1,4 @@
+@prefix : <https://rdfox.com/getting-started/> .
+
+[?x, :path, ?y] :- [?x, :edge, ?y] .
+[?x, :path, ?z] :- [?x, :path, ?y], [?y, :edge, ?z] .

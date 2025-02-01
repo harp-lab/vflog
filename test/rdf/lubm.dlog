@@ -1,0 +1,201 @@
+@prefix : <https://rdfox.com/getting-started/> .
+# advisor(?X, ?Y) :- src_advisor(?X, ?Y) .
+# AssistantProfessor(?X) :- src_AssistantProfessor(?X) .
+# AssociateProfessor(?X) :- src_AssociateProfessor(?X) .
+# Course(?X) :- src_Course(?X) .
+# Department(?X) :- src_Department(?X) .
+# doctoralDegreeFrom(?X, ?Y) :- src_doctoralDegreeFrom(?X, ?Y) .
+# emailAddress(?X, ?Y) :- src_emailAddress(?X, ?Y) .
+# FullProfessor(?X) :- src_FullProfessor(?X) .
+# GraduateCourse(?X) :- src_GraduateCourse(?X) .
+# GraduateStudent(?X) :- src_GraduateStudent(?X) .
+# headOf(?X, ?Y) :- src_headOf(?X, ?Y) .
+# Lecturer(?X) :- src_Lecturer(?X) .
+# mastersDegreeFrom(?X, ?Y) :- src_mastersDegreeFrom(?X, ?Y) .
+# memberOf(?X, ?Y) :- src_memberOf(?X, ?Y) .
+# name(?X, ?Y) :- src_name(?X, ?Y) .
+# Publication(?X) :- src_Publication(?X) .
+# publicationAuthor(?X, ?Y) :- src_publicationAuthor(?X, ?Y) .
+# ResearchAssistant(?X) :- src_ResearchAssistant(?X) .
+# ResearchGroup(?X) :- src_ResearchGroup(?X) .
+# researchInterest(?X, ?Y) :- src_researchInterest(?X, ?Y) .
+# subOrganizationOf(?X, ?Y) :- src_subOrganizationOf(?X, ?Y) .
+# takesCourse(?X, ?Y) :- src_takesCourse(?X, ?Y) .
+# teacherOf(?X, ?Y) :- src_teacherOf(?X, ?Y) .
+# TeachingAssistant(?X) :- src_TeachingAssistant(?X) .
+# teachingAssistantOf(?X, ?Y) :- src_teachingAssistantOf(?X, ?Y) .
+# telephone(?X, ?Y) :- src_telephone(?X, ?Y) .
+# undergraduateDegreeFrom(?X, ?Y) :- src_undergraduateDegreeFrom(?X, ?Y) .
+# UndergraduateStudent(?X) :- src_UndergraduateStudent(?X) .
+# University(?X) :- src_University(?X) .
+# worksFor(?X, ?Y) :- src_worksFor(?X, ?Y) .
+
+[?x, :advisor, ?y] :- [?x, :src_advisor, ?y] .
+:AssistantProfessor[?x] :- :src_AssistantProfessor[?x] .
+:AssociateProfessor[?x] :- :src_AssociateProfessor[?x] .
+:Course[?x] :- :src_Course[?x] .
+:Department[?x] :- :src_Department[?x] .
+:doctoralDegreeFrom[?x, ?y] :- :src_doctoralDegreeFrom[?x, ?y] .
+:emailAddress[?x, ?y] :- :src_emailAddress[?x, ?y] .
+:FullProfessor[?x] :- :src_FullProfessor[?x] .
+:GraduateCourse[?x] :- :src_GraduateCourse[?x] .
+:GraduateStudent[?x] :- :src_GraduateStudent[?x] .
+:headOf[?x, ?y] :- :src_headOf[?x, ?y] .
+:Lecturer[?x] :- :src_Lecturer[?x] .
+:mastersDegreeFrom[?x, ?y] :- :src_mastersDegreeFrom[?x, ?y] .
+:memberOf[?x, ?y] :- :src_memberOf[?x, ?y] .
+:name[?x, ?y] :- :src_name[?x, ?y] .
+:Publication[?x] :- :src_Publication[?x] .
+:publicationAuthor[?x, ?y] :- :src_publicationAuthor[?x, ?y] .
+:ResearchAssistant[?x] :- :src_ResearchAssistant[?x] .
+:ResearchGroup[?x] :- :src_ResearchGroup[?x] .
+:researchInterest[?x, ?y] :- :src_researchInterest[?x, ?y] .
+:subOrganizationOf[?x, ?y] :- :src_subOrganizationOf[?x, ?y] .
+:takesCourse[?x, ?y] :- :src_takesCourse[?x, ?y] .
+:teacherOf[?x, ?y] :- :src_teacherOf[?x, ?y] .
+:TeachingAssistant[?x] :- :src_TeachingAssistant[?x] .
+:teachingAssistantOf[?x, ?y] :- :src_teachingAssistantOf[?x, ?y] .
+:telephone[?x, ?y] :- :src_telephone[?x, ?y] .
+:undergraduateDegreeFrom[?x, ?y] :- :src_undergraduateDegreeFrom[?x, ?y] .
+:UndergraduateStudent[?x] :- :src_UndergraduateStudent[?x] .
+:University[?x] :- :src_University[?x] .
+
+
+# %%% t-tgds
+
+# Person(?X) :- advisor(?X, ?X1) .
+# Professor(?X1) :- advisor(?X, ?X1) .
+# Professor(?X) :- AssistantProfessor(?X) .
+# Professor(?X) :- AssociateProfessor(?X) .
+# headOf(?X, !Y), Department(!Y) :- Chair(?X) .
+# Person(?X) :- Chair(?X) .
+# Professor(?X) :- Chair(?X) .
+# Work(?X) :- Course(?X) .
+# Person(?X) :- degreeFrom(?X, ?X1) .
+# University(?X1) :- degreeFrom(?X, ?X1) .
+# hasAlumnus(?X, ?Y) :- degreeFrom(?Y, ?X) .
+# Organization(?X) :- Department(?X) .
+# headOf(?X, !Y), Program(!Y) :- Director(?X) .
+# Person(?X) :- Director(?X) .
+# Person(?X) :- doctoralDegreeFrom(?X, ?X1) .
+# University(?X1) :- doctoralDegreeFrom(?X, ?X1) .
+# degreeFrom(?X, ?Y) :- doctoralDegreeFrom(?X, ?Y) .
+# Person(?X) :- emailAddress(?X, ?X1) .
+# Person(?X) :- Employee(?X) .
+# worksFor(?X, !Y), Organization(!Y) :- Employee(?X) .
+# Employee(?X) :- Faculty(?X) .
+# Professor(?X) :- FullProfessor(?X) .
+# Course(?X) :- GraduateCourse(?X) .
+# Person(?X) :- GraduateStudent(?X) .
+# takesCourse(?X, !Y), GraduateCourse(!Y) :- GraduateStudent(?X) .
+# Person(?X1) :- hasAlumnus(?X, ?X1) .
+# University(?X) :- hasAlumnus(?X, ?X1) .
+# degreeFrom(?X, ?Y) :- hasAlumnus(?Y, ?X) .
+# worksFor(?X, ?Y) :- headOf(?X, ?Y) .
+# Faculty(?X) :- Lecturer(?X) .
+# Person(?X) :- mastersDegreeFrom(?X, ?X1) .
+# University(?X1) :- mastersDegreeFrom(?X, ?X1) .
+# degreeFrom(?X, ?Y) :- mastersDegreeFrom(?X, ?Y) .
+# Organization(?X) :- member(?X, ?X1) .
+# Person(?X1) :- member(?X, ?X1) .
+# memberOf(?X, ?Y) :- member(?Y, ?X) .
+# member(?X, ?Y) :- memberOf(?Y, ?X) .
+# Chair(?X) :- Person(?X), headOf(?X, ?X1), Department(?X1) .
+# Director(?X) :- Person(?X), headOf(?X, ?X1), Program(?X1) .
+# Student(?X) :- Person(?X), takesCourse(?X, ?X1), Course(?X1) .
+# TeachingAssistant(?X) :- Person(?X), teachingAssistantOf(?X, ?X1), Course(?X1) .
+# Employee(?X) :- Person(?X), worksFor(?X, ?X1), Organization(?X1) .
+# Faculty(?X) :- Professor(?X) .
+# Organization(?X) :- Program(?X) .
+# Person(?X1) :- publicationAuthor(?X, ?X1) .
+# Publication(?X) :- publicationAuthor(?X, ?X1) .
+# Person(?X) :- ResearchAssistant(?X) .
+# worksFor(?X, !Y), ResearchGroup(!Y) :- ResearchAssistant(?X) .
+# Organization(?X) :- ResearchGroup(?X) .
+# Person(?X) :- Student(?X) .
+# takesCourse(?X, !Y), Course(!Y) :- Student(?X) .
+# Organization(?X) :- subOrganizationOf(?X, ?X1) .
+# Organization(?X1) :- subOrganizationOf(?X, ?X1) .
+# subOrganizationOf(?X, ?Z) :- subOrganizationOf(?X, ?Y), subOrganizationOf(?Y, ?Z) .
+# Course(?X1) :- teacherOf(?X, ?X1) .
+# Faculty(?X) :- teacherOf(?X, ?X1) .
+# Person(?X) :- TeachingAssistant(?X) .
+# teachingAssistantOf(?X, !Y), Course(!Y) :- TeachingAssistant(?X) .
+# Course(?X1) :- teachingAssistantOf(?X, ?X1) .
+# TeachingAssistant(?X) :- teachingAssistantOf(?X, ?X1) .
+# Person(?X) :- telephone(?X, ?X1) .
+# Person(?X) :- undergraduateDegreeFrom(?X, ?X1) .
+# University(?X1) :- undergraduateDegreeFrom(?X, ?X1) .
+# degreeFrom(?X, ?Y) :- undergraduateDegreeFrom(?X, ?Y) .
+# Student(?X) :- UndergraduateStudent(?X) .
+# Organization(?X) :- University(?X) .
+# memberOf(?X, ?Y) :- worksFor(?X, ?Y) .
+
+:Person[?x] :- [?x, :advisor, ?x1] .
+:Professor[?x1] :- [?x, :advisor, ?x1] .
+:Professor[?x] :- :AssistantProfessor[?x] .
+:Professor[?x] :- :AssociateProfessor[?x] .
+[?x, :headOf, ?y], :Department[?y] :- :Chair[?x], SKOLEM("Department", :Chair, ?x, ?y) .
+:Person[?x] :- :Chair[?x] .
+:Professor[?x] :- :Chair[?x] .
+:Work[?x] :- :Course[?x] .
+:Person[?x] :- [?x, :degreeFrom, ?x1] .
+:University[?x1] :- [?x, :degreeFrom, ?x1] .
+[?x, :hasAlumnus, ?y] :- [?y, :degreeFrom, ?x] .
+:Organization[?x] :- :Department[?x] .
+[?x, :headOf, ?y], :Program[?y] :- :Director[?x], SKOLEM("Director", :Director, ?x, ?y) .
+:Person[?x] :- :Director[?x] .
+:Person[?x] :- [?x, :doctoralDegreeFrom, ?x1] .
+:University[?x1] :- [?x, :doctoralDegreeFrom, ?x1] .
+[?x, :degreeFrom, ?y] :- [?x, :doctoralDegreeFrom, ?y] .
+:Person[?x] :- [?x, :emailAddress, ?x1] .
+:Person[?x] :- :Employee[?x] .
+[?x, :worksFor, ?y], :Organization[?y] :- :Employee[?x], SKOLEM("Employee", :Employee, ?y) .
+:Employee[?x] :- :Faculty[?x] .
+:Professor[?x] :- :FullProfessor[?x] .
+:Course[?x] :- :GraduateCourse[?x] .
+:Person[?x] :- :GraduateStudent[?x] .
+[?x, :takesCourse, ?y], :GraduateCourse[?y] :- :GraduateStudent[?x], SKOLEM("GraduateStudent", ?x, ?y) .
+:Person[?x1] :- [?x, :hasAlumnus, ?x1] .
+:University[?x] :- [?x, :hasAlumnus, ?x1] .
+[?x, :degreeFrom, ?y] :- [?y, :hasAlumnus, ?x] .
+[?x, :worksFor, ?y] :- [?x, :headOf, ?y] .
+:Faculty[?x] :- :Lecturer[?x] .
+:Person[?x] :- [?x, :mastersDegreeFrom, ?x1] .
+:University[?x1] :- [?x, :mastersDegreeFrom, ?x1] .
+[?x, :degreeFrom, ?y] :- [?x, :mastersDegreeFrom, ?y] .
+:Organization[?x] :- [?x, :member, ?x1] .
+:Person[?x1] :- [?x, :member, ?x1] .
+[?x, :memberOf, ?y] :- [?y, :member, ?x] .
+[?x, :member, ?y] :- [?y, :memberOf, ?x] .
+:Chair[?x] :- :Person[?x], [?x, :headOf, ?x1], :Department[?x1] .
+:Director[?x] :- :Person[?x], [?x, :headOf, ?x1], :Program[?x1] .
+:Student[?x] :- :Person[?x], [?x, :takesCourse, ?x1], :Course[?x1] .
+:TeachingAssistant[?x] :- :Person[?x], [?x, :teachingAssistantOf, ?x1], :Course[?x1] .
+:Employee[?x] :- :Person[?x], [?x, :worksFor, ?x1], :Organization[?x1] .
+:Faculty[?x] :- :Professor[?x] .
+:Organization[?x] :- :Program[?x] .
+:Person[?x1] :- [?x, :publicationAuthor, ?x1] .
+:Publication[?x] :- [?x, :publicationAuthor, ?x1] .
+:Person[?x] :- :ResearchAssistant[?x] .
+[?x, :worksFor, ?y], :ResearchGroup[?y] :- :ResearchAssistant[?x], SKOLEM("ResearchAssistant", ?x, ?y) .
+:Organization[?x] :- :ResearchGroup[?x] .
+:Person[?x] :- :Student[?x] .
+[?x, :takesCourse, ?y], :Course[?y] :- :Student[?x], SKOLEM("Student", ?x, ?y) .
+:Organization[?x] :- [?x, :subOrganizationOf, ?x1] .
+:Organization[?x1] :- [?x, :subOrganizationOf, ?x1] .
+[?x, :subOrganizationOf, ?z] :- [?x, :subOrganizationOf, ?y], [?y, :subOrganizationOf, ?z] .
+:Course[?x1] :- [?x, :teacherOf, ?x1] .
+:Faculty[?x] :- [?x, :teacherOf, ?x1] .
+:Person[?x] :- :TeachingAssistant[?x] .
+[?x, :teachingAssistantOf, ?y], :Course[?y] :- :TeachingAssistant[?x], SKOLEM("TeachingAssistant", ?x, ?y) .
+:Course[?x1] :- [?x, :teachingAssistantOf, ?x1] .
+:TeachingAssistant[?x] :- [?x, :teachingAssistantOf, ?x1] .
+:Person[?x] :- [?x, :telephone, ?x1] .
+:Person[?x] :- [?x, :undergraduateDegreeFrom, ?x1] .
+:University[?x1] :- [?x, :undergraduateDegreeFrom, ?x1] .
+[?x, :degreeFrom, ?y] :- [?x, :undergraduateDegreeFrom, ?y] .
+:Student[?x] :- :UndergraduateStudent[?x] .
+:Organization[?x] :- :University[?x] .
+[?x, :memberOf, ?y] :- [?x, :worksFor, ?y] .
+

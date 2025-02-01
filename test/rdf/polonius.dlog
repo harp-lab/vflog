@@ -1,0 +1,47 @@
+@prefix : <https://rdfox.com/getting-started/> .
+
+[?origin, :origin_live_on_entry, ?point] :-
+    [?point, :cfg_node, ?point],
+    [?origin, :universal_region, ?origin] .
+[?point1, :cfg_node, ?point2] :- [?point1, :cfg_edge, ?point2] .
+[?var, :var_live_on_entry, ?point] :- [?var, :var_used_at, ?point] .
+[?var, :var_maybe_partly_initialized_on_entry, ?point2] :-
+    [?var, :var_maybe_partly_initialized_on_exit, ?point1],
+    [?point1, :cfg_edge, ?point2] .
+[?x, :ancestor_path, ?y] :- [?x, :child_path, ?y] .
+[?x, :path_moved_at, ?y] :- [?x, :path_moved_at_base, ?y] .
+[?x, :path_assigned_at, ?y] :- [?x, :path_assigned_at_base, ?y] .
+[?x, :path_accessed_at, ?y] :- [?x, :path_accessed_at_base, ?y] .
+[?x, :path_begins_with_var, ?var] :- [?x, :path_is_var, ?var] .
+[?Grandparent, :ancestor_path, ?Child] :-
+    [?Parent, :ancestor_path, ?Child],
+    [?Parent, :child_path, ?Grandparent] .
+[?Child, :path_moved_at, ?Point] :-
+    [?Parent, :path_moved_at, ?Point],
+    [?Parent, :ancestor_path, ?Child] .
+[?Child, :path_assigned_at, ?point] :-
+    [?Parent, :path_assigned_at, ?point],
+    [?Parent, :ancestor_path, ?Child] .
+[?Child, :path_accessed_at, ?point] :-
+    [?Parent, :path_accessed_at, ?point],
+    [?Parent, :ancestor_path, ?Child] .
+[?Child, :path_begins_with_var, ?Var] :-
+    [?Parent, :path_begins_with_var, ?Var],
+    [?Parent, :ancestor_path, ?Child] .
+[?path, :path_maybe_initialized_on_exit, ?point] :- [?path, :path_assigned_at, ?point] .
+[?path, :path_maybe_uninitialized_on_exit, ?point] :- [?path, :path_moved_at, ?point] .
+[?path, :path_maybe_initialized_on_exit, ?point2] :-
+    [?path, :path_maybe_initialized_on_exit, ?point1],
+    [?point1, :cfg_edge, ?point2], 
+    NOT [?path, :path_moved_at, ?point2] .
+[?path, :path_maybe_uninitialized_on_exit, ?point2] :-
+    [?path, :path_maybe_uninitialized_on_exit, ?point1],
+    [?point1, :cfg_edge, ?point2],
+    NOT [?path, :path_assigned_at, ?point2] .
+[?var, :var_maybe_partly_initialized_on_exit, ?point] :-
+    [?path, :path_maybe_initialized_on_exit, ?point],
+    [?path, :path_begins_with_var, ?var] .
+[?Path, :move_error, ?TargetNode] :-
+    [?Path, :path_maybe_uninitialized_on_exit, ?SourceNode],
+    [?SourceNode, :cfg_edge, ?TargetNode] .
+
